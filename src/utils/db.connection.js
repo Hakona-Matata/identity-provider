@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const connect_DB = (app) => {
-	return app.listen(process.env.PORT, () => {
+	app.listen(process.env.PORT, () => {
 		mongoose.set("strictQuery", true);
 
 		mongoose
