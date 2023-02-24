@@ -19,6 +19,12 @@ const UserSchema = new Schema(
 		verificationToken: String,
 		isVerified: Boolean,
 		isVerifiedAt: Date,
+		session: [
+			{
+				label: { type: String, enum: ["accessToken", "refreshToken"] },
+				value: { type: String },
+			},
+		],
 	},
 	{
 		timestamps: true,

@@ -7,7 +7,6 @@ const sendEmail = require("./../../helpers/email");
 //======================================================
 
 const signUp_POST_service = async (data) => {
-	console.log(data);
 	// (1) Create user from given payload
 	const user = new User({
 		...data,
@@ -99,13 +98,24 @@ const login_POST_service = async (data) => {
 		);
 	}
 
-	// (4) Create and return access token
+	// (4) Create access token
+	const accessToken = await generate_token({
+		payload: { _id: user._id },
+		secret: process.env.ACCESS_TOKEN_SECRET,
+		expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
+	});
+
+	// (5) save access token
+	await User.findOneAndUpdate(
+		{ _id: user._id },
+		{
+			$push: { session: { label: "accessToken", value: accessToken } },
+		}
+	);
+
+	// (6) Create and return access token
 	return {
-		accessToken: await generate_token({
-			payload: { _id: user._id },
-			secret: process.env.ACCESS_TOKEN_SECRET,
-			expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
-		}),
+		accessToken,
 	};
 };
 
