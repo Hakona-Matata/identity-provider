@@ -119,8 +119,28 @@ const login_POST_service = async (data) => {
 	};
 };
 
+const logout_POST_service = async ({ userId, accessToken }) => {
+	// (1) Get user from DB
+	const user = await User.findOne({ _id: userId }).select("session").lean();
+
+	// (2) Delete access token
+	await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: {
+				session: user.session.filter((token) => {
+					return token.label === "accessToken" && token.value !== accessToken;
+				}),
+			},
+		}
+	);
+
+	return "Logged out successfully.";
+};
+
 module.exports = {
 	signUp_POST_service,
 	verify_GET_service,
 	login_POST_service,
+	logout_POST_service,
 };

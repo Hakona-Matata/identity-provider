@@ -6,6 +6,7 @@ const {
 	signUp_POST_service,
 	verify_GET_service,
 	login_POST_service,
+	logout_POST_service,
 } = require("../Services/access.services.js");
 
 //===============================================================================
@@ -46,8 +47,22 @@ const login_POST_controller = async (req, res, next) => {
 	}
 };
 
+const logout_POST_controller = async (req, res, next) => {
+	try {
+		const result = await logout_POST_service({
+			userId: req.userId,
+			accessToken: req.accessToken,
+		});
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
 module.exports = {
 	signUp_POST_controller,
 	verify_GET_controller,
 	login_POST_controller,
+	logout_POST_controller,
 };
