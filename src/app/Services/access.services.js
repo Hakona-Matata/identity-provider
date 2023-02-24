@@ -1,5 +1,5 @@
 const { generate_token, verify_token } = require("./../../helpers/token");
-const { create_hash, verify_hash } = require("./../../helpers/hash");
+const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const CustomError = require("./../../Errors/CustomError");
 
 const User = require("./../Models/User.model");
@@ -7,10 +7,11 @@ const sendEmail = require("./../../helpers/email");
 //======================================================
 
 const signUp_POST_service = async (data) => {
+	console.log(data);
 	// (1) Create user from given payload
 	const user = new User({
 		...data,
-		password: await create_hash(data.password),
+		password: await generate_hash(data.password),
 	});
 
 	// (2) Create verification token
@@ -70,7 +71,46 @@ const verify_GET_service = async (data) => {
 	return "Your account is verified successfully";
 };
 
+const login_POST_service = async (data) => {
+	// (1) Get user from DB
+	const user = await User.findOne({ email: data.email })
+		.select("password isVerified")
+		.lean();
+
+	if (!user) {
+		throw new CustomError("InvalidError", "Email or password is incorrect!");
+	}
+
+	// (2) Check password
+	const isPasswordCorrect = await verify_hash({
+		plainText: data.password,
+		hash: user.password,
+	});
+
+	if (!isPasswordCorrect) {
+		throw new CustomError("InvalidError", "Email or password is incorrect!");
+	}
+
+	// (3) Check email verification status
+	if (!user.isVerified) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, you need to verify your account first!"
+		);
+	}
+
+	// (4) Create and return access token
+	return {
+		accessToken: await generate_token({
+			payload: { _id: user._id },
+			secret: process.env.ACCESS_TOKEN_SECRET,
+			expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
+		}),
+	};
+};
+
 module.exports = {
 	signUp_POST_service,
 	verify_GET_service,
+	login_POST_service,
 };

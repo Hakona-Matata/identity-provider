@@ -6,7 +6,8 @@ const failure = ({ res, error }) => {
 	console.log({ error });
 	console.log("--------------");
 	console.log(error.name);
-	// console.log(error.details);
+	console.log("--------------");
+	console.log(error.details);
 	// Validation errors
 	if (error.name === "ValidationError") {
 		return res
@@ -43,9 +44,16 @@ const failure = ({ res, error }) => {
 		return res.status(401).json({ data: "Sorry, your token is expired!" });
 	}
 
-	// Custom message
+	// Custom message || InvalidInput
 	if (error.name === "CustomError" && error.code === "InvalidInput") {
 		return res.status(422).json({
+			data: error.message,
+		});
+	}
+
+	// Custom message | UnAuthorized
+	if (error.name === "CustomError" && error.code === "UnAuthorized") {
+		return res.status(401).json({
 			data: error.message,
 		});
 	}
