@@ -1,4 +1,5 @@
 const { generate_token, verify_token } = require("./../../helpers/token");
+const { create_hash, verify_hash } = require("./../../helpers/hash");
 const CustomError = require("./../../Errors/CustomError");
 
 const User = require("./../Models/User.model");
@@ -7,7 +8,10 @@ const sendEmail = require("./../../helpers/email");
 
 const signUp_POST_service = async (data) => {
 	// (1) Create user from given payload
-	const user = new User(data);
+	const user = new User({
+		...data,
+		password: await create_hash(data.password),
+	});
 
 	// (2) Create verification token
 	const verificationToken = await generate_token({
