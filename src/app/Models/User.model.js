@@ -16,6 +16,9 @@ const UserSchema = new Schema(
 			index: true,
 		},
 		password: String,
+		verificationToken: String,
+		isVerified: Boolean,
+		isVerifiedAt: Date,
 	},
 	{
 		timestamps: true,
