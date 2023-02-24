@@ -1,35 +1,39 @@
 {
-  "name": "identity-provider",
-  "version": "1.0.0",
-  "description": "My Identity Provider server | Anything related to identity handling ",
-  "main": "server.js",
-  "scripts": {
-    "dev": "nodemon src/server.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Hakona-Matata/identity-provider.git"
-  },
-  "keywords": [
-    "rest-api",
-    "identity-provider",
-    "IDP",
-    "microservices",
-    "express",
-    "nodejs",
-    "mongodb"
-  ],
-  "author": "Ahmed Elgaidi",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Hakona-Matata/identity-provider/issues"
-  },
-  "homepage": "https://github.com/Hakona-Matata/identity-provider#readme",
-  "dependencies": {
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
-    "joi": "^17.8.3",
-    "mongoose": "^6.10.0",
-    "nodemon": "^2.0.20"
-  }
+	"name": "identity-provider",
+	"version": "1.0.0",
+	"description": "My Identity Provider server | Anything related to identity handling ",
+	"main": "server.js",
+	"scripts": {
+		"prod": "NODE_ENV=production node src/server.js",
+		"dev": "NODE_ENV=development nodemon src/server.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Hakona-Matata/identity-provider.git"
+	},
+	"keywords": [
+		"rest-api",
+		"identity-provider",
+		"IDP",
+		"microservices",
+		"express",
+		"nodejs",
+		"mongodb"
+	],
+	"author": "Ahmed Elgaidi",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/Hakona-Matata/identity-provider/issues"
+	},
+	"homepage": "https://github.com/Hakona-Matata/identity-provider#readme",
+	"dependencies": {
+		"bcrypt": "^5.1.0",
+		"dotenv": "^16.0.3",
+		"express": "^4.18.2",
+		"joi": "^17.8.3",
+		"jsonwebtoken": "^9.0.0",
+		"mongoose": "^6.10.0",
+		"nodemailer": "^6.9.1",
+		"nodemon": "^2.0.20"
+	}
 }
