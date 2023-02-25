@@ -1,6 +1,10 @@
 const { success, failure } = require("../../Errors/responseHandler");
 const validate = require("./../../helpers/validate");
-const { all_sessions_GET_service } = require("./../Services/session.services");
+const session_validators = require("./../Validators/session.validators");
+const {
+	all_sessions_GET_service,
+	cancel_session_POST_service,
+} = require("./../Services/session.services");
 
 const all_sessions_GET_controller = async (req, res, next) => {
 	try {
@@ -13,4 +17,22 @@ const all_sessions_GET_controller = async (req, res, next) => {
 	}
 };
 
-module.exports = { all_sessions_GET_controller };
+const cancel_session_POST_controller = async (req, res, next) => {
+	try {
+		const validatedData = await validate(session_validators.cancel, req.body);
+
+		const result = await cancel_session_POST_service({
+			userId: req.userId,
+			sessionId: validatedData.sessionId,
+		});
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
+module.exports = {
+	all_sessions_GET_controller,
+	cancel_session_POST_controller,
+};

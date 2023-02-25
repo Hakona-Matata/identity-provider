@@ -39,7 +39,7 @@ module.exports = async (req, res, next) => {
 		// (5) Move forward
 		next();
 	} catch (error) {
-		error.name === "Error"
+		return error.name === "Error"
 			? res.status(401).json({
 					data: error.message,
 			  })

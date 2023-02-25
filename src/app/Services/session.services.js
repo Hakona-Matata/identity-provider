@@ -1,5 +1,6 @@
 const Session = require("./../Models/Session.model");
 const { verify_token } = require("./../../helpers/token");
+const CustomError = require("./../../Errors/CustomError");
 
 const all_sessions_GET_service = async (userId) => {
 	// (1) Get all user session from DB
@@ -21,7 +22,7 @@ const all_sessions_GET_service = async (userId) => {
 		})
 	);
 
-	// (3) Sort and return sessions (valid, invalid)
+	// (3) Sort and return sessions (valid, expired)
 	return {
 		count: sessions.length,
 		sessions: sessionWithStatus.sort(
@@ -30,4 +31,17 @@ const all_sessions_GET_service = async (userId) => {
 	};
 };
 
-module.exports = { all_sessions_GET_service };
+const cancel_session_POST_service = async ({ userId, sessionId }) => {
+	const done = await Session.findOneAndDelete({ userId, _id: sessionId });
+
+	if (!done) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, you can't cancel this session!"
+		);
+	}
+
+	return "Session is cancelled successfully";
+};
+
+module.exports = { all_sessions_GET_service, cancel_session_POST_service };

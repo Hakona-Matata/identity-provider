@@ -127,10 +127,14 @@ const login_POST_service = async (data) => {
 };
 
 const logout_POST_service = async ({ userId, accessToken }) => {
-	await Session.deleteOne({
+	const done = await Session.findOneAndDelete({
 		userId,
 		accessToken,
 	});
+
+	if (!done) {
+		throw new CustomError("UnAuthorized", "Sorry, logout failed!");
+	}
 
 	return "Logged out successfully";
 };

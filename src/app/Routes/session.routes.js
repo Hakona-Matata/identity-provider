@@ -10,6 +10,10 @@ const router = express.Router();
 
 router
 	.route("/sessions")
-	.get(protect, isVerified, session_controllers.all_sessions_GET_controller);
-
+	.get(protect, isVerified, session_controllers.all_sessions_GET_controller)
+	.post(
+		protect,
+		isVerified,
+		session_controllers.cancel_session_POST_controller
+	);
 module.exports = router;
