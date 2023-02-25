@@ -16,4 +16,7 @@ router
 		isVerified,
 		session_controllers.cancel_session_POST_controller
 	);
+
+router.route('/session/renew').post()
+
 module.exports = router;
