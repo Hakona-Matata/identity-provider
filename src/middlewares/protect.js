@@ -3,22 +3,19 @@ const jwt_errors = require("../Errors/jwt");
 
 module.exports = async (req, res, next) => {
 	try {
-		const { userId, accessToken, refreshToken } =
-			await check_access_refresh_tokens({ req, res });
-		console.log("=====================");
-		console.log({ userId, accessToken, refreshToken });
-		console.log("=====================");
+		const result = await check_access_refresh_tokens({ req, res });
+		console.log({ result });
+		if (req.body.refreshToken) {
+			req.userId = result.userId;
+			req.refreshToken = result.refreshToken;
+			next();
+		}
 
-		req.userId = userId;
-		req.accessToken = accessToken;
-		req.refreshToken = refreshToken;
-
+		req.userId = result.userId;
+		req.accessToken = result.accessToken;
 		next();
 	} catch (error) {
-		return error.name === "Error"
-			? res.status(401).json({
-					data: error.message,
-			  })
-			: jwt_errors({ res, error });
+		console.log(error);
+		return jwt_errors({ res, error });
 	}
 };

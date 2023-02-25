@@ -44,4 +44,12 @@ const cancel_session_POST_service = async ({ userId, sessionId }) => {
 	return "Session is cancelled successfully";
 };
 
-module.exports = { all_sessions_GET_service, cancel_session_POST_service };
+const renew_session_POST_service = ({ userId, refreshToken }) => {
+	return { userId, refreshToken };
+};
+
+module.exports = {
+	all_sessions_GET_service,
+	cancel_session_POST_service,
+	renew_session_POST_service,
+};

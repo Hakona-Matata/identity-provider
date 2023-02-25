@@ -131,11 +131,7 @@ const logout_POST_service = async ({ userId, accessToken }) => {
 		userId,
 		accessToken,
 	});
-
-	if (!done) {
-		throw new CustomError("UnAuthorized", "Sorry, logout failed!");
-	}
-
+	console.log({ done });
 	return "Logged out successfully";
 };
 

@@ -4,15 +4,15 @@ module.exports = ({ res, error }) => {
 		error.name === "JsonWebTokenError" &&
 		error.message === "invalid signature"
 	) {
-		return res
-			.status(401)
-			.json({ data: `Sorry, your ${error.token} is invalid!` });
+		return res.status(401).json({ data: `Sorry, your token is invalid!` });
 	}
 
 	// JWT Expiration
 	if (error.name === "TokenExpiredError" && error.message === "jwt expired") {
-		return res
-			.status(401)
-			.json({ data: `Sorry, your ${error.token} is expired!` });
+		return res.status(401).json({ data: `Sorry, your token is expired!` });
+	}
+
+	if (error.name === "JsonWebTokenError" && error.message === "jwt malformed") {
+		return res.status(401).json({ data: `Sorry, your token is malformed!` });
 	}
 };
