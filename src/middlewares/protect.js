@@ -5,7 +5,7 @@ const jwt_errors = require("../Errors/jwt");
 module.exports = async (req, res, next) => {
 	try {
 		// (1) Get access token
-		const { accessToken } = req.body;
+		const accessToken = req.headers["authorization"].split(" ")[1];
 
 		if (!accessToken) {
 			throw new Error("sorry, the access token is not found!");
