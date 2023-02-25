@@ -1,3 +1,5 @@
+const jwt_errors = require("./jwt");
+
 const success = ({ res, result }) => {
 	return res.status(200).json({ data: result });
 };
@@ -8,6 +10,9 @@ const failure = ({ res, error }) => {
 	console.log(error.name);
 	console.log("--------------");
 	console.log(error.details);
+
+	jwt_errors({ res, error });
+
 	// Validation errors
 	if (error.name === "ValidationError") {
 		return res
@@ -29,19 +34,6 @@ const failure = ({ res, error }) => {
 		return res.status(422).json({
 			data: "Sorry, the connection needs to be secure using SSL!",
 		});
-	}
-
-	// JWT Invalid signature
-	if (
-		error.name === "JsonWebTokenError" &&
-		error.message === "invalid signature"
-	) {
-		return res.status(401).json({ data: "Sorry, your token is invalid!" });
-	}
-
-	// JWT Expiration
-	if (error.name === "TokenExpiredError" && error.message === "jwt expired") {
-		return res.status(401).json({ data: "Sorry, your token is expired!" });
 	}
 
 	// Custom message || InvalidInput

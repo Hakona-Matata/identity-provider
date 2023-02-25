@@ -1,14 +1,14 @@
-const User = require("./../app/Models/User.model");
+const Session = require("../app/Models/Session.model");
 const { verify_token } = require("./../helpers/token");
+const jwt_errors = require("../Errors/jwt");
 
-//=========================================================
 module.exports = async (req, res, next) => {
 	try {
 		// (1) Get access token
 		const { accessToken } = req.body;
 
 		if (!accessToken) {
-			throw new Error("sorry, the accessToken is not found!");
+			throw new Error("sorry, the access token is not found!");
 		}
 
 		// (2) Verify access token
@@ -17,17 +17,16 @@ module.exports = async (req, res, next) => {
 			secret: process.env.ACCESS_TOKEN_SECRET,
 		});
 
-		// (3) Get user to check if this token is active or not (user may revoke it but, it still valid!)
-		const user = await User.findOne({ _id: decoded._id })
-			.select("session")
-			.lean();
+		// (3) Get token from DB
+		// * This is needed to prevent token usage after user revoking it (if there is still a window to be used!)
+		const token = await Session.findOne({
+			userId: decoded._id,
+			accessToken,
+		});
 
-		if (
-			user.session.filter(
-				(token) => token.label === "accessToken" && token.value == accessToken
-			).length == 0
-		) {
-			throw new Error("Sorry, This access token is revoked!");
+		// * This means that token is not expired! not manipulated! (only there is a window to use it!)
+		if (!token) {
+			throw new Error("Sorry, your account token may be revoked!");
 		}
 
 		// (4) Add some data to request object
@@ -40,11 +39,10 @@ module.exports = async (req, res, next) => {
 		// (5) Move forward
 		next();
 	} catch (error) {
-		return res.status(401).json({
-			data:
-				error.message === "invalid signature"
-					? "Sorry, your access token is invalid!"
-					: error.message,
-		});
+		error.name === "Error"
+			? res.status(401).json({
+					data: error.message,
+			  })
+			: jwt_errors({ res, error });
 	}
 };

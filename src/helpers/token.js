@@ -1,7 +1,5 @@
 const jwt = require("jsonwebtoken");
 
-//===========================================
-
 const generate_token = async ({ payload, secret, expiresIn }) => {
 	return await jwt.sign(payload, secret, { expiresIn });
 };

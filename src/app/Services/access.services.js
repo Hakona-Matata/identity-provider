@@ -3,6 +3,7 @@ const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const CustomError = require("./../../Errors/CustomError");
 
 const User = require("./../Models/User.model");
+const Session = require("../Models/Session.model");
 const sendEmail = require("./../../helpers/email");
 //======================================================
 
@@ -94,48 +95,44 @@ const login_POST_service = async (data) => {
 	if (!user.isVerified) {
 		throw new CustomError(
 			"UnAuthorized",
-			"Sorry, you need to verify your account first!"
+			"Sorry, your email address isn't verified yet!"
 		);
 	}
 
-	// (4) Create access token
+	// (4) Create access and refresh tokens
 	const accessToken = await generate_token({
 		payload: { _id: user._id },
 		secret: process.env.ACCESS_TOKEN_SECRET,
 		expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
 	});
 
-	// (5) save access token
-	await User.findOneAndUpdate(
-		{ _id: user._id },
-		{
-			$push: { session: { label: "accessToken", value: accessToken } },
-		}
-	);
+	const refreshToken = await generate_token({
+		payload: { _id: user._id },
+		secret: process.env.REFRESH_TOKEN_SECRET,
+		expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+	});
+
+	// (5) create and save session
+	await Session.create({
+		userId: user._id,
+		accessToken,
+		refreshToken,
+	});
 
 	// (6) Create and return access token
 	return {
 		accessToken,
+		refreshToken,
 	};
 };
 
 const logout_POST_service = async ({ userId, accessToken }) => {
-	// (1) Get user from DB
-	const user = await User.findOne({ _id: userId }).select("session").lean();
+	await Session.deleteOne({
+		userId,
+		accessToken,
+	});
 
-	// (2) Delete access token
-	await User.findOneAndUpdate(
-		{ _id: userId },
-		{
-			$set: {
-				session: user.session.filter((token) => {
-					return token.label === "accessToken" && token.value !== accessToken;
-				}),
-			},
-		}
-	);
-
-	return "Logged out successfully.";
+	return "Logged out successfully";
 };
 
 module.exports = {
