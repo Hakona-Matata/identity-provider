@@ -39,7 +39,7 @@ const renew_session_POST_controller = async (req, res, next) => {
 
 		const result = await renew_session_POST_service({
 			userId: req.userId,
-			refreshToken: validatedData.refreshToken,
+			givenRefreshToken: validatedData.refreshToken,
 		});
 
 		return success({ res, result });

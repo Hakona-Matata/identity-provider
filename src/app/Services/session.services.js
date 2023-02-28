@@ -1,5 +1,8 @@
 const Session = require("./../Models/Session.model");
-const { verify_token } = require("./../../helpers/token");
+const {
+	verify_token,
+	generate_access_refresh_token,
+} = require("./../../helpers/token");
 const CustomError = require("./../../Errors/CustomError");
 
 const all_sessions_GET_service = async (userId) => {
@@ -44,8 +47,32 @@ const cancel_session_POST_service = async ({ userId, sessionId }) => {
 	return "Session is cancelled successfully";
 };
 
-const renew_session_POST_service = ({ userId, refreshToken }) => {
-	return { userId, refreshToken };
+const renew_session_POST_service = async ({ userId, givenRefreshToken }) => {
+	// (1) Prepare tokens payload!
+	const payload = {
+		_id: userId,
+	};
+
+	// (2) Generate access & refresh tokens!
+	const { accessToken, refreshToken } = await generate_access_refresh_token({
+		accessTokenPayload: payload,
+		refreshTokenPayload: payload,
+	});
+
+	// (3) Delete old tokens from DB
+	const deletedSession = await Session.findOneAndDelete({
+		refreshToken: givenRefreshToken,
+	});
+
+	// (4) Save new tokens into DB
+	const result = await Session.create({
+		userId: deletedSession.userId,
+		accessToken,
+		refreshToken,
+	});
+
+	// (5) Return user, new tokens!
+	return { accessToken, refreshToken };
 };
 
 module.exports = {
