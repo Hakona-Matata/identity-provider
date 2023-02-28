@@ -1,9 +1,9 @@
 const { success, failure } = require("./../../Errors/responseHandler");
-const jwt_errors = require("./../../Errors/jwt");
 const {
 	deactivateAccount_PUT_service,
 	activateAccount_PUT_service,
 	confirmActivation_GET_service,
+	deleteAccount_DELETE_service,
 } = require("./../Services/account.services");
 
 const validate = require("./../../helpers/validate");
@@ -51,8 +51,19 @@ const confirmActivation_GET_controller = async (req, res, next) => {
 	}
 };
 
+const deleteAccount_DELETE_controller = async (req, res, next) => {
+	try {
+		const result = await deleteAccount_DELETE_service({ userId: req.userId });
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, result });
+	}
+};
+
 module.exports = {
 	deactivateAccount_PUT_controller,
 	activateAccount_PUT_controller,
 	confirmActivation_GET_controller,
+	deleteAccount_DELETE_controller,
 };

@@ -109,8 +109,24 @@ const confirmActivation_GET_service = async ({ activationToken }) => {
 	return "Account is activated successfully";
 };
 
+const deleteAccount_DELETE_service = async ({ userId }) => {
+	const done = await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isDeleted: true, isDeletedAt: new Date() },
+		}
+	).select("_id");
+
+	if (!done) {
+		throw new Error("Sorry, Account deletion failed");
+	}
+
+	return "Account deleted successfully!\n(It Will be deleted permenantly after 30 days)";
+};
+
 module.exports = {
 	deactivateAccount_PUT_service,
 	activateAccount_PUT_service,
 	confirmActivation_GET_service,
+	deleteAccount_DELETE_service,
 };

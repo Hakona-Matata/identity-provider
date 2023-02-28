@@ -23,4 +23,8 @@ router
 	.route("/activate/:activationToken")
 	.get(account_controllers.confirmActivation_GET_controller);
 
+router
+	.route("/delete")
+	.delete(protect, isVerified, account_controllers.deleteAccount_DELETE_controller);
+
 module.exports = router;

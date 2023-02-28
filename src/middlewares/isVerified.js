@@ -5,18 +5,22 @@ const User = require("./../app/Models/User.model");
 // * This middleware needs to be after "protect" middleware to get userId from request!!
 module.exports = async (req, res, next) => {
 	try {
-		// console.log("Hi, from isverified");
+		console.log("Hi, from isverified");
 
 		const user = await User.findOne({ _id: req.userId })
-			.select("isVerified isActive")
+			.select("isVerified isActive isDeleted")
 			.lean();
 
-		if (!user || !user.isVerified) {
-			throw new Error("Sorry, You need to verify your email address first!");
+		if (!user || user.isDeleted) {
+			throw new Error("Sorry, your account is deleted!");
 		}
 
 		if (!user || !user.isActive) {
 			throw new Error("Sorry, you need to activate your account first!");
+		}
+
+		if (!user || !user.isVerified) {
+			throw new Error("Sorry, You need to verify your email address first!");
 		}
 
 		req.isActive = user.isActive;
