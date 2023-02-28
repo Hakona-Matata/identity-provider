@@ -15,6 +15,8 @@ router
 		account_controllers.deactivateAccount_PUT_controller
 	);
 
-    // router.route('/activate').put()
+router
+	.route("/activate")
+	.put(account_controllers.activateAccount_PUT_controller);
 
 module.exports = router;

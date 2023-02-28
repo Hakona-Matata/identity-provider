@@ -24,6 +24,7 @@ const UserSchema = new Schema(
 			default: true,
 		},
 		activeStatusChangedAt: Date,
+		activationToken: String,
 	},
 	{
 		timestamps: true,
