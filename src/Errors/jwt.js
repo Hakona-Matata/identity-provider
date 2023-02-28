@@ -12,6 +12,7 @@ module.exports = ({ res, error }) => {
 		return res.status(401).json({ data: `Sorry, your token is expired!` });
 	}
 
+	// JWT Malformation
 	if (error.name === "JsonWebTokenError" && error.message === "jwt malformed") {
 		return res.status(401).json({ data: `Sorry, your token is malformed!` });
 	}

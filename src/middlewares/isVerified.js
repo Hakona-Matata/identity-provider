@@ -5,7 +5,7 @@ const User = require("./../app/Models/User.model");
 // * This middleware needs to be after "protect" middleware to get userId from request!!
 module.exports = async (req, res, next) => {
 	try {
-		console.log("Hi, from isverified");
+		// console.log("Hi, from isverified");
 
 		const user = await User.findOne({ _id: req.userId })
 			.select("isVerified isActive")

@@ -9,7 +9,7 @@ const jwt_errors = require("../Errors/jwt");
 
 module.exports = async (req, res, next) => {
 	try {
-		console.log("Hi, from protect");
+		// console.log("Hi, from protect");
 		const result = await check_access_refresh_tokens({ req, res });
 
 		if (req.body.refreshToken) {
@@ -22,7 +22,7 @@ module.exports = async (req, res, next) => {
 		req.accessToken = result.accessToken;
 		return next();
 	} catch (error) {
-		console.log(error);
+		// console.log(error);
 		return jwt_errors({ res, error });
 	}
 };

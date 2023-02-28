@@ -11,4 +11,13 @@ module.exports = {
 			"any.required": `"email" field is required!`,
 		}),
 	}),
+	confirm: Joi.object({
+		activationToken: Joi.string().trim().min(3).max(200).required().messages({
+			"string.base": `"activationToken" param has to be of type string!`,
+			"string.empty": `"activationToken" param can't be empty!`,
+			"string.min": `"activationToken" param can't be true!`,
+			"string.max": `"activationToken" param can't be true!`,
+			"any.required": `"activationToken" param is required!`,
+		}),
+	}),
 };

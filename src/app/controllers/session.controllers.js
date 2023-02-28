@@ -13,7 +13,6 @@ const all_sessions_GET_controller = async (req, res, next) => {
 
 		return success({ res, result });
 	} catch (error) {
-		console.log(error);
 		return failure({ res, error });
 	}
 };

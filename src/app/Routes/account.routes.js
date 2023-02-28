@@ -19,4 +19,8 @@ router
 	.route("/activate")
 	.put(account_controllers.activateAccount_PUT_controller);
 
+router
+	.route("/activate/:activationToken")
+	.get(account_controllers.confirmActivation_GET_controller);
+
 module.exports = router;

@@ -1,17 +1,19 @@
 const { success, failure } = require("./../../Errors/responseHandler");
+const jwt_errors = require("./../../Errors/jwt");
 const {
 	deactivateAccount_PUT_service,
 	activateAccount_PUT_service,
+	confirmActivation_GET_service,
 } = require("./../Services/account.services");
 
 const validate = require("./../../helpers/validate");
 
 const account_validators = require("../Validators/account.validators.js");
+const accountValidators = require("../Validators/account.validators.js");
 
 const deactivateAccount_PUT_controller = async (req, res, next) => {
 	try {
 		const result = await deactivateAccount_PUT_service({
-			isActive: req.isActive,
 			userId: req.userId,
 		});
 
@@ -29,6 +31,20 @@ const activateAccount_PUT_controller = async (req, res, next) => {
 			email: validatedData.email,
 		});
 
+		return success({ res, result, res });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
+const confirmActivation_GET_controller = async (req, res, next) => {
+	try {
+		const validatedData = await validate(accountValidators.confirm, req.params);
+
+		const result = await confirmActivation_GET_service({
+			activationToken: validatedData.activationToken,
+		});
+
 		return success({ res, result });
 	} catch (error) {
 		return failure({ res, error });
@@ -38,4 +54,5 @@ const activateAccount_PUT_controller = async (req, res, next) => {
 module.exports = {
 	deactivateAccount_PUT_controller,
 	activateAccount_PUT_controller,
+	confirmActivation_GET_controller,
 };

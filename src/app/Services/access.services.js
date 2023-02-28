@@ -132,7 +132,7 @@ const logout_POST_service = async ({ userId, accessToken }) => {
 		userId,
 		accessToken,
 	});
-	console.log({ done });
+
 	return "Logged out successfully";
 };
 

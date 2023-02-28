@@ -5,13 +5,11 @@ const success = ({ res, result }) => {
 };
 
 const failure = ({ res, error }) => {
-	console.log({ error });
-	console.log("--------------");
-	console.log(error.name);
-	console.log("--------------");
-	console.log(error.details);
-
-	jwt_errors({ res, error });
+	// console.log({ error });
+	// console.log("--------------");
+	// console.log(error.name);
+	// console.log("--------------");
+	// console.log(error.details);
 
 	// Validation errors
 	if (error.name === "ValidationError") {
@@ -50,7 +48,14 @@ const failure = ({ res, error }) => {
 		});
 	}
 
-	return res.status(500).json({ data: error.message });
+	if (error.name.toLowerCase().includes("token")) {
+		return jwt_errors({ res, error });
+	}
+
+	console.log("Unhandledd error!!!!!!!!!!!!!!!");
+	console.log("--------------------------------------------");
+	console.log({ error });
+	console.log("--------------------------------------------");
 };
 
 module.exports = { success, failure };
