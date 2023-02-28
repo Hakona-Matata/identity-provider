@@ -5,7 +5,12 @@ const {
 
 const deactivateAccount_PUT_controller = async (req, res, next) => {
 	try {
-		return await deactivateAccount_PUT_service(req.userId);
+		const result = await deactivateAccount_PUT_service({
+			isActive: req.isActive,
+			userId: req.userId,
+		});
+
+		return success({ res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}

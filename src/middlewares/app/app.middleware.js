@@ -1,6 +1,6 @@
 const access_routes = require("../../app/Routes/access.routes");
 const session_routes = require("../../app/Routes/session.routes");
-const account_routes = require("../../app/Routes/access.routes");
+const account_routes = require("../../app/Routes/account.routes");
 
 const protect = require("../../middlewares/protect");
 const isVerified = require("../../middlewares/isVerified");
