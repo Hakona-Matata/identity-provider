@@ -1,5 +1,6 @@
 const { verify_token } = require("./token");
 const Session = require("./../app/Models/Session.model");
+const User = require("./../app/Models/User.model");
 
 module.exports = async = async ({ req, res }) => {
 	/* 
@@ -47,13 +48,13 @@ const check_accessToken = async ({ token, secret, res }) => {
 		token,
 		secret,
 	});
-	console.log({ decoded });
+
 	// (3) Get session from DB
 	const session = await Session.findOne({
 		userId: decoded._id,
 		accessToken: token,
 	});
-	console.log({ session });
+
 	// * This means that access token is not expired! not manipulated! (only there is a window to use it!)
 	if (!session) {
 		return res

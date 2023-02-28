@@ -13,7 +13,6 @@ const all_sessions_GET_controller = async (req, res, next) => {
 
 		return success({ res, result });
 	} catch (error) {
-		console.log(error);
 		return failure({ res, error });
 	}
 };
@@ -39,7 +38,7 @@ const renew_session_POST_controller = async (req, res, next) => {
 
 		const result = await renew_session_POST_service({
 			userId: req.userId,
-			refreshToken: validatedData.refreshToken,
+			givenRefreshToken: validatedData.refreshToken,
 		});
 
 		return success({ res, result });

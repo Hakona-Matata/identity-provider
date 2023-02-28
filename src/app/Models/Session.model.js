@@ -11,7 +11,7 @@ const SessionSchema = new Schema(
 			required: true,
 		},
 		accessToken: String,
-		refreshToken: String,
+		refreshToken: { type: String, index: true },
 	},
 	{
 		versionKey: false,

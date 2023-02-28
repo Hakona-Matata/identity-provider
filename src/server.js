@@ -5,7 +5,7 @@ const express = require("express");
 const connect_DB = require("./utils/db.connection.js");
 
 // const configure_middlewares = require("./app.js");
-const access_middlewares = require("./middlewares/app/access.middleware");
+const app_middlewares = require("./middlewares/app/app.middleware");
 const thirdParty_middlewares = require("./middlewares/app/thirdParth.middlewares");
 
 //==================================================
@@ -18,4 +18,4 @@ connect_DB(app);
 thirdParty_middlewares({ app, express });
 
 // (3) Let's apply our own application middlwars!
-access_middlewares(app);
+app_middlewares(app);

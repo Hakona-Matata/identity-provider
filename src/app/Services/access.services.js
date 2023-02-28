@@ -1,4 +1,8 @@
-const { generate_token, verify_token } = require("./../../helpers/token");
+const {
+	generate_token,
+	verify_token,
+	generate_access_refresh_token,
+} = require("./../../helpers/token");
 const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const CustomError = require("./../../Errors/CustomError");
 
@@ -100,16 +104,13 @@ const login_POST_service = async (data) => {
 	}
 
 	// (4) Create access and refresh tokens
-	const accessToken = await generate_token({
-		payload: { _id: user._id },
-		secret: process.env.ACCESS_TOKEN_SECRET,
-		expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
-	});
+	const tokenPayload = {
+		_id: user._id,
+	};
 
-	const refreshToken = await generate_token({
-		payload: { _id: user._id },
-		secret: process.env.REFRESH_TOKEN_SECRET,
-		expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+	const { accessToken, refreshToken } = await generate_access_refresh_token({
+		accessTokenPayload: tokenPayload,
+		refreshTokenPayload: tokenPayload,
 	});
 
 	// (5) create and save session
@@ -131,7 +132,7 @@ const logout_POST_service = async ({ userId, accessToken }) => {
 		userId,
 		accessToken,
 	});
-	console.log({ done });
+
 	return "Logged out successfully";
 };
 

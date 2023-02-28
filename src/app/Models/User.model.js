@@ -1,3 +1,4 @@
+const { bool } = require("joi");
 const mongoose = require("mongoose");
 
 //==============================================================
@@ -19,6 +20,17 @@ const UserSchema = new Schema(
 		verificationToken: String,
 		isVerified: { type: Boolean, default: false },
 		isVerifiedAt: Date,
+		isActive: {
+			type: Boolean,
+			default: true,
+		},
+		activeStatusChangedAt: Date,
+		activationToken: String,
+		isDeleted: {
+			type: Boolean,
+			default: false,
+		},
+		isDeletedAt: Date,
 	},
 	{
 		timestamps: true,
