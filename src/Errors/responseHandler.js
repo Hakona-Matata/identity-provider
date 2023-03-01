@@ -48,6 +48,11 @@ const failure = ({ res, error }) => {
 		});
 	}
 
+	if (error.name === "CustomError" && error.code === "ProcessFailed") {
+		return res.status(500).json({ data: error.message });
+	}
+
+	// JWT Errors
 	if (error.name.toLowerCase().includes("token")) {
 		return jwt_errors({ res, error });
 	}

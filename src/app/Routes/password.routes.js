@@ -10,4 +10,8 @@ router
 	.route("/change")
 	.put(protect, isVerified, password_controllers.changePassword_PUT_controller);
 
+router
+	.route("/forget")
+	.post(password_controllers.forgetPassword_POST_controller);
+
 module.exports = router;
