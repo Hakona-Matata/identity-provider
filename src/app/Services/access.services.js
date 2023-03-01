@@ -82,7 +82,7 @@ const login_POST_service = async (data) => {
 		.lean();
 
 	if (!user) {
-		throw new CustomError("InvalidError", "Email or password is incorrect!");
+		throw new CustomError("InvalidInput", "Email or password is incorrect!");
 	}
 
 	// (2) Check password
@@ -92,7 +92,7 @@ const login_POST_service = async (data) => {
 	});
 
 	if (!isPasswordCorrect) {
-		throw new CustomError("InvalidError", "Email or password is incorrect!");
+		throw new CustomError("InvalidInput", "Email or password is incorrect!");
 	}
 
 	// (3) Check email verification status

@@ -1,6 +1,5 @@
 const { verify_token } = require("./token");
 const Session = require("./../app/Models/Session.model");
-const User = require("./../app/Models/User.model");
 
 module.exports = async = async ({ req, res }) => {
 	/* 

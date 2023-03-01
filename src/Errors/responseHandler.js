@@ -56,6 +56,8 @@ const failure = ({ res, error }) => {
 	console.log("--------------------------------------------");
 	console.log({ error });
 	console.log("--------------------------------------------");
+
+	return res.status(500).json({ data: "Something went wrong" });
 };
 
 module.exports = { success, failure };
