@@ -14,4 +14,6 @@ router
 	.route("/forget")
 	.post(password_controllers.forgetPassword_POST_controller);
 
+router.route("/reset").put(password_controllers.resetPassword_PUT_controller);
+
 module.exports = router;

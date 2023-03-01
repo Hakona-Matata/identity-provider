@@ -32,7 +32,8 @@ const UserSchema = new Schema(
 			default: false,
 		},
 		isDeletedAt: Date,
-		forgetPasswordToken: String
+		resetToken: String,
+		resetAt: Date,
 	},
 	{
 		timestamps: true,

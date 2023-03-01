@@ -33,55 +33,100 @@ const changePassword_PUT_service = async (data) => {
 };
 
 const forgetPassword_POST_service = async (userEmail) => {
-	const message = `Please, check your mailbox, the link is only valid for ${process.env.FORGET_PASSWORD_EXPIRES_IN}!`;
+	const message = `Please, check your mailbox, the link is only valid for ${process.env.RESET_PASSWORD_EXPIRES_IN}!`;
 
 	const user = await User.findOne({ email: userEmail })
-		.select("_id forgetPasswordToken")
+		.select("_id resetToken")
 		.lean();
 
 	if (!user) {
 		return message;
 	}
 
-	if (user && user.forgetPasswordToken) {
+	if (user && user.resetToken) {
 		const decoded = await verify_token({
-			token: user.forgetPasswordToken,
-			secret: process.env.FORGET_PASSWORD_SECRET,
+			token: user.resetToken,
+			secret: process.env.RESET_PASSWORD_SECRET,
 		});
 
 		if (decoded) {
 			throw new CustomError(
 				"InvalidInput",
-				"Sorry, your mailbox is already have a valid link!"
+				"Sorry, your mailbox already have a valid link!"
 			);
 		}
 	}
 
-	const forgetPasswordToken = await generate_token({
+	const resetToken = await generate_token({
 		payload: { _id: user._id },
-		secret: process.env.FORGET_PASSWORD_SECRET,
-		expiresIn: process.env.FORGET_PASSWORD_EXPIRES_IN,
+		secret: process.env.RESET_PASSWORD_SECRET,
+		expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN,
 	});
 
-	const forgetpasswordLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/password/forget/${forgetPasswordToken}`;
+	const resetLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/password/reset/${resetToken}`;
 
 	await sendEmail({
 		from: "Hakona Matata company",
 		to: userEmail,
-		subject: "Email Activation",
-		text: `Hello, ${user.email}\nPlease click the link to activate your email (It's only valid for ${process.env.FORGET_PASSWORD_EXPIRES_IN})\n${forgetpasswordLink}\nthanks.`,
+		subject: "Forget Password",
+		text: `Hello, ${user.email}\nPlease click the link to activate your email (It's only valid for ${process.env.RESET_PASSWORD_EXPIRES_IN})\n${resetLink}\nthanks.`,
 	});
 
 	const done = await User.findOneAndUpdate(
 		{ _id: user._id },
-		{ $set: { forgetPasswordToken } }
+		{ $set: { resetToken } }
 	).select("_id");
 
-	if (done) {
-		throw new CustomError("ProcessFailed", "Sorry, Reset password failed");
+	if (!done) {
+		throw new CustomError("ProcessFailed", "Sorry, Forget password failed");
 	}
 
 	return message;
 };
 
-module.exports = { changePassword_PUT_service, forgetPassword_POST_service };
+const resetToken_PUT_service = async (data) => {
+	// (1) Verify given token
+	const decoded = await verify_token({
+		token: data.resetToken,
+		secret: process.env.RESET_PASSWORD_SECRET,
+	});
+
+	// (2) Get user, and check if he already asked for password reset!
+	const user = await User.findOne({ _id: decoded._id })
+		.select("resetToken")
+		.lean();
+
+	if (!user || !user.resetToken) {
+		throw new CustomError(
+			"InvalidInput",
+			"Sorry, you already reset your password!"
+		);
+	}
+
+	// (3) Create new password
+	const password = await generate_hash(data.password);
+
+	// (4) Delete all sessions found created by that forgetton password
+	await Session.deleteMany({ userId: user._id });
+
+	// (5) Update user document
+	const done = await User.findOneAndUpdate(
+		{ _id: decoded._id },
+		{
+			$set: { password, resetAt: new Date() },
+			$unset: { resetToken: 1 },
+		}
+	).select("_id");
+
+	if (!done) {
+		throw new CustomError("ProcessFailed", "Sorry, Reset password failed");
+	}
+
+	return "Password reset was successful";
+};
+
+module.exports = {
+	changePassword_PUT_service,
+	forgetPassword_POST_service,
+	resetToken_PUT_service,
+};
