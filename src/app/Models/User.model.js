@@ -17,6 +17,7 @@ const UserSchema = new Schema(
 			index: true,
 		},
 		password: String,
+		passwordChangedAt: Date,
 		verificationToken: String,
 		isVerified: { type: Boolean, default: false },
 		isVerifiedAt: Date,
@@ -31,6 +32,8 @@ const UserSchema = new Schema(
 			default: false,
 		},
 		isDeletedAt: Date,
+		resetToken: String,
+		resetAt: Date,
 	},
 	{
 		timestamps: true,

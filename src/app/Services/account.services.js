@@ -26,7 +26,10 @@ const activateAccount_PUT_service = async ({ email }) => {
 	}
 
 	if (user.isActive) {
-		throw new Error("Sorry, your account is already active!");
+		throw new CustomError(
+			"InvalidInput",
+			"Sorry, your account is already active!"
+		);
 	}
 
 	/* 
@@ -41,7 +44,10 @@ const activateAccount_PUT_service = async ({ email }) => {
 		});
 
 		if (decoded) {
-			throw new Error("Sorry, you still have a valid link in your mailbox!");
+			throw new CustomError(
+				"InvalidInput",
+				"Sorry, you still have a valid link in your mailbox!"
+			);
 		}
 	}
 
