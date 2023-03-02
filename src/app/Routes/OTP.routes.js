@@ -10,4 +10,8 @@ router
 	.route("/enable")
 	.get(protect, isVerified, OTP_controllers.enableOTP_GET_controller);
 
+router
+	.route("/confirm")
+	.post(protect, isVerified, OTP_controllers.confirmOTP_POST_controller);
+
 module.exports = router;
