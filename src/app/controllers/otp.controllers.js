@@ -5,7 +5,11 @@ const { enableOTP_GET_service } = require("./../Services/OTP.services");
 
 const enableOTP_GET_controller = async (req, res, next) => {
 	try {
-		const result = await enableOTP_GET_service(req.userId);
+		const result = await enableOTP_GET_service({
+			userId: req.userId,
+			email: req.email,
+			isOTPEnabled: req.isOTPEnabled,
+		});
 
 		return success({ res, result });
 	} catch (error) {

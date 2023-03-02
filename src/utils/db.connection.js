@@ -6,7 +6,7 @@ const connect_DB = (app) => {
 
 		mongoose
 			.connect(process.env.MONGO_URL)
-			.then(() => {
+			.then(async (db) => {
 				console.log(
 					`server is running on ${process.env.BASE_URL}:${process.env.PORT} in "${process.env.NODE_ENV}" environment`
 				);

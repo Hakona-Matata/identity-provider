@@ -32,6 +32,9 @@ const UserSchema = new Schema(
 		isDeletedAt: Date,
 		resetToken: String,
 		resetAt: Date,
+
+		isOTPEnabled: { type: Boolean, default: false },
+		OTPEnabledAt: Date,
 	},
 	{
 		timestamps: true,

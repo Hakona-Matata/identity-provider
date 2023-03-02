@@ -8,6 +8,7 @@ const SessionSchema = new Schema(
 		userId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "User",
+			index: true,
 			required: true,
 		},
 		accessToken: String,
