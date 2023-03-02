@@ -52,6 +52,10 @@ const failure = ({ res, error }) => {
 		return res.status(500).json({ data: error.message });
 	}
 
+	if (error.name === "CustomError" && error.code === "AlreadyDone") {
+		return res.status(400).json({ data: error.message });
+	}
+
 	// JWT Errors
 	if (error.name.toLowerCase().includes("token")) {
 		return jwt_errors({ res, error });

@@ -9,7 +9,7 @@ module.exports = async (req, res, next) => {
 		console.log("Hi, from isverified");
 		const user = await User.findOne({ _id: req.userId })
 			.select(
-				`isVerified isActive isDeleted ${
+				`email isVerified isActive isDeleted isOTPEnabled ${
 					req.originalUrl === "/auth/password/change" ? "password" : ""
 				}` // just to decrease on db call!
 			)
@@ -33,8 +33,10 @@ module.exports = async (req, res, next) => {
 			});
 		}
 
+		req.email = user.email;
 		req.isActive = user.isActive;
 		req.isVerified = user.isVerified;
+		req.isOTPEnabled = user.isOTPEnabled;
 		req.password = user.password || null;
 		return next();
 	} catch (error) {
