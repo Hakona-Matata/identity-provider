@@ -76,4 +76,32 @@ const confirmOTP_POST_service = async ({ userId, givenOTP }) => {
 	return "OTP is enabled successfully";
 };
 
-module.exports = { enableOTP_GET_service, confirmOTP_POST_service };
+const DisableOTP_DELETE_service = async ({ userId }) => {
+	const user = await User.findOne({ _id: userId })
+		.select("isOTPEnabled")
+		.lean();
+
+	if (!user || !user.isOTPEnabled) {
+		throw new CustomError("AlreadyDone", "Sorry, you already disabled OTP!");
+	}
+
+	const done = await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isOTPEnabled: false },
+			$unset: { OTPEnabledAt: 1 },
+		}
+	);
+
+	if (!done) {
+		throw new CustomError("ProcessFailed", "Sorry, Disable OTP failed");
+	}
+
+	return "You disabled OTP successfully";
+};
+
+module.exports = {
+	enableOTP_GET_service,
+	confirmOTP_POST_service,
+	DisableOTP_DELETE_service,
+};

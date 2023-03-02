@@ -14,4 +14,8 @@ router
 	.route("/confirm")
 	.post(protect, isVerified, OTP_controllers.confirmOTP_POST_controller);
 
+router
+	.route("/disable")
+	.delete(protect, isVerified, OTP_controllers.DisableOTP_DELETE_controller);
+
 module.exports = router;
