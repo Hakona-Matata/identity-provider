@@ -5,6 +5,8 @@ const {
 	enableOTP_GET_service,
 	confirmOTP_POST_service,
 	DisableOTP_DELETE_service,
+	sendOTP_POST_service,
+	verifyOTP_POST_service,
 } = require("./../Services/OTP.services");
 
 const enableOTP_GET_controller = async (req, res, next) => {
@@ -46,8 +48,35 @@ const DisableOTP_DELETE_controller = async (req, res, next) => {
 	}
 };
 
+const sendOTP_POST_controller = async (req, res, next) => {
+	try {
+		const validatedData = await validate(OTP_validators.sendOTP, req.body);
+
+		const result = await sendOTP_POST_service({
+			userId: validatedData.userId,
+			email: validatedData.email,
+		});
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
+const verifyOTP_POST_controller = async (req, res, next) => {
+	try {
+		// const result = await verifyOTP_POST_service(validatedData.userId);
+		//
+		// return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
 module.exports = {
 	enableOTP_GET_controller,
 	confirmOTP_POST_controller,
 	DisableOTP_DELETE_controller,
+	sendOTP_POST_controller,
+	verifyOTP_POST_controller,
 };

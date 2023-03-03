@@ -9,7 +9,6 @@ const CustomError = require("./../../Errors/CustomError");
 const User = require("./../Models/User.model");
 const Session = require("../Models/Session.model");
 const sendEmail = require("./../../helpers/email");
-//======================================================
 
 const signUp_POST_service = async (data) => {
 	// (1) Create user from given payload

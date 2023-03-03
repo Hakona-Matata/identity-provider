@@ -5,11 +5,11 @@ const success = ({ res, result }) => {
 };
 
 const failure = ({ res, error }) => {
-	// console.log({ error });
-	// console.log("--------------");
-	// console.log(error.name);
-	// console.log("--------------");
-	// console.log(error.details);
+	console.log({ error });
+	console.log("--------------");
+	console.log(error.name);
+	console.log("--------------");
+	console.log(error.details);
 
 	// Validation errors
 	if (error.name === "ValidationError") {

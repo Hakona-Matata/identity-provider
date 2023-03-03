@@ -6,7 +6,6 @@ const sendEmail = require("./../../helpers/email");
 const CustomError = require("./../../Errors/CustomError");
 
 const enableOTP_GET_service = async ({ userId, email, isOTPEnabled }) => {
-	// TODO: make this check in the middleware!
 	if (isOTPEnabled) {
 		throw new CustomError("AlreadyDone", "Sorry, you already enabled OTP!");
 	}
@@ -100,8 +99,50 @@ const DisableOTP_DELETE_service = async ({ userId }) => {
 	return "You disabled OTP successfully";
 };
 
+const sendOTP_POST_service = async ({ userId, email }) => {
+	// (1) Check if we already assigned him one!
+	const otp = await OTP.findOne({ userId }).select("_id").lean();
+
+	if (otp) {
+		throw new CustomError(
+			"AlreadyDone",
+			"Sorry, we already sent you OTP and it's still valid!"
+		);
+	}
+
+	// (2) Generate OTP | 6 random numbers
+	const plainTextOTP = generate_randomNumber({ length: 6 });
+
+	// (3) Hash OTP!
+	const hashedOTP = await generate_hash(`${plainTextOTP}`);
+
+	// (4) Send OTP to user mailbox
+	await sendEmail({
+		from: "Hakona Matata company",
+		to: email,
+		subject: "Identity check (OTP)",
+		text: `Hello, ${email}\nThis OTP code "${plainTextOTP}" is only valid for ${
+			process.env.OTP_EXPIRES_IN_SECONDS / 60
+		} minutes\nThanks`,
+	});
+
+	// (5) Save it into DB
+	await OTP.create({ userId, otp: hashedOTP });
+
+	return "Please, check your mailbox for the OTP code";
+};
+
+const verifyOTP_POST_service = async (userId) => {
+	return userId;
+};
+
 module.exports = {
+	// During setup
 	enableOTP_GET_service,
 	confirmOTP_POST_service,
 	DisableOTP_DELETE_service,
+
+	// During login process
+	sendOTP_POST_service,
+	verifyOTP_POST_service,
 };
