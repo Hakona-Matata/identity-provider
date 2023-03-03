@@ -15,6 +15,7 @@ const OTPSchema = new Schema(
 			type: Date,
 			default: Date.now,
 		},
+		count: { type: Number, default: 0 }, // number of wrong tries
 	},
 	{
 		versionKey: false,

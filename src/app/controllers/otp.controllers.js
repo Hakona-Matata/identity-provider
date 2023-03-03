@@ -65,9 +65,14 @@ const sendOTP_POST_controller = async (req, res, next) => {
 
 const verifyOTP_POST_controller = async (req, res, next) => {
 	try {
-		// const result = await verifyOTP_POST_service(validatedData.userId);
-		//
-		// return success({ res, result });
+		const validatedData = await validate(OTP_validators.verifyOTP, req.body);
+
+		const result = await verifyOTP_POST_service({
+			userId: validatedData.userId,
+			givenOTP: validatedData.otp,
+		});
+
+		return success({ res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}

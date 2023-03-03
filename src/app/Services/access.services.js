@@ -1,7 +1,7 @@
 const {
 	generate_token,
 	verify_token,
-	generate_access_refresh_token,
+	give_access,
 } = require("./../../helpers/token");
 const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const CustomError = require("./../../Errors/CustomError");
@@ -102,28 +102,12 @@ const login_POST_service = async (data) => {
 		);
 	}
 
-	// (4) Create access and refresh tokens
-	const tokenPayload = {
-		_id: user._id,
-	};
+	// TODO:  I think i should check here for all the security layers enalbed on this user account
+	// TODO: and return them back, so the user can choose among them and finally give him access!
 
-	const { accessToken, refreshToken } = await generate_access_refresh_token({
-		accessTokenPayload: tokenPayload,
-		refreshTokenPayload: tokenPayload,
-	});
-
-	// (5) create and save session
-	await Session.create({
-		userId: user._id,
-		accessToken,
-		refreshToken,
-	});
-
-	// (6) Create and return access token
-	return {
-		accessToken,
-		refreshToken,
-	};
+	// TODO: So, this step would be deleted!
+	// This should return access and refresh tokens
+	return await give_access({ userId: user._id });
 };
 
 const logout_POST_service = async ({ userId, accessToken }) => {
@@ -131,6 +115,10 @@ const logout_POST_service = async ({ userId, accessToken }) => {
 		userId,
 		accessToken,
 	});
+
+	if (!done) {
+		throw new CustomError("ProcessFailed", "Sorry, the logout attempt failed");
+	}
 
 	return "Logged out successfully";
 };

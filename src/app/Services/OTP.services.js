@@ -4,6 +4,7 @@ const { generate_randomNumber } = require("./../../helpers/randomNumber");
 const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const sendEmail = require("./../../helpers/email");
 const CustomError = require("./../../Errors/CustomError");
+const { give_access } = require("./../../helpers/token");
 
 const enableOTP_GET_service = async ({ userId, email, isOTPEnabled }) => {
 	if (isOTPEnabled) {
@@ -132,8 +133,45 @@ const sendOTP_POST_service = async ({ userId, email }) => {
 	return "Please, check your mailbox for the OTP code";
 };
 
-const verifyOTP_POST_service = async (userId) => {
-	return userId;
+const verifyOTP_POST_service = async ({ userId, givenOTP }) => {
+	// (1) Get OTP form DB | check if I really assined him an OTP!
+	const otp = await OTP.findOne({ userId }).lean();
+
+	if (!otp) {
+		throw new CustomError("UnAuthorized", "Sorry, the OTP may be expired!");
+	}
+
+	// (2) Check for how many wrong tries he doing!
+	if (otp.count >= 3) {
+		await OTP.findOneAndDelete({ _id: otp._id });
+
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, You have reached your maximum wrong tries!"
+		);
+	}
+
+	// (3) Check validity of the given OTP
+	const isOTPValid = await verify_hash({
+		plainText: `${givenOTP}`,
+		hash: otp.otp,
+	});
+
+	if (!isOTPValid) {
+		// If it was invalid, then increase the count of the wrong tries!
+		await OTP.findOneAndUpdate(
+			{ _id: otp._id },
+			{ $set: { count: otp.count + 1 } }
+		);
+
+		throw new CustomError("UnAuthorized", "Sorry, your OTP is invalid!");
+	}
+
+	// (4) If everyting goes well, then don't wait for automatic deleteing, do it now!
+	await OTP.findOneAndDelete({ _id: otp._id });
+
+	// (5) Return access and refresh tokens!
+	return await give_access({ userId });
 };
 
 module.exports = {
