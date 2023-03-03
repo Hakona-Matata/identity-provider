@@ -12,7 +12,7 @@ const enableOTP_GET_service = async ({ userId, email, isOTPEnabled }) => {
 	}
 
 	// (1) Check if we already assigned him an OTP!
-	const otp = await OTP.findOne({ userId }).select("_id").lean();
+	const otp = await OTP.findOne({ userId, by: "EMAIL" }).select("_id").lean();
 
 	if (otp) {
 		throw new CustomError(
@@ -38,14 +38,14 @@ const enableOTP_GET_service = async ({ userId, email, isOTPEnabled }) => {
 	});
 
 	// (5) Save it into DB
-	await OTP.create({ userId, otp: hashedOTP });
+	await OTP.create({ userId, otp: hashedOTP, by: "EMAIL" });
 
 	return "Please, check your mailbox for the OTP code";
 };
 
 const confirmOTP_POST_service = async ({ userId, givenOTP }) => {
 	// (1) Get OTP from DB
-	const otp = await OTP.findOne({ userId }).select("otp").lean();
+	const otp = await OTP.findOne({ userId, by: "EMAIL" }).select("otp").lean();
 
 	if (!otp) {
 		throw new CustomError("UnAuthorized", "Sorry, your OTP may be expired!");
@@ -61,7 +61,10 @@ const confirmOTP_POST_service = async ({ userId, givenOTP }) => {
 		throw new CustomError("UnAuthorized", "Sorry, your OTP is invalid!");
 	}
 
-	// (3) update user document
+	// (3) Delete OTP | Don't wait for the automatic deletion!
+	await OTP.findOneAndDelete({ _id: otp._id });
+
+	// (4) update user document
 	const done = await User.findOneAndUpdate(
 		{ _id: userId },
 		{
@@ -102,7 +105,7 @@ const DisableOTP_DELETE_service = async ({ userId }) => {
 
 const sendOTP_POST_service = async ({ userId, email }) => {
 	// (1) Check if we already assigned him one!
-	const otp = await OTP.findOne({ userId }).select("_id").lean();
+	const otp = await OTP.findOne({ userId, by: "EMAIL" }).select("_id").lean();
 
 	if (otp) {
 		throw new CustomError(
@@ -128,14 +131,14 @@ const sendOTP_POST_service = async ({ userId, email }) => {
 	});
 
 	// (5) Save it into DB
-	await OTP.create({ userId, otp: hashedOTP });
+	await OTP.create({ userId, otp: hashedOTP, by: "EMAIL" });
 
 	return "Please, check your mailbox for the OTP code";
 };
 
 const verifyOTP_POST_service = async ({ userId, givenOTP }) => {
 	// (1) Get OTP form DB | check if I really assined him an OTP!
-	const otp = await OTP.findOne({ userId }).lean();
+	const otp = await OTP.findOne({ userId, by: "EMAIL" }).lean();
 
 	if (!otp) {
 		throw new CustomError("UnAuthorized", "Sorry, the OTP may be expired!");

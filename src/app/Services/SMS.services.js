@@ -1,1 +1,82 @@
-module.exports = {};
+const User = require("./../Models/User.model");
+const OTP = require("./../Models/OTP.model");
+const { send_SMS } = require("./../../helpers/SMS");
+const { generate_randomNumber } = require("./../../helpers/randomNumber");
+const { generate_hash } = require("./../../helpers/hash");
+const CustomError = require("./../../Errors/CustomError");
+
+const enableSMS_POST_service = async ({
+	userId,
+	isSMSEnabled,
+	phoneNumber,
+	countryCode,
+	countryName,
+	countryIso2,
+}) => {
+	if (isSMSEnabled) {
+		throw new CustomError("AlreadyDone", "Sorry, you already enabled SMS!");
+	}
+
+	// (1) Check if we already assigned him an OTP!
+	const otp = await OTP.findOne({ userId, by: "SMS" }).select("_id").lean();
+
+	if (otp) {
+		throw new CustomError(
+			"AlreadyDone",
+			"Sorry, the OTP sent to your phone is still valid!"
+		);
+	}
+
+	// (2) Generate OTP | 6 random numbers
+	const plainTextOTP = generate_randomNumber({ length: 6 });
+
+	// (3) Hash OTP!
+	const hashedOTP = await generate_hash(`${plainTextOTP}`);
+
+	// (4) Send SMS
+	await send_SMS({
+		phoneNumber,
+		message: `OTP: ${plainTextOTP}\nIt's valid only for ${
+			process.env.OTP_EXPIRES_IN_SECONDS / 60
+		} minutes`,
+	});
+
+	// (5) Save it into DB
+	await OTP.create({ userId, otp: hashedOTP, by: "SMS" });
+
+	// (6) Update user document
+	const done = await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: {
+				phoneNumber,
+				countryCode,
+				countryName,
+				countryIso2,
+			},
+		}
+	);
+
+	if (!done) {
+		/*
+            If the process wasn't successfull, then don't save those phone and country info!
+        */
+		await User.findOneAndUpdate(
+			{ _id: userId },
+			{
+				$unset: {
+					phoneNumber,
+					countryCode,
+					countryName,
+					countryIso2,
+				},
+			}
+		);
+
+		throw new Customer("ProcessFailed", "Sorry, Enable SMS failed");
+	}
+
+	return "OTP code sent to your phone successfully";
+};
+
+module.exports = { enableSMS_POST_service };
