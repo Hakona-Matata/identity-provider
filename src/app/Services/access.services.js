@@ -1,7 +1,7 @@
 const {
 	generate_token,
 	verify_token,
-	generate_access_refresh_token,
+	give_access,
 } = require("./../../helpers/token");
 const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const CustomError = require("./../../Errors/CustomError");
@@ -9,7 +9,7 @@ const CustomError = require("./../../Errors/CustomError");
 const User = require("./../Models/User.model");
 const Session = require("../Models/Session.model");
 const sendEmail = require("./../../helpers/email");
-//======================================================
+const { use } = require("bcrypt/promises");
 
 const signUp_POST_service = async (data) => {
 	// (1) Create user from given payload
@@ -78,7 +78,7 @@ const verify_GET_service = async (data) => {
 const login_POST_service = async (data) => {
 	// (1) Get user from DB
 	const user = await User.findOne({ email: data.email })
-		.select("password isVerified")
+		.select("password isVerified isActive isOTPEnabled")
 		.lean();
 
 	if (!user) {
@@ -103,28 +103,31 @@ const login_POST_service = async (data) => {
 		);
 	}
 
-	// (4) Create access and refresh tokens
-	const tokenPayload = {
-		_id: user._id,
-	};
+	// (4) Check fore account activation status
+	if (!user.isActive) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, you need to activate your email first!"
+		);
+	}
 
-	const { accessToken, refreshToken } = await generate_access_refresh_token({
-		accessTokenPayload: tokenPayload,
-		refreshTokenPayload: tokenPayload,
-	});
+	// (5) Check for all the enabled methods as 2FA!
+	const enabledMethods = [];
 
-	// (5) create and save session
-	await Session.create({
-		userId: user._id,
-		accessToken,
-		refreshToken,
-	});
+	if (user.isOTPEnabled) {
+		enabledMethods.push({ isOTPEnabled: true });
+	}
 
-	// (6) Create and return access token
-	return {
-		accessToken,
-		refreshToken,
-	};
+	// (5) The frontend should show the user all the enabled methods, so he can choose whatever he wants
+	if (enabledMethods.length >= 1) {
+		return {
+			message: "Please, choose one of the given 2FA methods!",
+			methods: enabledMethods,
+		};
+	}
+
+	// (6) If no methods are enabled, then just give him needed tokens!
+	return await give_access({ userId: user._id });
 };
 
 const logout_POST_service = async ({ userId, accessToken }) => {
@@ -132,6 +135,10 @@ const logout_POST_service = async ({ userId, accessToken }) => {
 		userId,
 		accessToken,
 	});
+
+	if (!done) {
+		throw new CustomError("ProcessFailed", "Sorry, the logout attempt failed");
+	}
 
 	return "Logged out successfully";
 };

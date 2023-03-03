@@ -1,4 +1,6 @@
 const jwt = require("jsonwebtoken");
+const Session = require("./../app/Models/Session.model");
+const CustomError = require("./../Errors/CustomError");
 
 // For General use!
 const generate_token = async ({ payload, secret, expiresIn }) => {
@@ -32,8 +34,37 @@ const generate_access_refresh_token = async ({
 	};
 };
 
+// After success login attempt return tokens!
+const give_access = async ({ userId }) => {
+	// (1) Prepare payload
+	const payload = { _id: userId };
+
+	// (2) Create access and refresh tokens
+	const { accessToken, refreshToken } = await generate_access_refresh_token({
+		accessTokenPayload: payload,
+		refreshTokenPayload: payload,
+	});
+
+	// (3) create and save session
+	const done = await Session.create({
+		userId,
+		accessToken,
+		refreshToken,
+	});
+
+	if (!done) {
+		throw new CustomError("ProcessFailed", "Sorry, the login attempt failed");
+	}
+
+	// (4) Create and return access token
+	return {
+		accessToken,
+		refreshToken,
+	};
+};
+
 module.exports = {
 	generate_token,
 	verify_token,
-	generate_access_refresh_token,
+	give_access,
 };
