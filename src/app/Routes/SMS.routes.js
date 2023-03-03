@@ -14,4 +14,8 @@ router
 	.route("/confirm")
 	.post(protect, isVerified, SMS_controllers.confirmSMS_POST_controller);
 
+router
+	.route("/disable")
+	.delete(protect, isVerified, SMS_controllers.disableSMS_delete_controller);
+
 module.exports = router;

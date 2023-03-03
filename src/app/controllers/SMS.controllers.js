@@ -4,6 +4,7 @@ const SMS_validators = require("./../Validators/SMS.validators");
 const {
 	enableSMS_POST_service,
 	confirmSMS_POST_service,
+	disableSMS_delete_service,
 } = require("./../../app/Services/SMS.services");
 
 const enableSMS_POST_controller = async (req, res, next) => {
@@ -40,4 +41,18 @@ const confirmSMS_POST_controller = async (req, res, next) => {
 	}
 };
 
-module.exports = { enableSMS_POST_controller, confirmSMS_POST_controller };
+const disableSMS_delete_controller = async (req, res, next) => {
+	try {
+		const result = await disableSMS_delete_service({ userId: req.userId });
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
+module.exports = {
+	enableSMS_POST_controller,
+	confirmSMS_POST_controller,
+	disableSMS_delete_controller,
+};

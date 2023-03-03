@@ -118,4 +118,38 @@ const confirmSMS_POST_service = async ({ userId, givenOTP }) => {
 	return "OTP over SMS is enabled successfully";
 };
 
-module.exports = { enableSMS_POST_service, confirmSMS_POST_service };
+const disableSMS_delete_service = async ({ userId }) => {
+	const user = await User.findOne({ _id: userId })
+		.select("isSMSEnabled")
+		.lean();
+
+	if (!user || !user.isSMSEnabled) {
+		throw new CustomError(
+			"AlreadyDone",
+			"Sorry, you already disabled OTP over SMS!"
+		);
+	}
+
+	const done = await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isSMSEnabled: false },
+			$unset: { SMSEnabledAt: 1 },
+		}
+	);
+
+	if (!done) {
+		throw new CustomError(
+			"ProcessFailed",
+			"Sorry, Disable OTP over SMS failed"
+		);
+	}
+
+	return "You disabled OTP over SMS successfully";
+};
+
+module.exports = {
+	enableSMS_POST_service,
+	confirmSMS_POST_service,
+	disableSMS_delete_service,
+};
