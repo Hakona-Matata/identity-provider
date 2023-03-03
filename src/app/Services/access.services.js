@@ -9,6 +9,7 @@ const CustomError = require("./../../Errors/CustomError");
 const User = require("./../Models/User.model");
 const Session = require("../Models/Session.model");
 const sendEmail = require("./../../helpers/email");
+const { use } = require("bcrypt/promises");
 
 const signUp_POST_service = async (data) => {
 	// (1) Create user from given payload
@@ -77,7 +78,7 @@ const verify_GET_service = async (data) => {
 const login_POST_service = async (data) => {
 	// (1) Get user from DB
 	const user = await User.findOne({ email: data.email })
-		.select("password isVerified")
+		.select("password isVerified isActive isOTPEnabled")
 		.lean();
 
 	if (!user) {
@@ -102,11 +103,30 @@ const login_POST_service = async (data) => {
 		);
 	}
 
-	// TODO:  I think i should check here for all the security layers enalbed on this user account
-	// TODO: and return them back, so the user can choose among them and finally give him access!
+	// (4) Check fore account activation status
+	if (!user.isActive) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, you need to activate your email first!"
+		);
+	}
 
-	// TODO: So, this step would be deleted!
-	// This should return access and refresh tokens
+	// (5) Check for all the enabled methods as 2FA!
+	const enabledMethods = [];
+
+	if (user.isOTPEnabled) {
+		enabledMethods.push({ isOTPEnabled: true });
+	}
+
+	// (5) The frontend should show the user all the enabled methods, so he can choose whatever he wants
+	if (enabledMethods.length >= 1) {
+		return {
+			message: "Please, choose one of the given 2FA methods!",
+			methods: enabledMethods,
+		};
+	}
+
+	// (6) If no methods are enabled, then just give him needed tokens!
 	return await give_access({ userId: user._id });
 };
 

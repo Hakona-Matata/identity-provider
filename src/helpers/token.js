@@ -34,7 +34,7 @@ const generate_access_refresh_token = async ({
 	};
 };
 
-// After successful login attempt return tokens!
+// After success login attempt return tokens!
 const give_access = async ({ userId }) => {
 	// (1) Prepare payload
 	const payload = { _id: userId };
