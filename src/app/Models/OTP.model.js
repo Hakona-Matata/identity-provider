@@ -11,6 +11,13 @@ const OTPSchema = new Schema(
 			required: true,
 		},
 		otp: String,
+		by: {
+			// The OTP sending way!
+			type: String,
+			enum: ["EMAIL", "SMS"],
+			required: true,
+			index: true,
+		},
 		createdAt: {
 			type: Date,
 			default: Date.now,

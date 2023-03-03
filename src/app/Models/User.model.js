@@ -16,25 +16,39 @@ const UserSchema = new Schema(
 		},
 		password: String,
 		passwordChangedAt: Date,
+
 		verificationToken: String,
 		isVerified: { type: Boolean, default: false },
 		isVerifiedAt: Date,
+
 		isActive: {
 			type: Boolean,
 			default: true,
 		},
 		activeStatusChangedAt: Date,
 		activationToken: String,
+
 		isDeleted: {
 			type: Boolean,
 			default: false,
 		},
 		isDeletedAt: Date,
+
 		resetToken: String,
 		resetAt: Date,
 
 		isOTPEnabled: { type: Boolean, default: false },
 		OTPEnabledAt: Date,
+
+		phoneNumber: String,
+		isPhoneVerified: { type: Boolean, default: false },
+
+		countryCode: String,
+		countryName: String,
+		countryIso2: String,
+
+		isSMSEnabled: { type: Boolean, default: false },
+		SMSEnabledAt: Date,
 	},
 	{
 		timestamps: true,
