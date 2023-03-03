@@ -2,7 +2,7 @@ const User = require("./../Models/User.model");
 const OTP = require("./../Models/OTP.model");
 const { send_SMS } = require("./../../helpers/SMS");
 const { generate_randomNumber } = require("./../../helpers/randomNumber");
-const { generate_hash } = require("./../../helpers/hash");
+const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const CustomError = require("./../../Errors/CustomError");
 
 const enableSMS_POST_service = async ({
@@ -79,4 +79,43 @@ const enableSMS_POST_service = async ({
 	return "OTP code sent to your phone successfully";
 };
 
-module.exports = { enableSMS_POST_service };
+const confirmSMS_POST_service = async ({ userId, givenOTP }) => {
+	// (1) Get OTP from DB
+	const otp = await OTP.findOne({ userId, by: "SMS" }).select("otp").lean();
+
+	if (!otp) {
+		throw new CustomError("UnAuthorized", "Sorry, your OTP may be expired!");
+	}
+
+	// (2) Check given OTP
+	const isOTPValid = await verify_hash({
+		plainText: `${givenOTP}`,
+		hash: otp.otp,
+	});
+
+	if (!isOTPValid) {
+		throw new CustomError("UnAuthorized", "Sorry, your OTP is invalid!");
+	}
+
+	// (3) Delete OTP | Don't wait for the automatic deletion!
+	await OTP.findOneAndDelete({ _id: otp._id });
+
+	// (4) update user document
+	const done = await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isSMSEnabled: true, SMSEnabledAt: new Date() },
+		}
+	);
+
+	if (!done) {
+		throw new CustomError(
+			"ProcessFailed",
+			"Sorry, OTP over SMS confirmation failed"
+		);
+	}
+
+	return "OTP over SMS is enabled successfully";
+};
+
+module.exports = { enableSMS_POST_service, confirmSMS_POST_service };

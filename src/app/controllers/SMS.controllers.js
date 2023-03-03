@@ -1,7 +1,10 @@
 const validate = require("./../../helpers/validate");
 const { success, failure } = require("./../../Errors/responseHandler");
 const SMS_validators = require("./../Validators/SMS.validators");
-const { enableSMS_POST_service } = require("./../../app/Services/SMS.services");
+const {
+	enableSMS_POST_service,
+	confirmSMS_POST_service,
+} = require("./../../app/Services/SMS.services");
 
 const enableSMS_POST_controller = async (req, res, next) => {
 	try {
@@ -22,4 +25,19 @@ const enableSMS_POST_controller = async (req, res, next) => {
 	}
 };
 
-module.exports = { enableSMS_POST_controller };
+const confirmSMS_POST_controller = async (req, res, next) => {
+	try {
+		const validatedData = await validate(SMS_validators.confirmSMS, req.body);
+
+		const result = await confirmSMS_POST_service({
+			userId: req.userId,
+			givenOTP: validatedData.otp,
+		});
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
+module.exports = { enableSMS_POST_controller, confirmSMS_POST_controller };

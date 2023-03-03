@@ -10,4 +10,8 @@ router
 	.route("/enable")
 	.post(protect, isVerified, SMS_controllers.enableSMS_POST_controller);
 
+router
+	.route("/confirm")
+	.post(protect, isVerified, SMS_controllers.confirmSMS_POST_controller);
+
 module.exports = router;
