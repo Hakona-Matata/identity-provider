@@ -9,7 +9,6 @@ const CustomError = require("./../../Errors/CustomError");
 const User = require("./../Models/User.model");
 const Session = require("../Models/Session.model");
 const sendEmail = require("./../../helpers/email");
-const { use } = require("bcrypt/promises");
 
 const signUp_POST_service = async (data) => {
 	// (1) Create user from given payload
@@ -126,6 +125,7 @@ const login_POST_service = async (data) => {
 	if (enabledMethods.length >= 1) {
 		return {
 			message: "Please, choose one of the given 2FA methods!",
+			userId: user._id,
 			methods: enabledMethods,
 		};
 	}

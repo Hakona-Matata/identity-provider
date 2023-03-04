@@ -148,8 +148,50 @@ const disableSMS_delete_service = async ({ userId }) => {
 	return "You disabled OTP over SMS successfully";
 };
 
+const sendSMS_POST_service = async ({ userId }) => {
+	// (1) Check if we already assigned him an OTP!
+	const otp = await OTP.findOne({ userId, by: "SMS" }).select("_id").lean();
+
+	if (otp) {
+		throw new CustomError(
+			"AlreadyDone",
+			"Sorry, the OTP sent to your phone is still valid!"
+		);
+	}
+
+	// (2) Get phone number
+	const user = await User.findOne({ _id: userId }).select("phoneNumber").lean();
+
+	// (2) Generate OTP | 6 random numbers
+	const plainTextOTP = generate_randomNumber({ length: 6 });
+
+	// (3) Hash OTP!
+	const hashedOTP = await generate_hash(`${plainTextOTP}`);
+
+	// (4) Send SMS
+	await send_SMS({
+		phoneNumber: user.phoneNumber,
+		message: `OTP: ${plainTextOTP}\nIt's valid only for ${
+			process.env.OTP_EXPIRES_IN_SECONDS / 60
+		} minutes`,
+	});
+
+	// (5) Save it into DB
+	const done = await OTP.create({ userId, otp: hashedOTP, by: "SMS" });
+
+	if (!done) {
+		throw new CustomError(
+			"ProcessFailed",
+			"Sorry, sending OTP over SMS failed"
+		);
+	}
+
+	return "OTP sent to your phone successfully";
+};
+
 module.exports = {
 	enableSMS_POST_service,
 	confirmSMS_POST_service,
 	disableSMS_delete_service,
+	sendSMS_POST_service,
 };
