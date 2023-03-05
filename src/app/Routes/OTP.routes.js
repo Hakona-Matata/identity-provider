@@ -1,6 +1,6 @@
 const express = require("express");
 
-const OTP_controllers = require("./../controllers/otp.controllers");
+const OTP_controllers = require("./../controllers/OTP.controllers");
 const protect = require("./../../middlewares/protect");
 const isVerified = require("./../../middlewares/isVerified");
 
