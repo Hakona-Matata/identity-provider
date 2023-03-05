@@ -4,9 +4,6 @@ const CustomError = require("./../../Errors/CustomError");
 
 const User = require("./../Models/User.model");
 const TOTP = require("./../Models/TOTP.model");
-const {
-	CustomerProfilesChannelEndpointAssignmentContextImpl,
-} = require("twilio/lib/rest/trusthub/v1/customerProfiles/customerProfilesChannelEndpointAssignment");
 
 const enableTOTP_POST_service = async ({ userId, isTOTPEnabled }) => {
 	if (isTOTPEnabled) {
@@ -99,4 +96,34 @@ const confirmTOTP_POST_service = async ({ userId, givenTOTP }) => {
 	return "TOTP enabled successfully!";
 };
 
-module.exports = { enableTOTP_POST_service, confirmTOTP_POST_service };
+const disableTOTP_DELETE_service = async ({ userId }) => {
+	const user = await User.findOne({ _id: userId })
+		.select("isTOTPEnabled")
+		.lean();
+
+	if (user && !user.isTOTPEnabled) {
+		throw new CustomError("UnAuthorized", "Sorry, you already disabled TOTP!");
+	}
+
+	await TOTP.findOneAndDelete({ userId });
+
+	const done = await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isTOTPEnabled: false },
+			$unset: { TOTPEnabledAt: 1 },
+		}
+	);
+
+	if (!done) {
+		throw new CustomError("ProcessFailed", "Sorry, disable TOTP failed");
+	}
+
+	return "TOTP disabled successfully!";
+};
+
+module.exports = {
+	enableTOTP_POST_service,
+	confirmTOTP_POST_service,
+	disableTOTP_DELETE_service,
+};

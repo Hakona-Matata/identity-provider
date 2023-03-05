@@ -14,4 +14,8 @@ router
 	.route("/confirm")
 	.post(protect, isVerified, TOTP_controllers.confirmTOTP_POST_controller);
 
+router
+	.route("/disable")
+	.delete(protect, isVerified, TOTP_controllers.disableTOTP_DELETE_controller);
+
 module.exports = router;
