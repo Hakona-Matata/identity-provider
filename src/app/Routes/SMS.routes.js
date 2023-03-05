@@ -18,4 +18,8 @@ router
 	.route("/disable")
 	.delete(protect, isVerified, SMS_controllers.disableSMS_delete_controller);
 
+router.route("/send").post(SMS_controllers.sendSMS_POST_controller);
+
+router.route("/verify").post(SMS_controllers.verifySMS_post_controller);
+
 module.exports = router;
