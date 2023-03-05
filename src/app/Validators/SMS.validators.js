@@ -48,4 +48,27 @@ module.exports = {
 			"any.required": `"userId" field is required!`,
 		}),
 	}),
+	verifySMS: Joi.object({
+		userId: Joi.string().hex().length(24).required().messages({
+			"string.base": `"userId" field has to be of type string!`,
+			"string.empty": `"userId" field can't be empty!`,
+			"string.length": `"userId" field length can't be true!`,
+			"string.hex": `"userId" field is not valid!`,
+			"any.required": `"userId" field is required!`,
+		}),
+		otp: Joi.number()
+			.integer()
+			.positive()
+			.required()
+			.min(100_000)
+			.max(900_1000)
+			.messages({
+				"any.required": `"otp" field is required!`,
+				"number.base": `"otp" field has to be of type number!`,
+				"number.integer": `"otp" field has to be integer!`,
+				"number.positive": `"otp" field has to be positive!`,
+				"number.min": `"otp" field has to be 6 digits!`,
+				"number.max": `"otp" field has to be 6 digits!`,
+			}),
+	}),
 };
