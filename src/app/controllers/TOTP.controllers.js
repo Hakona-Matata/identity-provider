@@ -5,6 +5,7 @@ const {
 	enableTOTP_POST_service,
 	confirmTOTP_POST_service,
 	disableTOTP_DELETE_service,
+	verifyTOTP_POST_service,
 } = require("./../Services/TOTP.services");
 
 const enableTOTP_POST_controller = async (req, res, next) => {
@@ -45,8 +46,24 @@ const disableTOTP_DELETE_controller = async (req, res, next) => {
 	}
 };
 
+const verifyTOTP_POST_controller = async (req, res, next) => {
+	try {
+		const validatedData = await validate(TOTP_validators.verifyTOTP, req.body);
+
+		const result = await verifyTOTP_POST_service({
+			userId: validatedData.userId,
+			givenTOTP: validatedData.totp,
+		});
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
 module.exports = {
 	enableTOTP_POST_controller,
 	confirmTOTP_POST_controller,
 	disableTOTP_DELETE_controller,
+	verifyTOTP_POST_controller,
 };

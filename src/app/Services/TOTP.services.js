@@ -1,4 +1,5 @@
 const { generate_secret, verify_totp } = require("./../../helpers/totp");
+const { give_access } = require("./../../helpers/token");
 const Encrypter = require("./../../helpers/crypto");
 const CustomError = require("./../../Errors/CustomError");
 
@@ -78,6 +79,7 @@ const confirmTOTP_POST_service = async ({ userId, givenTOTP }) => {
 		{ _id: totp._id },
 		{
 			$set: { isSecretTemp: false },
+			$unset: { count: 1 },
 		}
 	);
 
@@ -122,8 +124,44 @@ const disableTOTP_DELETE_service = async ({ userId }) => {
 	return "TOTP disabled successfully!";
 };
 
+const verifyTOTP_POST_service = async ({ userId, givenTOTP }) => {
+	// (1) Get user form DB
+	const user = await User.findOne({ _id: userId })
+		.select("isTOTPEnabled")
+		.lean();
+
+	if (!user) {
+		throw new CustomError("InvalidInput", "Sorry, Invalid input!");
+	}
+
+	if (user && !user.isTOTPEnabled) {
+		throw new CustomError("UnAuthorized", "Sorry, TOTP is not enabled!");
+	}
+
+	// (2) Get assined TOTP secret from DB
+	const totp = await TOTP.findOne({ userId }).select("secret").lean();
+
+	// (3) Decrypt secret
+	const encrypter = new Encrypter(process.env.TOTP_ENCRYPTION_KEY);
+	const decryptedSecret = encrypter.dencrypt(totp.secret);
+
+	// (4) Verify given TOTP aganist decrypted secret!
+	const isTOTPValid = await verify_totp({
+		token: givenTOTP,
+		secret: decryptedSecret,
+	});
+
+	if (!isTOTPValid) {
+		throw new CustomError("InvalidInput", "Sorry, the given code is invalid");
+	}
+
+	// (5) Return access and refresh tokens!
+	return await give_access({ userId });
+};
+
 module.exports = {
 	enableTOTP_POST_service,
 	confirmTOTP_POST_service,
 	disableTOTP_DELETE_service,
+	verifyTOTP_POST_service,
 };
