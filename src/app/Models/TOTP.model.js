@@ -3,8 +3,22 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const TOTPSchema = new Schema(
-	{},
 	{
+		userId: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+			index: true,
+			required: true,
+		},
+		secret: String,
+		isSecretTemp: {
+			index: true,
+			type: Boolean,
+			default: true,
+		},
+	},
+	{
+		timestamps: true,
 		versionKey: false,
 	}
 );

@@ -49,6 +49,9 @@ const UserSchema = new Schema(
 
 		isSMSEnabled: { type: Boolean, default: false },
 		SMSEnabledAt: Date,
+
+		isTOTPEnabled: { type: Boolean, default: false },
+		TOTPEnabledAt: Date,
 	},
 	{
 		timestamps: true,
