@@ -16,6 +16,7 @@ const TOTPSchema = new Schema(
 			type: Boolean,
 			default: true,
 		},
+		count: { type: Number, default: 0 }, // number of wrong tries
 	},
 	{
 		timestamps: true,

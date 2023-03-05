@@ -6,4 +6,12 @@ const generate_secret = async () => {
 	return base32;
 };
 
-module.exports = { generate_secret };
+const verify_totp = async ({ token, secret }) => {
+	return speakeasy.totp.verify({
+		secret,
+		encoding: "base32",
+		token,
+	});
+};
+
+module.exports = { generate_secret, verify_totp };

@@ -10,4 +10,8 @@ router
 	.route("/enable")
 	.post(protect, isVerified, TOTP_controllers.enableTOTP_POST_controller);
 
+router
+	.route("/confirm")
+	.post(protect, isVerified, TOTP_controllers.confirmTOTP_POST_controller);
+
 module.exports = router;
