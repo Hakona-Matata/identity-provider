@@ -77,7 +77,9 @@ const verify_GET_service = async (data) => {
 const login_POST_service = async (data) => {
 	// (1) Get user from DB
 	const user = await User.findOne({ email: data.email })
-		.select("password isVerified isActive isOTPEnabled isSMSEnabled")
+		.select(
+			"password isVerified isActive isOTPEnabled isSMSEnabled isTOTPEnabled"
+		)
 		.lean();
 
 	if (!user) {
@@ -119,6 +121,10 @@ const login_POST_service = async (data) => {
 
 	if (user.isSMSEnabled) {
 		enabledMethods.push({ isSMSEnabled: true });
+	}
+
+	if (user.isTOTPEnabled) {
+		enabledMethods.push({ isTOTPEnabled: true });
 	}
 
 	// (5) The frontend should show the user all the enabled methods, so he can choose whatever he wants

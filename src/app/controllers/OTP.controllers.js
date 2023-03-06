@@ -1,13 +1,13 @@
-const validate = require("./../../helpers/validate");
-const { success, failure } = require("./../../Errors/responseHandler");
-const OTP_validators = require("./../Validators/OTP.validators");
+const validate = require("../../helpers/validate");
+const { success, failure } = require("../../Errors/responseHandler");
+const OTP_validators = require("../Validators/OTP.validators");
 const {
 	enableOTP_GET_service,
 	confirmOTP_POST_service,
 	DisableOTP_DELETE_service,
 	sendOTP_POST_service,
 	verifyOTP_POST_service,
-} = require("./../Services/OTP.services");
+} = require("../Services/OTP.services");
 
 const enableOTP_GET_controller = async (req, res, next) => {
 	try {

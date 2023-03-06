@@ -7,7 +7,7 @@ module.exports = {
 			.positive()
 			.required()
 			.min(100_000)
-			.max(900_1000)
+			.max(999999)
 			.messages({
 				"any.required": `"otp" field is required!`,
 				"number.base": `"otp" field has to be of type number!`,
@@ -47,7 +47,7 @@ module.exports = {
 			.positive()
 			.required()
 			.min(100_000)
-			.max(900_1000)
+			.max(999999)
 			.messages({
 				"any.required": `"otp" field is required!`,
 				"number.base": `"otp" field has to be of type number!`,

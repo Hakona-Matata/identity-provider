@@ -1,6 +1,6 @@
 const express = require("express");
 
-const OTP_controllers = require("./../controllers/otp.controllers");
+const OTP_controllers = require("./../controllers/OTP.controllers");
 const protect = require("./../../middlewares/protect");
 const isVerified = require("./../../middlewares/isVerified");
 
@@ -21,6 +21,7 @@ router
 
 // During Login process
 router.route("/send").post(OTP_controllers.sendOTP_POST_controller);
+
 router.route("/verify").post(OTP_controllers.verifyOTP_POST_controller);
 
 module.exports = router;
