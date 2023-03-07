@@ -1,15 +1,17 @@
 const { success, failure } = require("../../Errors/responseHandler");
 const validate = require("./../../helpers/validate");
 
-const access_validators = require("../Validators/access.validators.js");
+const backup_validators = require("../Validators/backup.validators.js");
 
 const {
 	generateBackupCodes_POST_service,
+	confirmBackupCodes_POST_service,
 } = require("./../Services/backup.services");
 
 const generateBackupCodes_POST_controller = async (req, res, next) => {
 	try {
 		const result = await generateBackupCodes_POST_service({
+			enabledMethodsCount: req.enabledMethodsCount,
 			userId: req.userId,
 			isBackupEnabled: req.isBackupEnabled,
 		});
@@ -20,4 +22,23 @@ const generateBackupCodes_POST_controller = async (req, res, next) => {
 	}
 };
 
-module.exports = { generateBackupCodes_POST_controller };
+const confirmBackupCodes_POST_controller = async (req, res, next) => {
+	try {
+		const validatedData = await validate(backup_validators.confirm, req.body);
+
+		const result = await confirmBackupCodes_POST_service({
+			isBackupEnabled: req.isBackupEnabled,
+			userId: req.userId,
+			code: validatedData.code,
+		});
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
+module.exports = {
+	generateBackupCodes_POST_controller,
+	confirmBackupCodes_POST_controller,
+};

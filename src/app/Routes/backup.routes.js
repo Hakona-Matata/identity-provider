@@ -15,4 +15,12 @@ router
 		backup_controllers.generateBackupCodes_POST_controller
 	);
 
+router
+	.route("/confirm")
+	.post(
+		protect,
+		isVerified,
+		backup_controllers.confirmBackupCodes_POST_controller
+	);
+
 module.exports = router;
