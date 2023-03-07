@@ -6,6 +6,7 @@ const CustomError = require("./../../Errors/CustomError");
 
 const User = require("./../Models/User.model");
 const Backup = require("./../Models/Backup.model");
+const { give_access } = require("./../../helpers/token");
 
 const generateBackupCodes_POST_service = async ({
 	enabledMethodsCount,
@@ -103,16 +104,48 @@ const confirmBackupCodes_POST_service = async ({
 	return "Backup codes enabled successfully";
 };
 
+const verifyBackupCodes_POST_service = async ({ email, code }) => {
+	// (1) Check if user is really enabled backup codes!
+	const user = await User.findOne({ email }).select("isBackupEnabled").lean();
+
+	if (!user) {
+		throw new CustomError("InvalidInput", "Sorry, backup code is invalid!");
+	}
+
+	if (user && !user.isBackupEnabled) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, backup codes feature isn't enabled!"
+		);
+	}
+
+	// (2) Find valid matched backup code (if found)
+	const matchedCodeId = await validate_backup_code({
+		plainTextCode: code,
+		userId: user._id,
+	});
+
+	// (3) Now, delete the document
+	const done = await Backup.findOneAndDelete({ _id: matchedCodeId });
+
+	if (!done) {
+		throw new CustomError("ProcessFailed", "Sorry, verify backup code failed");
+	}
+
+	// (4) Give user needed tokens
+	return await give_access({ userId: user._id });
+};
+
 module.exports = {
 	generateBackupCodes_POST_service,
 	confirmBackupCodes_POST_service,
+	verifyBackupCodes_POST_service,
 };
 
 const validate_backup_code = async ({ plainTextCode, userId }) => {
 	// (1) Find all valid user backup codes
 	const allUserValidBackupCodes = await Backup.find({
 		userId,
-		isUsed: false,
 	})
 		.select("code")
 		.lean();
@@ -128,7 +161,7 @@ const validate_backup_code = async ({ plainTextCode, userId }) => {
 	});
 
 	if (validBackup.length !== 1) {
-		throw new CustomError("InvalidInput", "Sorry, code is invalid!");
+		throw new CustomError("InvalidInput", "Sorry, backup code is invalid!");
 	}
 
 	// (3) Return that hashedBackup _id for further use

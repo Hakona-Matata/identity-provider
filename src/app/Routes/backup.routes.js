@@ -23,4 +23,8 @@ router
 		backup_controllers.confirmBackupCodes_POST_controller
 	);
 
+router
+	.route("/verify")
+	.post(backup_controllers.verifyBackupCodes_POST_controller);
+
 module.exports = router;

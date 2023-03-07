@@ -19,10 +19,6 @@ const BackupSchema = new Schema(
 			index: true,
 			default: true,
 		},
-		isUsed: {
-			type: Boolean,
-			default: false,
-		},
 		isUsedAt: Date,
 	},
 	{
