@@ -36,24 +36,10 @@ const generateBackupCodes_POST_service = async ({
 		);
 	}
 
-	// (3) Generate backup codes
-	const { codes, hashedCodes } = await generate_backup_codes({
-		userId,
-		backupCodeNumbers: 10,
-	});
+	// (3) Generate and save them
+	const codes = await generate_save_backup_codes({ userId });
 
-	// (4) Save generated backup codes!
-	// * The ordered flag when set to false, increases the performance!
-	const done = await Backup.insertMany(hashedCodes, { ordered: false });
-
-	if (!done) {
-		throw new CustomError(
-			"ProcessFailed",
-			"Sorry, generate backup codes failed"
-		);
-	}
-
-	// (5) Return codes to user, and wait for confirm saving them!
+	// (4) Return codes to user, and wait for confirm saving them!
 	return codes;
 };
 
@@ -104,6 +90,33 @@ const confirmBackupCodes_POST_service = async ({
 	return "Backup codes enabled successfully";
 };
 
+const regenerateBackupCodes_POST_service = async ({ userId }) => {
+	// (1) Delete all old ones (even if they still valid!)
+	await Backup.deleteMany({ userId });
+
+	// (2) Update user document, so he needs to verify given new codes before enabling the feature!
+	await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isBackupEnabled: false },
+			$unset: { BackupEnabledAt: 1 },
+		}
+	);
+
+	// (3) Generate and save them
+	const codes = await generate_save_backup_codes({ userId });
+
+	if (!codes) {
+		throw new CustomError(
+			"ProcessFailed",
+			"Sorry, regenerate backup codes failed"
+		);
+	}
+
+	// (4) Return codes to user so, he can save them somewhere
+	return codes;
+};
+
 const verifyBackupCodes_POST_service = async ({ email, code }) => {
 	// (1) Check if user is really enabled backup codes!
 	const user = await User.findOne({ email }).select("isBackupEnabled").lean();
@@ -134,11 +147,14 @@ const verifyBackupCodes_POST_service = async ({ email, code }) => {
 
 	// (4) Give user needed tokens
 	return await give_access({ userId: user._id });
+
+	// TODO: Should redirected to change password route or something like that
 };
 
 module.exports = {
 	generateBackupCodes_POST_service,
 	confirmBackupCodes_POST_service,
+	regenerateBackupCodes_POST_service,
 	verifyBackupCodes_POST_service,
 };
 
@@ -166,4 +182,25 @@ const validate_backup_code = async ({ plainTextCode, userId }) => {
 
 	// (3) Return that hashedBackup _id for further use
 	return validBackup[0]._id;
+};
+
+const generate_save_backup_codes = async ({ userId }) => {
+	// (1) Generate backup codes
+	const { codes, hashedCodes } = await generate_backup_codes({
+		userId,
+		backupCodeNumbers: 10,
+	});
+
+	// (2) Save generated backup codes!
+	// * The ordered flag when set to false, increases the performance!
+	const done = await Backup.insertMany(hashedCodes, { ordered: false });
+
+	if (!done) {
+		throw new CustomError(
+			"ProcessFailed",
+			"Sorry, generate backup codes failed"
+		);
+	}
+
+	return codes;
 };

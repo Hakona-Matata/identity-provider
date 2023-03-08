@@ -24,6 +24,14 @@ router
 	);
 
 router
+	.route("/regenerate")
+	.post(
+		protect,
+		isVerified,
+		backup_controllers.regenerateBackupCodes_POST_controller
+	);
+
+router
 	.route("/verify")
 	.post(backup_controllers.verifyBackupCodes_POST_controller);
 
