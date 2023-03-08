@@ -7,6 +7,7 @@ const {
 	generateBackupCodes_POST_service,
 	confirmBackupCodes_POST_service,
 	regenerateBackupCodes_POST_service,
+	disableBackupCodes_delete_service,
 	verifyBackupCodes_POST_service,
 } = require("./../Services/backup.services");
 
@@ -52,6 +53,19 @@ const regenerateBackupCodes_POST_controller = async (req, res, next) => {
 	}
 };
 
+const disableBackupCodes_delete_controller = async (req, res, next) => {
+	try {
+		const result = await disableBackupCodes_delete_service({
+			userId: req.userId,
+			isBackupEnabled: req.isBackupEnabled,
+		});
+
+		return success({ res, result });
+	} catch (error) {
+		return failure({ res, error });
+	}
+};
+
 const verifyBackupCodes_POST_controller = async (req, res, next) => {
 	try {
 		const validatedData = await validate(backup_validators.verify, req.body);
@@ -68,5 +82,6 @@ module.exports = {
 	generateBackupCodes_POST_controller,
 	confirmBackupCodes_POST_controller,
 	regenerateBackupCodes_POST_controller,
+	disableBackupCodes_delete_controller,
 	verifyBackupCodes_POST_controller,
 };

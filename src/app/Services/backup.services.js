@@ -117,6 +117,34 @@ const regenerateBackupCodes_POST_service = async ({ userId }) => {
 	return codes;
 };
 
+const disableBackupCodes_delete_service = async ({
+	userId,
+	isBackupEnabled,
+}) => {
+	if (!isBackupEnabled) {
+		throw new CustomError("UnAuthorized", "Sorry, backup codes isn't enabled!");
+	}
+
+	await Backup.deleteMany({ userId });
+
+	const done = await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isBackupEnabled: false },
+			$unset: { BackupEnabledAt: 1 },
+		}
+	);
+
+	if (!done) {
+		throw new CustomError(
+			"ProcessFailed",
+			"Sorry, disable backup codes failed."
+		);
+	}
+
+	return "Backup codes disabled successfully!";
+};
+
 const verifyBackupCodes_POST_service = async ({ email, code }) => {
 	// (1) Check if user is really enabled backup codes!
 	const user = await User.findOne({ email }).select("isBackupEnabled").lean();
@@ -155,9 +183,11 @@ module.exports = {
 	generateBackupCodes_POST_service,
 	confirmBackupCodes_POST_service,
 	regenerateBackupCodes_POST_service,
+	disableBackupCodes_delete_service,
 	verifyBackupCodes_POST_service,
 };
 
+// Some helpers
 const validate_backup_code = async ({ plainTextCode, userId }) => {
 	// (1) Find all valid user backup codes
 	const allUserValidBackupCodes = await Backup.find({

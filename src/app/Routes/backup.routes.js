@@ -32,6 +32,14 @@ router
 	);
 
 router
+	.route("/disable")
+	.delete(
+		protect,
+		isVerified,
+		backup_controllers.disableBackupCodes_delete_controller
+	);
+
+router
 	.route("/verify")
 	.post(backup_controllers.verifyBackupCodes_POST_controller);
 
