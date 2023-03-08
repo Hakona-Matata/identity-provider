@@ -52,6 +52,9 @@ const UserSchema = new Schema(
 
 		isTOTPEnabled: { type: Boolean, default: false },
 		TOTPEnabledAt: Date,
+
+		isBackupEnabled: { type: Boolean, default: false },
+		BackupEnabledAt: Date,
 	},
 	{
 		timestamps: true,
