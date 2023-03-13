@@ -12,10 +12,12 @@ const thirdParty_middlewares = require("./middlewares/app/thirdParth.middlewares
 const app = express();
 
 // (1) After intializing our server istance, let's connect to MongoDB!
-connect_DB(app);
+process.env.NODE_ENV === "test" ? "" : connect_DB(app);
 
 // (2) Let's apply our third party middlewares!
 thirdParty_middlewares({ app, express });
 
 // (3) Let's apply our own application middlwars!
 app_middlewares(app);
+
+module.exports = app;
