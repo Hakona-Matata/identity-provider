@@ -11,7 +11,8 @@ const connect = async () => {
 
 const disconnect = async () => {
 	try {
-		return await mongoose.disconnect();
+		await mongoose.disconnect();
+		return await mongoose.connection.close();
 	} catch (error) {
 		console.error(error);
 	}
