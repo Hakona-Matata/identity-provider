@@ -5,7 +5,9 @@
 	"main": "server.js",
 	"scripts": {
 		"prod": "NODE_ENV=production node src/server.js",
-		"dev": "NODE_ENV=development nodemon src/server.js"
+		"dev": "NODE_ENV=development nodemon src/server.js",
+		"test": "NODE_ENV=test jest",
+		"test-watch": "NODE_ENV=test jest --watch --detectOpenHandles"
 	},
 	"repository": {
 		"type": "git",
@@ -38,5 +40,10 @@
 		"phone": "^3.1.35",
 		"speakeasy": "^2.0.0",
 		"twilio": "^4.8.0"
+	},
+	"devDependencies": {
+		"@faker-js/faker": "^7.6.0",
+		"jest": "^29.5.0",
+		"supertest": "^6.3.3"
 	}
 }

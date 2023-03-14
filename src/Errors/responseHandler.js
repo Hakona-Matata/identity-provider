@@ -28,6 +28,7 @@ const failure = ({ res, error }) => {
 	}
 
 	// Nodemailer SSL Error
+
 	if (error.code === "ESOCKET") {
 		return res.status(422).json({
 			data: "Sorry, the connection needs to be secure using SSL!",

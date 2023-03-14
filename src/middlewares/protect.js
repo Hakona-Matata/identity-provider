@@ -8,11 +8,20 @@ const jwt_errors = require("../Errors/jwt");
 */
 
 module.exports = async (req, res, next) => {
+	console.log("Hi, from protect");
+	const accessToken = req?.headers["authorization"]?.split(" ")[1];
+	const refreshToken = req.body.refreshToken;
+
 	try {
-		console.log("Hi, from protect");
+		if (!accessToken && !refreshToken) {
+			return res
+				.status(401)
+				.json({ data: "Sorry, you need to pass the needed tokens!" });
+		}
+
 		const result = await check_access_refresh_tokens({ req, res });
 
-		if (req.body.refreshToken) {
+		if (refreshToken) {
 			req.userId = result.userId;
 			req.refreshToken = result.refreshToken;
 			return next();

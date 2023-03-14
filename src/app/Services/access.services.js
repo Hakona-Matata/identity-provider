@@ -28,13 +28,14 @@ const signUp_POST_service = async (data) => {
 	const link = `${process.env.BASE_URL}:${process.env.PORT}/auth/verify-email/${verificationToken}`;
 
 	// (4) Send Verification email to user mailbox
-	await sendEmail({
-		from: "Hakona Matata company",
-		to: user.email,
-		subject: "Email Verification",
-		text: `Hello, ${user.email}\nPlease click the link to verify your email (It's only valid for ${process.env.VERIFICATION_TOKEN_EXPIRES_IN})\n${link}\nthanks.`,
-	});
-
+	if (process.env.NODE_ENV !== "test") {
+		await sendEmail({
+			from: "Hakona Matata company",
+			to: user.email,
+			subject: "Email Verification",
+			text: `Hello, ${user.email}\nPlease click the link to verify your email (It's only valid for ${process.env.VERIFICATION_TOKEN_EXPIRES_IN})\n${link}\nthanks.`,
+		});
+	}
 	// (5) Update user document
 	user.verificationToken = verificationToken;
 
