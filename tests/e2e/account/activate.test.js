@@ -110,11 +110,63 @@ describe(`"PUT" ${baseURL} - Activate User Account`, () => {
 		// (5) Clean DB
 		await User.findOneAndDelete({ _id: user._id });
 
-		console.log({ status, body });
-
 		expect(status).toBe(401);
 		expect(body.data).toBe(
 			"Sorry, you still have a valid link in your mailbox!"
 		);
+	});
+
+	it("5. Provided email is not of type string", async () => {
+		const { status, body } = await request(app)
+			.put(baseURL)
+			.send({ email: 1234324 });
+
+		expect(status).toBe(422);
+		expect(body.data[0]).toBe('"email" field has to be of type string!');
+	});
+
+	it("6. Provided email is not a valid email", async () => {
+		const { status, body } = await request(app)
+			.put(baseURL)
+			.send({ email: "testsetsesttesttest" });
+
+		expect(status).toBe(422);
+		expect(body.data[0]).toBe(`"email" field has to be a valid email!`);
+	});
+
+	it("7. Provided email is too short to be true", async () => {
+		const { status, body } = await request(app)
+			.put(baseURL)
+			.send({ email: "test" });
+
+		expect(status).toBe(422);
+		expect(body.data[0]).toBe(
+			`"email" field can't be less than 15 characters!`
+		);
+	});
+
+	it("8. Provided email is too long to be true", async () => {
+		const { status, body } = await request(app)
+			.put(baseURL)
+			.send({ email: "test".repeat(50) });
+
+		expect(status).toBe(422);
+		expect(body.data[0]).toBe(`"email" field can't be more than 40 characers!`);
+	});
+
+	it("9. Provided email can't be empty", async () => {
+		const { status, body } = await request(app)
+			.put(baseURL)
+			.send({ email: "" });
+
+		expect(status).toBe(422);
+		expect(body.data[0]).toBe(`"email" field can't be empty!`);
+	});
+
+	it("10. No email is provided", async () => {
+		const { status, body } = await request(app).put(baseURL);
+
+		expect(status).toBe(422);
+		expect(body.data[0]).toBe(`"email" field is required!`);
 	});
 });
