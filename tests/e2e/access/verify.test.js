@@ -3,6 +3,7 @@ const { faker } = require("@faker-js/faker");
 
 const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
+const User = require("./../../../src/app/Models/User.model");
 
 const baseURL = "/auth/verify-email";
 const testVerificationToken = {
