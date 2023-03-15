@@ -100,7 +100,7 @@ const resetToken_PUT_service = async (data) => {
 
 	if (!user || !user.resetToken) {
 		throw new CustomError(
-			"InvalidInput",
+			"UnAuthorized",
 			"Sorry, you already reset your password!"
 		);
 	}

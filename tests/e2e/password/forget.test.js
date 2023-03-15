@@ -35,7 +35,10 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			email: user.email,
 		});
 
-		// (3) Our expectations
+		// (3) Clean DB
+		await User.findOneAndDelete({ _id: user._id });
+
+		// (4) Our expectations
 		expect(status).toBe(200);
 		expect(body.data).toBe(
 			`Please, check your mailbox, the link is only valid for ${process.env.RESET_PASSWORD_EXPIRES_IN}!`
@@ -80,10 +83,15 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			email: user.email,
 		});
 
-		// (5) Our expectations
+		// (5) Clean DB
+		await User.findOneAndDelete({ _id: user.id });
+
+		// (6) Our expectations
 		expect(status).toBe(401);
 		expect(body.data).toBe("Sorry, your mailbox already have a valid link!");
 	});
+
+	//===============================================================
 
 	it("4. Email field is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
