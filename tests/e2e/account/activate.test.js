@@ -18,8 +18,8 @@ afterAll(async () => {
 	return await disconnect();
 });
 
-describe(`"PUT" ${baseURL} - Activate User Account`, () => {
-	it("1. Activate user account successfully", async () => {
+describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
+	it("1. Initiate activate user account successfully", async () => {
 		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
