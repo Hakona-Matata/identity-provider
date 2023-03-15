@@ -25,9 +25,9 @@ const activateAccount_PUT_service = async ({ email }) => {
 		return `Please, check your mailbox to confirm your account activation\nYou only have ${process.env.ACTIVATION_TOKEN_EXPIRES_IN}`;
 	}
 
-	if (user.isActive) {
+	if (user && user.isActive) {
 		throw new CustomError(
-			"InvalidInput",
+			"UnAuthorized",
 			"Sorry, your account is already active!"
 		);
 	}
@@ -45,7 +45,7 @@ const activateAccount_PUT_service = async ({ email }) => {
 
 		if (decoded) {
 			throw new CustomError(
-				"InvalidInput",
+				"UnAuthorized",
 				"Sorry, you still have a valid link in your mailbox!"
 			);
 		}
@@ -59,12 +59,14 @@ const activateAccount_PUT_service = async ({ email }) => {
 
 	const activationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/account/activate/${activationToken}`;
 
-	await sendEmail({
-		from: "Hakona Matata company",
-		to: user.email,
-		subject: "Email Activation",
-		text: `Hello, ${user.email}\nPlease click the link to activate your email (It's only valid for ${process.env.ACTIVATION_TOKEN_EXPIRES_IN})\n${activationLink}\nthanks.`,
-	});
+	if (process.env.NODE_ENV !== "test") {
+		await sendEmail({
+			from: "Hakona Matata company",
+			to: user.email,
+			subject: "Email Activation",
+			text: `Hello, ${user.email}\nPlease click the link to activate your email (It's only valid for ${process.env.ACTIVATION_TOKEN_EXPIRES_IN})\n${activationLink}\nthanks.`,
+		});
+	}
 
 	const done = await User.findOneAndUpdate(
 		{ email },

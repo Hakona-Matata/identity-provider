@@ -8,7 +8,6 @@ const jwt_errors = require("../Errors/jwt");
 */
 
 module.exports = async (req, res, next) => {
-	console.log("Hi, from protect");
 	const accessToken = req?.headers["authorization"]?.split(" ")[1];
 	const refreshToken = req.body.refreshToken;
 
