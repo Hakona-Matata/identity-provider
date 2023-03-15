@@ -3,8 +3,10 @@ const { faker } = require("@faker-js/faker");
 
 const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
-const User = require("./../../../src/app/Models/User.model");
 const { generate_hash } = require("./../../../src/helpers/hash");
+
+const User = require("./../../../src/app/Models/User.model");
+const Session = require("./../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/account/deactivate";
 
@@ -43,6 +45,10 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 
 		// (4) Clean DB
 		await User.findOneAndDelete({ _id: user._id });
+		await Session.findOneAndDelete({
+			userId: user._id,
+			accessToken,
+		});
 
 		// (5) Our expectations
 		expect(status).toBe(200);
@@ -67,12 +73,14 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 		});
 
 		// (2) Log user In to have the needed accessToken
-
 		const { status, body } = await request(app)
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Our expectaions | The middleware should prevent his access!
+		// (3) Clean DB
+		await User.findOneAndDelete({ _id: user.id });
+
+		// (4) Our expectaions | The middleware should prevent his access!
 		expect(status).toBe(401);
 		expect(body.data).toBe("Sorry, you need to activate your email first!");
 	});

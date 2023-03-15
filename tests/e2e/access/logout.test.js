@@ -3,8 +3,10 @@ const { faker } = require("@faker-js/faker");
 
 const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
-const User = require("./../../../src/app/Models/User.model");
 const { generate_hash } = require("./../../../src/helpers/hash");
+
+const User = require("./../../../src/app/Models/User.model");
+const Session = require("./../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/logout";
 
@@ -44,6 +46,10 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 
 		// (4) clean DB
 		await User.findOneAndDelete({ _id: user._id });
+		await Session.findOneAndDelete({
+			userId: user._id,
+			accessToken: body.data.accessToken,
+		});
 
 		// (5) Our expectations
 		expect(status).toBe(200);

@@ -3,6 +3,7 @@ const { faker } = require("@faker-js/faker");
 
 const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
+const User = require("./../../../src/app/Models/User.model");
 
 const baseURL = "/auth/sign-up";
 
@@ -59,7 +60,10 @@ describe(`"POST" ${baseURL} - create new user"`, () => {
 				userName: faker.random.alpha(10),
 			});
 
-		// (2) Our expectations
+		// (2) Clean DB
+		await User.findOneAndDelete({ userName: fakeUser.userName });
+
+		// (3) Our expectations
 		expect(status).toBe(422);
 		expect(body.data[0]).toBe("Sorry, this email may be already taken!");
 	});

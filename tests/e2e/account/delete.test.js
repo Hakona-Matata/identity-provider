@@ -3,10 +3,11 @@ const { faker } = require("@faker-js/faker");
 
 const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
+
 const User = require("./../../../src/app/Models/User.model");
+const Session = require("./../../../src/app/Models/Session.model");
 
 const { generate_hash } = require("./../../../src/helpers/hash");
-const { generate_token } = require("./../../../src/helpers/token");
 
 const baseURL = "/auth/account/delete";
 
@@ -46,6 +47,10 @@ describe(`"GET" ${baseURL} - Delete User Account`, () => {
 
 		// (4) clean DB
 		await User.findOneAndDelete({ _id: user._id });
+		await Session.findOneAndDelete({
+			userId: user._id,
+			accessToken,
+		});
 
 		// (5) Our expectations
 		expect(status).toBe(200);
@@ -81,6 +86,10 @@ describe(`"GET" ${baseURL} - Delete User Account`, () => {
 
 		// (4) clean DB
 		await User.findOneAndDelete({ _id: user._id });
+		await Session.findOneAndDelete({
+			userId: user._id,
+			accessToken,
+		});
 
 		// (5) Our expectations
 		expect(status).toBe(401);
