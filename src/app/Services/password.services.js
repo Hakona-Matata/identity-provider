@@ -51,7 +51,7 @@ const forgetPassword_POST_service = async (userEmail) => {
 
 		if (decoded) {
 			throw new CustomError(
-				"InvalidInput",
+				"UnAuthorized",
 				"Sorry, your mailbox already have a valid link!"
 			);
 		}
@@ -65,12 +65,14 @@ const forgetPassword_POST_service = async (userEmail) => {
 
 	const resetLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/password/reset/${resetToken}`;
 
-	await sendEmail({
-		from: "Hakona Matata company",
-		to: userEmail,
-		subject: "Forget Password",
-		text: `Hello, ${user.email}\nPlease click the link to activate your email (It's only valid for ${process.env.RESET_PASSWORD_EXPIRES_IN})\n${resetLink}\nthanks.`,
-	});
+	if (process.env.NODE_ENV !== "test") {
+		await sendEmail({
+			from: "Hakona Matata company",
+			to: userEmail,
+			subject: "Forget Password",
+			text: `Hello, ${user.email}\nPlease click the link to activate your email (It's only valid for ${process.env.RESET_PASSWORD_EXPIRES_IN})\n${resetLink}\nthanks.`,
+		});
+	}
 
 	const done = await User.findOneAndUpdate(
 		{ _id: user._id },
@@ -98,7 +100,7 @@ const resetToken_PUT_service = async (data) => {
 
 	if (!user || !user.resetToken) {
 		throw new CustomError(
-			"InvalidInput",
+			"UnAuthorized",
 			"Sorry, you already reset your password!"
 		);
 	}
