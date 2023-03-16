@@ -2,7 +2,6 @@ const jwt = require("jsonwebtoken");
 const Session = require("./../app/Models/Session.model");
 const CustomError = require("./../Errors/CustomError");
 
-// For General use!
 const generate_token = async ({ payload, secret, expiresIn }) => {
 	return await jwt.sign(payload, secret, { expiresIn });
 };
@@ -11,30 +10,6 @@ const verify_token = async ({ token, secret }) => {
 	return await jwt.verify(token, secret);
 };
 
-// Specific use!
-const generate_access_refresh_token = async ({
-	accessTokenPayload,
-	refreshTokenPayload,
-}) => {
-	const accessToken = await generate_token({
-		payload: accessTokenPayload,
-		secret: process.env.ACCESS_TOKEN_SECRET,
-		expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
-	});
-
-	const refreshToken = await generate_token({
-		payload: refreshTokenPayload,
-		secret: process.env.REFRESH_TOKEN_SECRET,
-		expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
-	});
-
-	return {
-		accessToken,
-		refreshToken,
-	};
-};
-
-// After success login attempt return tokens!
 const give_access = async ({ userId }) => {
 	// (1) Prepare payload
 	const payload = { _id: userId };
@@ -67,4 +42,28 @@ module.exports = {
 	generate_token,
 	verify_token,
 	give_access,
+};
+
+// ===================================================
+
+const generate_access_refresh_token = async ({
+	accessTokenPayload,
+	refreshTokenPayload,
+}) => {
+	const accessToken = await generate_token({
+		payload: accessTokenPayload,
+		secret: process.env.ACCESS_TOKEN_SECRET,
+		expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
+	});
+
+	const refreshToken = await generate_token({
+		payload: refreshTokenPayload,
+		secret: process.env.REFRESH_TOKEN_SECRET,
+		expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+	});
+
+	return {
+		accessToken,
+		refreshToken,
+	};
 };
