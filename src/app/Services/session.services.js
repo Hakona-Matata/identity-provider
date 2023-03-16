@@ -1,8 +1,5 @@
 const Session = require("./../Models/Session.model");
-const {
-	verify_token,
-	generate_access_refresh_token,
-} = require("./../../helpers/token");
+const { verify_token, give_access } = require("./../../helpers/token");
 const CustomError = require("./../../Errors/CustomError");
 
 const all_sessions_GET_service = async (userId) => {
@@ -47,32 +44,27 @@ const cancel_session_POST_service = async ({ userId, sessionId }) => {
 	return "Session is cancelled successfully";
 };
 
-const renew_session_POST_service = async ({ userId, givenRefreshToken }) => {
-	// (1) Prepare tokens payload!
-	const payload = {
-		_id: userId,
-	};
-
-	// (2) Generate access & refresh tokens!
-	const { accessToken, refreshToken } = await generate_access_refresh_token({
-		accessTokenPayload: payload,
-		refreshTokenPayload: payload,
+const renew_session_POST_service = async ({ givenRefreshToken }) => {
+	// (1) Verify refresh token
+	const decoded = await verify_token({
+		token: givenRefreshToken,
+		secret: process.env.REFRESH_TOKEN_SECRET,
 	});
 
-	// (3) Delete old tokens from DB
-	const deletedSession = await Session.findOneAndDelete({
+	// (2) Delete old session
+	const deleted = await Session.findOneAndDelete({
 		refreshToken: givenRefreshToken,
 	});
 
-	// (4) Save new tokens into DB
-	const result = await Session.create({
-		userId: deletedSession.userId,
-		accessToken,
-		refreshToken,
-	});
+	if (!deleted) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, this refresh token is revoked!"
+		);
+	}
 
-	// (5) Return user, new tokens!
-	return { accessToken, refreshToken };
+	// (3) Return user, new tokens!
+	return await give_access({ userId: decoded._id });
 };
 
 module.exports = {

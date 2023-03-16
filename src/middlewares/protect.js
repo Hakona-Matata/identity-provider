@@ -1,34 +1,42 @@
-const check_access_refresh_tokens = require("./../helpers/checkAccessRefreshTokens");
 const jwt_errors = require("../Errors/jwt");
 
-/*
-	This middleware checks the validity of tokens:
-	- access token
-	- refresh token (if provided) to get new (access and refresh) tokens
-*/
-
 module.exports = async (req, res, next) => {
-	const accessToken = req?.headers["authorization"]?.split(" ")[1];
-	const refreshToken = req.body.refreshToken;
-
 	try {
-		if (!accessToken && !refreshToken) {
+		// (1) Get access token from request
+		const accessToken = req?.headers["authorization"]?.split(" ")[1];
+
+		if (!accessToken) {
+			return res.status(404).json({ data: "Sorry, access token is not found" });
+		}
+
+		// (2) Verify access token
+		const decoded = await verify_token({
+			token: accessToken,
+			secret: process.env.ACCESS_TOKEN_SECRET,
+		});
+
+		// (3) Get session from DB
+		const session = await Session.findOne({
+			userId: decoded._id,
+			accessToken: token,
+		});
+
+		/*
+			This means that, the access token is
+			- valid 
+			- not expired! 
+			- not manipulated/ malformed! 
+			Only, there is a window to use it! (user revoked it recently | deleted!)
+		*/
+		if (!session) {
 			return res
-				.status(401)
-				.json({ data: "Sorry, you need to pass the needed tokens!" });
+				.status(400)
+				.json({ data: "Sorry, the access token is invalid!" });
 		}
 
-		const result = await check_access_refresh_tokens({ req, res });
-
-		if (refreshToken) {
-			req.userId = result.userId;
-			req.refreshToken = result.refreshToken;
-			return next();
-		}
-
-		req.userId = result.userId;
-		req.accessToken = result.accessToken;
-		return next();
+		req.userId = decoded._id;
+		req.accessToken = session.accessToken;
+		next();
 	} catch (error) {
 		// console.log(error);
 		return jwt_errors({ res, error });

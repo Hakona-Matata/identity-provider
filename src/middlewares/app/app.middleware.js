@@ -7,12 +7,9 @@ const SMS_routes = require("./../../app/Routes/SMS.routes");
 const TOTP_routes = require("../../app/Routes/TOTP.routes");
 const backup_routes = require("../../app/Routes/backup.routes");
 
-const protect = require("../../middlewares/protect");
-const isVerified = require("../../middlewares/isVerified");
-
 const routes_middleware = (app) => {
 	app.use("/auth", access_routes);
-	app.use("/auth/sessions", [protect, isVerified, session_routes]);
+	app.use("/auth/sessions", session_routes);
 	app.use("/auth/account", account_routes);
 	app.use("/auth/password", password_routes);
 	app.use("/auth/otp", OTP_routes);
