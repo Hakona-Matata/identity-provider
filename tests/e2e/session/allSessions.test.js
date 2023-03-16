@@ -103,16 +103,19 @@ describe(`"GET" ${baseURL} - Get All user sessions (valid, expired)`, () => {
 			refreshToken: fakeRefreshToken,
 		});
 
-		// (6) Our test |  Get all available sessions (1 valid + 1 expired)!
+		// (6) Wait a second
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+
+		// (7) Our test |  Get all available sessions (1 valid + 1 expired)!
 		const { status, body } = await request(app)
 			.get(baseURL)
 			.set("authorization", `Bearer ${accessToken}`);
 
-		// (7) Clean DB
+		// (8) Clean DB
 		await User.findOneAndDelete({ _id: user.id });
 		await Session.deleteMany({ userId: user.id.toString() });
 
-		// (8) Our expectations
+		// (9) Our expectations
 		expect(status).toBe(200);
 		expect(body.data.count).toBe(2);
 		expect(body.data.sessions.length).toBe(2);

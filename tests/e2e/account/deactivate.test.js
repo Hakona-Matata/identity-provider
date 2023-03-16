@@ -58,8 +58,8 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 	it(`2. No accessToken is provided`, async () => {
 		const { status, body } = await request(app).put(baseURL);
 
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, you need to pass the needed tokens!");
+		expect(status).toBe(404);
+		expect(body.data).toBe("Sorry, access token is not found");
 	});
 
 	it(`3. account is already deactivated`, async () => {
