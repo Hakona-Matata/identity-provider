@@ -23,7 +23,7 @@ module.exports = async (req, res, next) => {
 
 		/*
 			This means that, the access token is
-			- valid 
+			- valid signature
 			- not expired! 
 			- not manipulated/ malformed! 
 			Only, there is a window to use it! (user revoked it recently | deleted!)

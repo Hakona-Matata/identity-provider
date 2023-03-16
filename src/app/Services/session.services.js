@@ -59,7 +59,7 @@ const renew_session_POST_service = async ({ givenRefreshToken }) => {
 	if (!deleted) {
 		throw new CustomError(
 			"UnAuthorized",
-			"Sorry, this refresh token is revoked!"
+			"Sorry, this refresh token is revoked/ disabled!"
 		);
 	}
 
