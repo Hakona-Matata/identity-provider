@@ -1,3 +1,5 @@
+const { verify_token } = require("./../helpers/token");
+const Session = require("./../app/Models/Session.model");
 const jwt_errors = require("../Errors/jwt");
 
 module.exports = async (req, res, next) => {
@@ -18,9 +20,9 @@ module.exports = async (req, res, next) => {
 		// (3) Get session from DB
 		const session = await Session.findOne({
 			userId: decoded._id,
-			accessToken: token,
+			accessToken,
 		});
-
+console
 		/*
 			This means that, the access token is
 			- valid signature

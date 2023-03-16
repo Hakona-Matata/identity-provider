@@ -47,7 +47,7 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 		// (4) Cancel/ revoke session
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.set("authorization", `Bearer ${accessToken}`)
+			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ sessionId: currentSession.id });
 
 		// (5) Clean DB
