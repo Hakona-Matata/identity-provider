@@ -106,6 +106,7 @@ const DisableOTP_DELETE_service = async ({ userId }) => {
 };
 
 const sendOTP_POST_service = async ({ userId, email }) => {
+	// TODO: I think i should use redirect() in login to hit this instead of making frontend do for me!
 	// (1) Check if we already assigned him one!
 	const otp = await OTP.findOne({ userId, by: "EMAIL" }).select("_id").lean();
 
@@ -122,16 +123,18 @@ const sendOTP_POST_service = async ({ userId, email }) => {
 	// (3) Hash OTP!
 	const hashedOTP = await generate_hash(`${plainTextOTP}`);
 
-	// (4) Send OTP to user mailbox
-	await sendEmail({
-		from: "Hakona Matata company",
-		to: email,
-		subject: "Identity check (OTP)",
-		text: `Hello, ${email}\nThis OTP code "${plainTextOTP}" is only valid for ${
-			process.env.OTP_EXPIRES_IN_SECONDS / 60
-		} minutes\nThanks`,
-	});
-
+	if (process.env.NODE_ENV !== "test") {
+		// (4) Send OTP to user mailbox
+		await sendEmail({
+			from: "Hakona Matata company",
+			to: email,
+			subject: "Identity check (OTP)",
+			text: `Hello, ${email}\nThis OTP code "${plainTextOTP}" is only valid for ${
+				process.env.OTP_EXPIRES_IN_SECONDS / 60
+			} minutes\nThanks`,
+		});
+	}
+	
 	// (5) Save it into DB
 	await OTP.create({ userId, otp: hashedOTP, by: "EMAIL" });
 
