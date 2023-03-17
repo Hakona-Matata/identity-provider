@@ -22,7 +22,7 @@ module.exports = async (req, res, next) => {
 			userId: decoded._id,
 			accessToken,
 		});
-console
+
 		/*
 			This means that, the access token is
 			- valid signature
@@ -40,7 +40,6 @@ console
 		req.accessToken = session.accessToken;
 		next();
 	} catch (error) {
-		// console.log(error);
 		return jwt_errors({ res, error });
 	}
 };

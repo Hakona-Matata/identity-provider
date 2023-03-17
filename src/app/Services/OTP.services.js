@@ -27,15 +27,17 @@ const enableOTP_GET_service = async ({ userId, email, isOTPEnabled }) => {
 	// (3) Hash OTP!
 	const hashedOTP = await generate_hash(`${plainTextOTP}`);
 
-	// (4) Send OTP to user mailbox
-	await sendEmail({
-		from: "Hakona Matata company",
-		to: email,
-		subject: "Identity check (OTP)",
-		text: `Hello, ${email}\nThis code "${plainTextOTP}" is only valid for ${
-			process.env.OTP_EXPIRES_IN_SECONDS / 60
-		} minutes\nThanks`,
-	});
+	if (process.env.NODE_ENV !== "test") {
+		// (4) Send OTP to user mailbox
+		await sendEmail({
+			from: "Hakona Matata company",
+			to: email,
+			subject: "Identity check (OTP)",
+			text: `Hello, ${email}\nThis code "${plainTextOTP}" is only valid for ${
+				process.env.OTP_EXPIRES_IN_SECONDS / 60
+			} minutes\nThanks`,
+		});
+	}
 
 	// (5) Save it into DB
 	await OTP.create({ userId, otp: hashedOTP, by: "EMAIL" });
