@@ -4,7 +4,6 @@ const { faker } = require("@faker-js/faker");
 const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
-const { generate_token } = require("./../../../src/helpers/token");
 const { generate_hash } = require("../../../src/helpers/hash");
 const {
 	generate_randomNumber,
