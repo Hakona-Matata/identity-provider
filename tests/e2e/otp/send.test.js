@@ -5,12 +5,8 @@ const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
-const {
-	generate_randomNumber,
-} = require("./../../../src/helpers/randomNumber");
 
 const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
 const OTP = require("./../../../src/app/Models/OTP.model");
 
 const baseURL = "/auth/otp/send";
