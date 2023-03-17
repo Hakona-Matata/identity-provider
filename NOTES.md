@@ -37,3 +37,6 @@ I'd think the things you should be interested in for a "production ready" applic
 - `Unit testing`: Test individual function/ unit!
 - `Integration testing`: Test two or more interacting functions/ units/ components
 - `End to End testing (e2e)`: Test the whole scenario no matters how many units/ functions they are!
+
+
+- W
