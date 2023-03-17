@@ -9,18 +9,15 @@ module.exports = {
 				const { isValid, phoneNumber, countryCode, countryName, countryIso2 } =
 					validate_phone(value);
 
-				if (!isValid) {
-					return helper.message(
-						`"phone" field is invalid (Must be in "E.164" format)`
-					);
-				}
-
-				return { phoneNumber, countryCode, countryName, countryIso2 };
+				return !isValid
+					? helper.error("any.custom")
+					: { phoneNumber, countryCode, countryName, countryIso2 };
 			})
 			.messages({
 				"string.base": `"phone" field has to be of type string!`,
 				"string.empty": `"phone" field can't be empty!`,
 				"any.required": `"phone" field is required!`,
+				"any.custom": `"phone" field is invalid (Must be in "E.164" format)`,
 			}),
 	}),
 	confirmSMS: Joi.object({

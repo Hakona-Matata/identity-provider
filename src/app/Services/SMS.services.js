@@ -36,13 +36,15 @@ const enableSMS_POST_service = async ({
 	// (3) Hash generated OTP!
 	const hashedOTP = await generate_hash(`${plainTextOTP}`);
 
-	// (4) Send OTP over SMS!
-	await send_SMS({
-		phoneNumber,
-		message: `OTP: ${plainTextOTP}\nIt's valid only for ${
-			process.env.OTP_EXPIRES_IN_SECONDS / 60
-		} minutes`,
-	});
+	if (process.env.NODE_ENV !== "test") {
+		// (4) Send OTP over SMS!
+		await send_SMS({
+			phoneNumber,
+			message: `OTP: ${plainTextOTP}\nIt's valid only for ${
+				process.env.OTP_EXPIRES_IN_SECONDS / 60
+			} minutes`,
+		});
+	}
 
 	// (5) Save it into DB
 	await OTP.create({ userId, otp: hashedOTP, by: "SMS" });
@@ -107,7 +109,7 @@ const confirmSMS_POST_service = async ({ userId, givenOTP }) => {
 const disableSMS_delete_service = async ({ userId }) => {
 	// (1) Get user from DB
 	const user = await User.findOne({ _id: userId })
-	.select("isSMSEnabled")
+		.select("isSMSEnabled")
 		.lean();
 
 	if (!user || !user.isSMSEnabled) {
