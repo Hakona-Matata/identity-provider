@@ -5,22 +5,9 @@ const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
-const {
-	generate_randomNumber,
-} = require("./../../../src/helpers/randomNumber");
 
 const User = require("../../../src/app/Models/User.model");
 const Session = require("../../../src/app/Models/Session.model");
-const OTP = require("./../../../src/app/Models/OTP.model");
-const {
-	verifyBackupCodes_POST_service,
-} = require("../../../src/app/Services/backup.services");
-const {
-	confirmSMS_POST_controller,
-} = require("../../../src/app/controllers/SMS.controllers");
-const {
-	ExportConfigurationContextImpl,
-} = require("twilio/lib/rest/bulkexports/v1/exportConfiguration");
 
 const baseURL = "/auth/sms/disable";
 
@@ -63,7 +50,11 @@ describe(`"DELETE" ${baseURL} - Disable SMS`, () => {
 			.delete(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (5) Our expectations
+		// (5) Clean DB
+		await User.findOneAndDelete({ _id: user.id });
+		await Session.findOneAndDelete({ userId: user.id, accessToken });
+
+		// (6) Our expectations
 		expect(status).toBe(200);
 		expect(body.data).toBe("You disabled OTP over SMS successfully");
 	});
@@ -92,7 +83,11 @@ describe(`"DELETE" ${baseURL} - Disable SMS`, () => {
 			.delete(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Our expectations
+		// (4) Clean DB
+		await User.findOneAndDelete({ _id: user.id });
+		await Session.findOneAndDelete({ userId: user.id, accessToken });
+
+		// (5) Our expectations
 		expect(status).toBe(400);
 		expect(body.data).toBe("Sorry, you already disabled OTP over SMS!");
 	});
