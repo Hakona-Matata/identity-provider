@@ -45,7 +45,10 @@ const confirmSMS_POST_controller = async (req, res, next) => {
 
 const disableSMS_delete_controller = async (req, res, next) => {
 	try {
-		const result = await disableSMS_delete_service({ userId: req.userId });
+		const result = await disableSMS_delete_service({
+			userId: req.userId,
+			isSMSEnabled: req.isSMSEnabled,
+		});
 
 		return success({ res, result });
 	} catch (error) {

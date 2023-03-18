@@ -106,20 +106,14 @@ const confirmSMS_POST_service = async ({ userId, givenOTP }) => {
 	return "OTP over SMS is enabled successfully";
 };
 
-const disableSMS_delete_service = async ({ userId }) => {
-	// (1) Get user from DB
-	const user = await User.findOne({ _id: userId })
-		.select("isSMSEnabled")
-		.lean();
-
-	if (!user || !user.isSMSEnabled) {
+const disableSMS_delete_service = async ({ userId, isSMSEnabled }) => {
+	if (!isSMSEnabled) {
 		throw new CustomError(
 			"AlreadyDone",
 			"Sorry, you already disabled OTP over SMS!"
 		);
 	}
 
-	// (2) Update and save user document
 	const done = await User.findOneAndUpdate(
 		{ _id: userId },
 		{
