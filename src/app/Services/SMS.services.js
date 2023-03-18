@@ -36,13 +36,15 @@ const enableSMS_POST_service = async ({
 	// (3) Hash generated OTP!
 	const hashedOTP = await generate_hash(`${plainTextOTP}`);
 
-	// (4) Send OTP over SMS!
-	await send_SMS({
-		phoneNumber,
-		message: `OTP: ${plainTextOTP}\nIt's valid only for ${
-			process.env.OTP_EXPIRES_IN_SECONDS / 60
-		} minutes`,
-	});
+	if (process.env.NODE_ENV !== "test") {
+		// (4) Send OTP over SMS!
+		await send_SMS({
+			phoneNumber,
+			message: `OTP: ${plainTextOTP}\nIt's valid only for ${
+				process.env.OTP_EXPIRES_IN_SECONDS / 60
+			} minutes`,
+		});
+	}
 
 	// (5) Save it into DB
 	await OTP.create({ userId, otp: hashedOTP, by: "SMS" });
@@ -104,20 +106,14 @@ const confirmSMS_POST_service = async ({ userId, givenOTP }) => {
 	return "OTP over SMS is enabled successfully";
 };
 
-const disableSMS_delete_service = async ({ userId }) => {
-	// (1) Get user from DB
-	const user = await User.findOne({ _id: userId })
-	.select("isSMSEnabled")
-		.lean();
-
-	if (!user || !user.isSMSEnabled) {
+const disableSMS_delete_service = async ({ userId, isSMSEnabled }) => {
+	if (!isSMSEnabled) {
 		throw new CustomError(
 			"AlreadyDone",
 			"Sorry, you already disabled OTP over SMS!"
 		);
 	}
 
-	// (2) Update and save user document
 	const done = await User.findOneAndUpdate(
 		{ _id: userId },
 		{
@@ -137,7 +133,19 @@ const disableSMS_delete_service = async ({ userId }) => {
 };
 
 const sendSMS_POST_service = async ({ userId }) => {
-	// (1) Check if we already assigned him an OTP!
+	// (1) Get user || Also his phone number!
+	const user = await User.findOne({ _id: userId })
+		.select("phoneNumber isSMSEnabled")
+		.lean();
+
+	if (!user || !user.isSMSEnabled) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, we can't send you OTP over SMS!"
+		);
+	}
+
+	// (2) Check if we already assigned him an OTP!
 	const otp = await OTP.findOne({ userId, by: "SMS" }).select("_id").lean();
 
 	if (otp) {
@@ -147,24 +155,23 @@ const sendSMS_POST_service = async ({ userId }) => {
 		);
 	}
 
-	// (2) Get phone number
-	const user = await User.findOne({ _id: userId }).select("phoneNumber").lean();
-
-	// (2) Generate OTP | 6 random numbers
+	// (3) Generate OTP | 6 random numbers
 	const plainTextOTP = generate_randomNumber({ length: 6 });
 
-	// (3) Hash OTP!
+	// (4) Hash OTP!
 	const hashedOTP = await generate_hash(`${plainTextOTP}`);
 
-	// (4) Send SMS
-	await send_SMS({
-		phoneNumber: user.phoneNumber,
-		message: `OTP: ${plainTextOTP}\nIt's valid only for ${
-			process.env.OTP_EXPIRES_IN_SECONDS / 60
-		} minutes`,
-	});
+	if (process.env.NODE_ENV !== "test") {
+		// (5) Send SMS
+		await send_SMS({
+			phoneNumber: user.phoneNumber,
+			message: `OTP: ${plainTextOTP}\nIt's valid only for ${
+				process.env.OTP_EXPIRES_IN_SECONDS / 60
+			} minutes`,
+		});
+	}
 
-	// (5) Save it into DB
+	// (6) Save it into DB
 	const done = await OTP.create({ userId, otp: hashedOTP, by: "SMS" });
 
 	if (!done) {
@@ -178,7 +185,7 @@ const sendSMS_POST_service = async ({ userId }) => {
 };
 
 const verifySMS_post_service = async ({ userId, givenOTP }) => {
-	await verify_OTP({ userId, givenOTP });
+	await verify_OTP({ userId, givenOTP, routePath: "/verify" });
 
 	return await give_access({ userId });
 };
@@ -196,7 +203,19 @@ module.exports = {
 /*
 		Find, check, delete OTP! 
 */
-const verify_OTP = async ({ userId, givenOTP }) => {
+const verify_OTP = async ({ userId, givenOTP, routePath }) => {
+	// (1) check if it's even enabled or not!
+	const user = await User.findOne({ _id: userId })
+		.select("isSMSEnabled")
+		.lean();
+
+	if (routePath && routePath === "/verify" && (!user || !user.isSMSEnabled)) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, you can't verify OTP over SMS"
+		);
+	}
+
 	// (1) Get OTP from DB
 	const otp = await OTP.findOne({ userId, by: "SMS" })
 		.select("otp count")
