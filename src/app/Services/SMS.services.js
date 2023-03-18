@@ -185,7 +185,7 @@ const sendSMS_POST_service = async ({ userId }) => {
 };
 
 const verifySMS_post_service = async ({ userId, givenOTP }) => {
-	await verify_OTP({ userId, givenOTP });
+	await verify_OTP({ userId, givenOTP, routePath: "/verify" });
 
 	return await give_access({ userId });
 };
@@ -203,7 +203,19 @@ module.exports = {
 /*
 		Find, check, delete OTP! 
 */
-const verify_OTP = async ({ userId, givenOTP }) => {
+const verify_OTP = async ({ userId, givenOTP, routePath }) => {
+	// (1) check if it's even enabled or not!
+	const user = await User.findOne({ _id: userId })
+		.select("isSMSEnabled")
+		.lean();
+
+	if (routePath && routePath === "/verify" && (!user || !user.isSMSEnabled)) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, you can't verify OTP over SMS"
+		);
+	}
+
 	// (1) Get OTP from DB
 	const otp = await OTP.findOne({ userId, by: "SMS" })
 		.select("otp count")
