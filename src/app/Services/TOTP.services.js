@@ -1,6 +1,8 @@
-const { generate_secret, verify_totp } = require("./../../helpers/totp");
+const { verify_totp } = require("./../../helpers/totp");
+const generate_secret = require("./.././../helpers/randomString");
 const { give_access } = require("./../../helpers/token");
 const Encrypter = require("./../../helpers/crypto");
+
 const CustomError = require("./../../Errors/CustomError");
 
 const User = require("./../Models/User.model");
@@ -15,7 +17,7 @@ const enableTOTP_POST_service = async ({ userId, isTOTPEnabled }) => {
 	await TOTP.deleteMany({ userId });
 
 	// (2) Create TOTP secret!
-	const secret = await generate_secret();
+	const secret = generate_secret();
 
 	// (3) Encrypt TOTP secret!
 	const encrypter = new Encrypter(process.env.TOTP_ENCRYPTION_KEY);
@@ -34,7 +36,9 @@ const enableTOTP_POST_service = async ({ userId, isTOTPEnabled }) => {
 
 const confirmTOTP_POST_service = async ({ userId, givenTOTP }) => {
 	// (1) Get TOTP from DB
-	const totp = await TOTP.findOne({ userId }).select("secret count").lean();
+	const totp = await TOTP.findOne({ userId })
+		.select("secret isSecretTemp count")
+		.lean();
 
 	if (!totp) {
 		// check if user really asked for enabling totp!
@@ -44,7 +48,11 @@ const confirmTOTP_POST_service = async ({ userId, givenTOTP }) => {
 		);
 	}
 
-	if (totp && totp.count > 3) {
+	if (totp && !totp.isSecretTemp) {
+		throw new CustomError("AlreadyDone", "Sorry, you already confirmed TOTP!");
+	}
+
+	if (totp && totp.count >= 3) {
 		// If the user keeps sending wrong totp during setup, then, that means the secret used in
 		// creating the QR Code is wrong, so delete it and start from scratch!
 		await TOTP.findOneAndDelete({ _id: totp._id });
