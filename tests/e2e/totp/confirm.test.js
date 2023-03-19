@@ -10,7 +10,6 @@ const { generate_totp } = require("./../../../src/helpers/totp");
 const User = require("../../../src/app/Models/User.model");
 const Session = require("./../../../src/app/Models/Session.model");
 const TOTP = require("./../../../src/app/Models/TOTP.model");
-const { totp } = require("otplib");
 
 const baseURL = "/auth/totp/confirm";
 
