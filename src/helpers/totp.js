@@ -1,17 +1,11 @@
-const speakeasy = require("speakeasy");
+const { totp } = require("otplib");
 
-const generate_secret = async () => {
-	const { base32 } = await speakeasy.generateSecret();
-
-	return base32;
+const generate_totp = ({ secret }) => {
+	return totp.generate(secret);
 };
 
 const verify_totp = async ({ token, secret }) => {
-	return speakeasy.totp.verify({
-		secret,
-		encoding: "base32",
-		token,
-	});
+	return totp.verify({ token, secret });
 };
 
-module.exports = { generate_secret, verify_totp };
+module.exports = { generate_totp, verify_totp };
