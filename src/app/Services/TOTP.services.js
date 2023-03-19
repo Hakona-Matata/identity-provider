@@ -139,7 +139,7 @@ const verifyTOTP_POST_service = async ({ userId, givenTOTP }) => {
 		.lean();
 
 	if (!user) {
-		throw new CustomError("InvalidInput", "Sorry, Invalid input!");
+		throw new CustomError("UnAuthorized", "Sorry, the given code is invalid");
 	}
 
 	if (user && !user.isTOTPEnabled) {

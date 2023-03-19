@@ -5,11 +5,9 @@ const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
-const { generate_totp } = require("./../../../src/helpers/totp");
 
 const User = require("../../../src/app/Models/User.model");
 const Session = require("./../../../src/app/Models/Session.model");
-const TOTP = require("./../../../src/app/Models/TOTP.model");
 
 const baseURL = "/auth/totp/disable";
 
@@ -61,7 +59,7 @@ describe(`"DELETE" ${baseURL} - Disable TOTP as security layer`, () => {
 		expect(body.data).toBe("TOTP disabled successfully!");
 	});
 
-	it.only("2. TOTP is already disabled", async () => {
+	it("2. TOTP is already disabled", async () => {
 		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),

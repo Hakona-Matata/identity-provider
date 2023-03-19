@@ -51,7 +51,7 @@ const verifyTOTP_POST_controller = async (req, res, next) => {
 		const validatedData = await validate(TOTP_validators.verifyTOTP, req.body);
 
 		const result = await verifyTOTP_POST_service({
-			email: validatedData.email,
+			userId: validatedData.userId,
 			givenTOTP: validatedData.totp,
 		});
 
