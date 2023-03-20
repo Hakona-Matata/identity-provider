@@ -32,7 +32,7 @@ const generateBackupCodes_POST_service = async ({
 	if (backupCodes.length >= 1) {
 		throw new CustomError(
 			"UnAuthorized",
-			"Sorry, you already generated 5 backup codes!"
+			"Sorry, you already generated backup codes!"
 		);
 	}
 

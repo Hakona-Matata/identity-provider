@@ -38,5 +38,5 @@ I'd think the things you should be interested in for a "production ready" applic
 - `Integration testing`: Test two or more interacting functions/ units/ components
 - `End to End testing (e2e)`: Test the whole scenario no matters how many units/ functions they are!
 
-
-- W
+- Did practice on normalization and denormalization
+- Do some CONSTANTS especiaally for the error codes! better at development!
