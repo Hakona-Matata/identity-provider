@@ -15,6 +15,7 @@ module.exports = {
 				"number.positive": `"code" field has to be positive!`,
 				"number.min": `"code" field has to be 12 digits!`,
 				"number.max": `"code" field has to be 12 digits!`,
+				"number.unsafe": `"code" field has to be 12 digits!`,
 			}),
 	}),
 
