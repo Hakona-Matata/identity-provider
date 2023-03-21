@@ -1,12 +1,12 @@
 const {
-	generate_backup_codes,
-	verify_find_backup_code,
+	generate_save_backup_codes,
+	verify_delete_backup_code,
 } = require("./../../helpers/backup");
+const { give_access } = require("./../../helpers/token");
 const CustomError = require("./../../Errors/CustomError");
 
 const User = require("./../Models/User.model");
 const Backup = require("./../Models/Backup.model");
-const { give_access } = require("./../../helpers/token");
 
 const generateBackupCodes_POST_service = async ({
 	enabledMethodsCount,
@@ -32,7 +32,7 @@ const generateBackupCodes_POST_service = async ({
 	if (backupCodes.length >= 1) {
 		throw new CustomError(
 			"UnAuthorized",
-			"Sorry, you already generated 5 backup codes!"
+			"Sorry, you already generated backup codes!"
 		);
 	}
 
@@ -41,6 +41,29 @@ const generateBackupCodes_POST_service = async ({
 
 	// (4) Return codes to user, and wait for confirm saving them!
 	return codes;
+};
+
+const regenerateBackupCodes_POST_service = async ({ userId }) => {
+	const oldBackupCodes = await Backup.find({ userId }).select("_id").lean();
+
+	if (oldBackupCodes.length == 0) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, you can't regenerate backup codes!"
+		);
+	}
+
+	await Backup.deleteMany({ userId });
+
+	await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isBackupEnabled: false },
+			$unset: { BackupEnabledAt: 1 },
+		}
+	);
+
+	return await generate_save_backup_codes({ userId });
 };
 
 const confirmBackupCodes_POST_service = async ({
@@ -55,16 +78,13 @@ const confirmBackupCodes_POST_service = async ({
 		);
 	}
 
-	// (1) Validate given backup code
-	const hashedCodeId = await validate_backup_code({
+	// (1) Verify given backup code (delete it if it's true!)
+	await verify_delete_backup_code({
 		plainTextCode: code,
 		userId,
 	});
 
-	// (2) Delete used code!
-	await Backup.findOneAndDelete({ _id: hashedCodeId });
-
-	// (3) Convert the remaning 4 codes to be permanant
+	// (2) Convert the remaning codes to be permanant (For future account recovery)
 	await Backup.updateMany(
 		{ userId },
 		{
@@ -72,7 +92,7 @@ const confirmBackupCodes_POST_service = async ({
 		}
 	);
 
-	// (4) Update user document
+	// (3) Update user document
 	const done = await User.findOneAndUpdate(
 		{ _id: userId },
 		{
@@ -90,33 +110,6 @@ const confirmBackupCodes_POST_service = async ({
 	return "Backup codes enabled successfully";
 };
 
-const regenerateBackupCodes_POST_service = async ({ userId }) => {
-	// (1) Delete all old ones (even if they still valid!)
-	await Backup.deleteMany({ userId });
-
-	// (2) Update user document, so he needs to verify given new codes before enabling the feature!
-	await User.findOneAndUpdate(
-		{ _id: userId },
-		{
-			$set: { isBackupEnabled: false },
-			$unset: { BackupEnabledAt: 1 },
-		}
-	);
-
-	// (3) Generate and save them
-	const codes = await generate_save_backup_codes({ userId });
-
-	if (!codes) {
-		throw new CustomError(
-			"ProcessFailed",
-			"Sorry, regenerate backup codes failed"
-		);
-	}
-
-	// (4) Return codes to user so, he can save them somewhere
-	return codes;
-};
-
 const disableBackupCodes_delete_service = async ({
 	userId,
 	isBackupEnabled,
@@ -127,7 +120,7 @@ const disableBackupCodes_delete_service = async ({
 
 	await Backup.deleteMany({ userId });
 
-	const done = await User.findOneAndUpdate(
+	const isBackupDisabled = await User.findOneAndUpdate(
 		{ _id: userId },
 		{
 			$set: { isBackupEnabled: false },
@@ -135,10 +128,10 @@ const disableBackupCodes_delete_service = async ({
 		}
 	);
 
-	if (!done) {
+	if (!isBackupDisabled) {
 		throw new CustomError(
 			"ProcessFailed",
-			"Sorry, disable backup codes failed."
+			"Sorry, disable backup codes failed!"
 		);
 	}
 
@@ -146,11 +139,10 @@ const disableBackupCodes_delete_service = async ({
 };
 
 const verifyBackupCodes_POST_service = async ({ email, code }) => {
-	// (1) Check if user is really enabled backup codes!
 	const user = await User.findOne({ email }).select("isBackupEnabled").lean();
 
 	if (!user) {
-		throw new CustomError("InvalidInput", "Sorry, backup code is invalid!");
+		throw new CustomError("UnAuthorized", "Sorry, backup code is invalid!");
 	}
 
 	if (user && !user.isBackupEnabled) {
@@ -160,20 +152,11 @@ const verifyBackupCodes_POST_service = async ({ email, code }) => {
 		);
 	}
 
-	// (2) Find valid matched backup code (if found)
-	const matchedCodeId = await validate_backup_code({
+	await verify_delete_backup_code({
 		plainTextCode: code,
 		userId: user._id,
 	});
 
-	// (3) Now, delete the document
-	const done = await Backup.findOneAndDelete({ _id: matchedCodeId });
-
-	if (!done) {
-		throw new CustomError("ProcessFailed", "Sorry, verify backup code failed");
-	}
-
-	// (4) Give user needed tokens
 	return await give_access({ userId: user._id });
 
 	// TODO: Should redirected to change password route or something like that
@@ -185,52 +168,4 @@ module.exports = {
 	regenerateBackupCodes_POST_service,
 	disableBackupCodes_delete_service,
 	verifyBackupCodes_POST_service,
-};
-
-// Some helpers
-const validate_backup_code = async ({ plainTextCode, userId }) => {
-	// (1) Find all valid user backup codes
-	const allUserValidBackupCodes = await Backup.find({
-		userId,
-	})
-		.select("code")
-		.lean();
-
-	if (!allUserValidBackupCodes) {
-		throw new CustomError("UnAuthorized", "Sorry, no remaining valid codes!");
-	}
-
-	// (2) Compare given plain text backup code against our previously found ones!
-	const validBackup = await verify_find_backup_code({
-		arrayHashedCode: allUserValidBackupCodes,
-		plainTextCode,
-	});
-
-	if (validBackup.length !== 1) {
-		throw new CustomError("InvalidInput", "Sorry, backup code is invalid!");
-	}
-
-	// (3) Return that hashedBackup _id for further use
-	return validBackup[0]._id;
-};
-
-const generate_save_backup_codes = async ({ userId }) => {
-	// (1) Generate backup codes
-	const { codes, hashedCodes } = await generate_backup_codes({
-		userId,
-		backupCodeNumbers: 10,
-	});
-
-	// (2) Save generated backup codes!
-	// * The ordered flag when set to false, increases the performance!
-	const done = await Backup.insertMany(hashedCodes, { ordered: false });
-
-	if (!done) {
-		throw new CustomError(
-			"ProcessFailed",
-			"Sorry, generate backup codes failed"
-		);
-	}
-
-	return codes;
 };

@@ -7,6 +7,7 @@ module.exports = async (req, res, next) => {
 		// (1) Get access token from request
 		const accessToken = req?.headers["authorization"]?.split(" ")[1];
 
+		// TODO: Make it 401 status code!
 		if (!accessToken) {
 			return res.status(404).json({ data: "Sorry, access token is not found" });
 		}
