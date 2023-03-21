@@ -43,6 +43,20 @@ const generateBackupCodes_POST_service = async ({
 	return codes;
 };
 
+const regenerateBackupCodes_POST_service = async ({ userId }) => {
+	await Backup.deleteMany({ userId });
+
+	await User.findOneAndUpdate(
+		{ _id: userId },
+		{
+			$set: { isBackupEnabled: false },
+			$unset: { BackupEnabledAt: 1 },
+		}
+	);
+
+	return await generate_save_backup_codes({ userId });
+};
+
 const confirmBackupCodes_POST_service = async ({
 	userId,
 	code,
@@ -85,33 +99,6 @@ const confirmBackupCodes_POST_service = async ({
 	}
 
 	return "Backup codes enabled successfully";
-};
-
-const regenerateBackupCodes_POST_service = async ({ userId }) => {
-	// (1) Delete all old ones (even if they still valid!)
-	await Backup.deleteMany({ userId });
-
-	// (2) Update user document, so he needs to verify given new codes before enabling the feature!
-	await User.findOneAndUpdate(
-		{ _id: userId },
-		{
-			$set: { isBackupEnabled: false },
-			$unset: { BackupEnabledAt: 1 },
-		}
-	);
-
-	// (3) Generate and save them
-	const codes = await generate_save_backup_codes({ userId });
-
-	if (!codes) {
-		throw new CustomError(
-			"ProcessFailed",
-			"Sorry, regenerate backup codes failed"
-		);
-	}
-
-	// (4) Return codes to user so, he can save them somewhere
-	return codes;
 };
 
 const disableBackupCodes_delete_service = async ({
