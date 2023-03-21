@@ -64,7 +64,7 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 		expect(body.data[0]).toBe('"password" field is required!');
 	});
 
-	it("4. Email is not in valid email format", async () => {
+	it("4. Email is not a valid email", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ email: "testtesttesttest", password: "tesTT12!@" });

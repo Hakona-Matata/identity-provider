@@ -38,6 +38,15 @@ describe(`"POST" ${baseURL} - Regenerate New Backup codes`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
+		await User.findOneAndUpdate(
+			{ _id: user.id },
+			{ $set: { isOTPEnabled: true } }
+		);
+
+		await request(app)
+			.post("/auth/backup/generate")
+			.set("Authorization", `Bearer ${accessToken}`);
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
@@ -50,7 +59,35 @@ describe(`"POST" ${baseURL} - Regenerate New Backup codes`, () => {
 		expect(body.data.length).toEqual(10);
 	});
 
-	it("2. Regenerate backup codes route is private", async () => {
+	it("2. User can't regenerate codes if he doesn't previously generated ones", async () => {
+		const user = await User.create({
+			email: faker.internet.email(),
+			userName: faker.random.alpha(10),
+			isVerified: true,
+			isActive: true,
+			password: await generate_hash("tesTES@!#1232"),
+		});
+
+		const {
+			body: {
+				data: { accessToken },
+			},
+		} = await request(app)
+			.post("/auth/login")
+			.send({ email: user.email, password: "tesTES@!#1232" });
+
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.set("Authorization", `Bearer ${accessToken}`);
+
+		await User.findOneAndDelete({ _id: user.id });
+		await Session.findOneAndDelete({ userId: user.id, accessToken });
+
+		expect(status).toBe(401);
+		expect(body.data).toBe("Sorry, you can't regenerate backup codes!");
+	});
+
+	it("3. Regenerate backup codes route is private", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
 		expect(status).toBe(404);

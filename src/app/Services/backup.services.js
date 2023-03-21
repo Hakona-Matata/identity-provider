@@ -44,6 +44,15 @@ const generateBackupCodes_POST_service = async ({
 };
 
 const regenerateBackupCodes_POST_service = async ({ userId }) => {
+	const oldBackupCodes = await Backup.find({ userId }).select("_id").lean();
+
+	if (oldBackupCodes.length == 0) {
+		throw new CustomError(
+			"UnAuthorized",
+			"Sorry, you can't regenerate backup codes!"
+		);
+	}
+
 	await Backup.deleteMany({ userId });
 
 	await User.findOneAndUpdate(
@@ -130,7 +139,6 @@ const disableBackupCodes_delete_service = async ({
 };
 
 const verifyBackupCodes_POST_service = async ({ email, code }) => {
-	// (1) Check if user is really enabled backup codes!
 	const user = await User.findOne({ email }).select("isBackupEnabled").lean();
 
 	if (!user) {
@@ -144,13 +152,11 @@ const verifyBackupCodes_POST_service = async ({ email, code }) => {
 		);
 	}
 
-	// (2) Verify given backup code (delete it if it's true!)
 	await verify_delete_backup_code({
 		plainTextCode: code,
 		userId: user._id,
 	});
 
-	// (3) Give user needed tokens!
 	return await give_access({ userId: user._id });
 
 	// TODO: Should redirected to change password route or something like that
