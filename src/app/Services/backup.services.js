@@ -111,7 +111,7 @@ const disableBackupCodes_delete_service = async ({
 
 	await Backup.deleteMany({ userId });
 
-	const done = await User.findOneAndUpdate(
+	const isBackupDisabled = await User.findOneAndUpdate(
 		{ _id: userId },
 		{
 			$set: { isBackupEnabled: false },
@@ -119,10 +119,10 @@ const disableBackupCodes_delete_service = async ({
 		}
 	);
 
-	if (!done) {
+	if (!isBackupDisabled) {
 		throw new CustomError(
 			"ProcessFailed",
-			"Sorry, disable backup codes failed."
+			"Sorry, disable backup codes failed!"
 		);
 	}
 
