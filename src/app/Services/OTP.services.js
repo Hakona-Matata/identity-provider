@@ -1,3 +1,5 @@
+const STATUS = require("../../constants/statusCodes");
+const CODE = require("../../constants/errorCodes");
 const User = require("./../Models/User.model");
 const OTP = require("./../Models/OTP.model");
 const { generate_randomNumber } = require("./../../helpers/randomNumber");
@@ -106,15 +108,15 @@ const DisableOTP_DELETE_service = async ({ userId }) => {
 };
 
 const sendOTP_POST_service = async ({ userId, email }) => {
-	// TODO: I think i should use redirect() in login to hit this instead of making frontend do for me!
 	// (1) Check if we already assigned him one!
 	const otp = await OTP.findOne({ userId, by: "EMAIL" }).select("_id").lean();
 
 	if (otp) {
-		throw new CustomError(
-			"AlreadyDone",
-			"Sorry, we already sent you OTP and it's still valid!"
-		);
+		throw new CustomError({
+			status: STATUS.BAD_REQUEST,
+			code: CODE.BAD_REQUEST,
+			message: "Sorry, we already sent you OTP and it's still valid!",
+		});
 	}
 
 	// (2) Generate OTP | 6 random numbers
@@ -134,7 +136,7 @@ const sendOTP_POST_service = async ({ userId, email }) => {
 			} minutes\nThanks`,
 		});
 	}
-	
+
 	// (5) Save it into DB
 	await OTP.create({ userId, otp: hashedOTP, by: "EMAIL" });
 

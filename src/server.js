@@ -10,7 +10,9 @@ const thirdParty_middlewares = require("./middlewares/app/thirdParth.middlewares
 
 //==================================================
 const app = express();
-
+process.on("uncaughtException", function (err) {
+	console.log(err);
+});
 // (1) After intializing our server istance, let's connect to MongoDB!
 process.env.NODE_ENV === "test" ? "" : connect_DB(app);
 

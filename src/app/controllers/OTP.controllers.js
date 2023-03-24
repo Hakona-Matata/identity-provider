@@ -1,3 +1,6 @@
+const STATUS = require("./../../constants/statusCodes");
+const CODE = require("../../constants/errorCodes");
+
 const validate = require("../../helpers/validate");
 const { success, failure } = require("../../Errors/responseHandler");
 const OTP_validators = require("../Validators/OTP.validators");
@@ -53,11 +56,10 @@ const sendOTP_POST_controller = async (req, res, next) => {
 		const validatedData = await validate(OTP_validators.sendOTP, req.body);
 
 		const result = await sendOTP_POST_service({
-			userId: validatedData.userId,
-			email: validatedData.email,
+			...validatedData,
 		});
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}

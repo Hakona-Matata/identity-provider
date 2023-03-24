@@ -1,3 +1,6 @@
+const STATUS = require("./../../../src/constants/statusCodes");
+const CODE = require("./../../../src/constants/errorCodes");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
@@ -6,7 +9,6 @@ const app = require("../../../src/server");
 const { generate_hash } = require("./../../../src/helpers/hash");
 
 const User = require("./../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/login";
 
@@ -20,7 +22,6 @@ afterAll(async () => {
 
 describe(`"POST" ${baseURL} - Log user In`, () => {
 	it("1. Log user In successfully", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -28,19 +29,10 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken: body.data.accessToken,
-		});
-
-		// (4) Our expectations
 		expect(status).toBe(200);
 		expect(body.data).toHaveProperty("accessToken");
 		expect(body.data).toHaveProperty("refreshToken");
@@ -51,8 +43,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ password: "teST12!@" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"email" field is required!');
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"email" field is required!'],
+		});
 	});
 
 	it("3. Password is not provided", async () => {
@@ -60,8 +57,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: "test123@gmail.com" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"password" field is required!');
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"password" field is required!'],
+		});
 	});
 
 	it("4. Email is not a valid email", async () => {
@@ -69,8 +71,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: "testtesttesttest", password: "tesTT12!@" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"email" field has to be a valid email!');
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"email" field has to be a valid email!'],
+		});
 	});
 
 	it("5. Email is too short to be true", async () => {
@@ -78,10 +85,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: "t@test.com", password: "tesTT12!@" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(
-			`"email" field can't be less than 15 characters!`
-		);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"email" field can't be less than 15 characters!`],
+		});
 	});
 
 	it("6. Email is too long to be true", async () => {
@@ -89,8 +99,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: `${"t".repeat(50)}@test.com`, password: "tesTT12!@" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"email" field can't be more than 40 characers!`);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"email" field can't be more than 40 characers!`],
+		});
 	});
 
 	it("7. Email is not of type string", async () => {
@@ -98,8 +113,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: 111111111111, password: "tesTT12!@" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"email" field has to be of type string!');
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"email" field has to be of type string!'],
+		});
 	});
 
 	it("8. Email can't be empty", async () => {
@@ -107,8 +127,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: "", password: "tesTT12!@" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"email" field can't be empty!`);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"email" field can't be empty!`],
+		});
 	});
 
 	it("9. Password can't be empty", async () => {
@@ -117,8 +142,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "",
 		});
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"password" field can't be empty!`);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"password" field can't be empty!`],
+		});
 	});
 
 	it("10. Password is too short to be true", async () => {
@@ -128,7 +158,15 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 		});
 
 		expect(status).toBe(422);
-		expect(body.data.length).toEqual(2);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"password" field can't be less than 8 characters!`,
+				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+			],
+		});
 	});
 
 	it("11. Password is too long to be true", async () => {
@@ -139,8 +177,16 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 				password: `${"test".repeat(50)}`,
 			});
 
-		expect(status).toBe(422);
-		expect(body.data.length).toEqual(2);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"password" field can't be more than 16 characers!`,
+				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+			],
+		});
 	});
 
 	it("12. Password is not of string type", async () => {
@@ -149,8 +195,13 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: 23532455,
 		});
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"password" field has to be of type string!');
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"password" field has to be of type string!'],
+		});
 	});
 
 	it("13. Given email is incorrect", async () => {
@@ -159,34 +210,37 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "tesTES@!#1232",
 		});
 
-		expect(status).toBe(422);
-		expect(body.data).toBe(`Email or password is incorrect!`);
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, email or password are incorrect!",
+		});
 	});
 
 	it("14. Given password is incorrect", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
 			password: "tesTES@!#1233",
 		});
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-
-		// (4) Our expectations
-		expect(status).toBe(422);
-		expect(body.data).toBe(`Email or password is incorrect!`);
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, your email address isn't verified yet!",
+		});
 	});
 
 	it("15. User email must be verified", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -194,22 +248,21 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
 			password: "tesTES@!#1232",
 		});
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-
-		// (4) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe(`Sorry, your email address isn't verified yet!`);
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, your email address isn't verified yet!",
+		});
 	});
 
 	it("16. User account is inactive/ disabled", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -218,22 +271,46 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
 			password: "tesTES@!#1232",
 		});
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-
-		// (4) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe(`Sorry, you need to activate your email first!`);
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, your account is deactivated!",
+		});
 	});
 
-	it("17. User account has 1 2fa method active", async () => {
-		// (1) Create and save a fake user
+	it("17. User account is not deleted", async () => {
+		const user = await User.create({
+			email: faker.internet.email(),
+			userName: faker.random.alpha(10),
+			isVerified: true,
+			isActive: true,
+			isOTPEnabled: true,
+			isDeleted: true,
+			password: await generate_hash("tesTES@!#1232"),
+		});
+
+		const { status, body } = await request(app).post(baseURL).send({
+			email: user.email,
+			password: "tesTES@!#1232",
+		});
+
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, your account is deleted recently!",
+		});
+	});
+
+	it("18. User account has one 2fa method enabled", async () => {
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -243,56 +320,50 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
 			password: "tesTES@!#1232",
 		});
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-
-		// (4) Our expectations
-		expect(status).toBe(200);
-		expect(body.data.methods.length).toEqual(1);
-		expect(body.data.userId).toEqual(user._id.toString());
-		expect(body.data.message).toEqual(
-			"Please, choose one of the given 2FA methods!"
-		);
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: "Please, check your mailbox for the OTP code",
+		});
 	});
 
-	it("18. User account has 2 2fa method active", async () => {
-		// (1) Create and save a fake user
+	it("19. User account has two 2fa method enabled", async () => {
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
 			isOTPEnabled: true,
-			isTOTPEnabled: true,
+			isSMSEnabled: true,
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
 			password: "tesTES@!#1232",
 		});
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-
-		// (4) Our expectations
-		expect(status).toBe(200);
-		expect(body.data.methods.length).toEqual(2);
-		expect(body.data.userId).toEqual(user._id.toString());
-		expect(body.data.message).toEqual(
-			"Please, choose one of the given 2FA methods!"
-		);
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: {
+				message: "Please, choose one of these security methods!",
+				userId: user.id,
+				methods: [{ isOTPEnabled: true }, { isSMSEnabled: true }],
+			},
+		});
 	});
 
-	it("19. User account has 3 2fa method active", async () => {
-		// (1) Create and save a fake user
+	it("20. User account has 3 2fa method enabled", async () => {
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -304,21 +375,25 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
 			password: "tesTES@!#1232",
 		});
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-
-		// (4) Our expectations
-		expect(status).toBe(200);
-		expect(body.data.methods.length).toEqual(3);
-		expect(body.data.userId).toEqual(user._id.toString());
-		expect(body.data.message).toEqual(
-			"Please, choose one of the given 2FA methods!"
-		);
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: {
+				message: "Please, choose one of these security methods!",
+				userId: user.id,
+				methods: [
+					{ isOTPEnabled: true },
+					{ isSMSEnabled: true },
+					{ isTOTPEnabled: true },
+				],
+			},
+		});
 	});
 });

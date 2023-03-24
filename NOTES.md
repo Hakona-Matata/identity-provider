@@ -40,3 +40,6 @@ I'd think the things you should be interested in for a "production ready" applic
 
 - Did practice on normalization and denormalization
 - Do some CONSTANTS especiaally for the error codes! better at development!
+
+- `Health check` API
+- `Alerting` API (that includes Push notification or so)
