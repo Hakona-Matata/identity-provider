@@ -73,7 +73,7 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 			success: false,
 			status: STATUS.UNAUTHORIZED,
 			code: CODE.UNAUTHORIZED,
-			message: `Sorry, the access token is invalid!`,
+			message: `Sorry, the token is invalid!`,
 		});
 	});
 
@@ -90,11 +90,11 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 			success: false,
 			status: STATUS.UNAUTHORIZED,
 			code: CODE.UNAUTHORIZED,
-			message: `Sorry, the access token is invalid!`,
+			message: `Sorry, the token is invalid!`,
 		});
 	});
 
-	it('5. Logout route is private', async() => {
+	it("5. Logout route is private", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
 		expect(status).toBe(STATUS.UNAUTHORIZED);
@@ -104,5 +104,5 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 			code: CODE.UNAUTHORIZED,
 			message: "Sorry, the access token is required!",
 		});
-	})
+	});
 });

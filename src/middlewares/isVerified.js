@@ -1,5 +1,8 @@
+const STATUS = require("./../constants/statusCodes");
+const CODE = require("./../constants/errorCodes");
+
+const date_to_days_hours_minutes = require("./../helpers/date");
 const User = require("./../app/Models/User.model");
-const CustomError = require("./../Errors/CustomError");
 
 // TODO: Create new end point to create new verify email address!
 
@@ -8,27 +11,41 @@ module.exports = async (req, res, next) => {
 	try {
 		const user = await User.findOne({ _id: req.userId })
 			.select(
-				`email isVerified isActive isDeleted isOTPEnabled isSMSEnabled isTOTPEnabled isBackupEnabled ${
+				`email isVerified isActive isDeleted isDeletedAt isOTPEnabled isSMSEnabled isTOTPEnabled isBackupEnabled ${
 					req.originalUrl === "/auth/password/change" ? "password" : ""
 				}` // just to decrease on db call!
 			)
 			.lean();
 
 		if (!user || user.isDeleted) {
-			return res.status(401).json({
-				data: "Sorry, your account is deleted!",
+			const { days, hours, minutes } = date_to_days_hours_minutes({
+				ISODate: user.isDeletedAt,
+				expiresAfterSeconds: process.env.DELETE_IN_30_DAYS * 1000,
+			});
+
+			return res.status(STATUS.FORBIDDEN).json({
+				success: false,
+				status: STATUS.FORBIDDEN,
+				code: CODE.FORBIDDEN,
+				message: `Sorry, your account is temporarily deleted!\nIt will be deleted permenantly in ${days} days, ${hours} hours, and ${minutes} minutes\nunless you canceled the deletion!`,
 			});
 		}
 
 		if (!user || !user.isActive) {
-			return res.status(401).json({
-				data: "Sorry, you need to activate your account first!",
+			return res.status(STATUS.FORBIDDEN).json({
+				success: false,
+				status: STATUS.FORBIDDEN,
+				code: CODE.FORBIDDEN,
+				message: "Sorry, you need to activate your account first!",
 			});
 		}
 
 		if (!user || !user.isVerified) {
-			return res.status(401).json({
-				data: "Sorry, You need to verify your email address first!",
+			return res.status(STATUS.FORBIDDEN).json({
+				success: false,
+				status: STATUS.FORBIDDEN,
+				code: CODE.FORBIDDEN,
+				message: "Sorry, You need to verify your email address first!",
 			});
 		}
 

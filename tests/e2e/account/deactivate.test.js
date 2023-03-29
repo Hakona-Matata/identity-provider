@@ -1,3 +1,6 @@
+const STATUS = require("./../../../src/constants/statusCodes");
+const CODE = require("./../../../src/constants/errorCodes");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
@@ -20,7 +23,6 @@ afterAll(async () => {
 
 describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 	it("1. Deactivate account successfully", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -29,7 +31,6 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to have the needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -38,32 +39,20 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Deactivate user account
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: "Account deactivated successfully!",
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("Account deactivated successfully!");
 	});
 
-	it(`2. No accessToken is provided`, async () => {
-		const { status, body } = await request(app).put(baseURL);
-
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
-	});
-
-	it(`3. account is already deactivated`, async () => {
-		// (1) Create and save a fake user
+	it(`2. Account is already deactivated`, async () => {
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -72,16 +61,28 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to have the needed accessToken
 		const { status, body } = await request(app)
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, your account is deactivated!",
+		});
+	});
 
-		// (4) Our expectaions | The middleware should prevent his access!
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, you need to activate your email first!");
+	it(`3. Deactivate account route is private`, async () => {
+		const { status, body } = await request(app).put(baseURL);
+
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, the access token is required!",
+		});
 	});
 });

@@ -5,10 +5,10 @@ const CODE = require("../../constants/errorCodes");
 const { generate_token, verify_token } = require("./../../helpers/token");
 const give_access = require("./../../helpers/giveAccess");
 const { generate_hash, verify_hash } = require("./../../helpers/hash");
+const sendEmail = require("./../../helpers/email");
 
 const User = require("./../Models/User.model");
 const Session = require("../Models/Session.model");
-const sendEmail = require("./../../helpers/email");
 
 const signUp_POST_service = async (data) => {
 	const user = await User.create({
@@ -83,7 +83,7 @@ const verify_GET_service = async (data) => {
 const login_POST_service = async ({ email, password }) => {
 	const user = await User.findOne({ email })
 		.select(
-			"email password isVerified isActive isDeleted isOTPEnabled isSMSEnabled isTOTPEnabled"
+			"email password isVerified isActive isTempDeleted isOTPEnabled isSMSEnabled isTOTPEnabled"
 		)
 		.lean();
 
@@ -111,11 +111,11 @@ const login_POST_service = async ({ email, password }) => {
 		});
 	}
 
-	if (user.isDeleted) {
+	if (user.isTempDeleted) {
 		throw new CustomError({
 			status: STATUS.UNAUTHORIZED,
 			code: CODE.UNAUTHORIZED,
-			message: "Sorry, your account is deleted recently!",
+			message: "Sorry, your account is temporarily deleted!",
 		});
 	}
 

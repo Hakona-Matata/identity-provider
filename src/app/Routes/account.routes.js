@@ -25,6 +25,14 @@ router
 
 router
 	.route("/delete")
-	.delete(protect, isVerified, account_controllers.deleteAccount_DELETE_controller);
+	.delete(
+		protect,
+		isVerified,
+		account_controllers.deleteAccount_DELETE_controller
+	);
+
+router
+	.route("/cancel-delete")
+	.put(account_controllers.cancelDeleteAccount_PUT_controller);
 
 module.exports = router;

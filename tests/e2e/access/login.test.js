@@ -285,28 +285,30 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 		});
 	});
 
-	it("17. User account is not deleted", async () => {
+	it("17. User account is temp deleted", async () => {
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			isOTPEnabled: true,
 			isDeleted: true,
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
-			password: "tesTES@!#1232",
+			password: user.password,
 		});
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
-			message: "Sorry, your account is deleted recently!",
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"password" field can't be more than 16 characers!`,
+				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+			],
 		});
 	});
 

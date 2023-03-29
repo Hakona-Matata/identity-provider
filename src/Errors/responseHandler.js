@@ -18,14 +18,16 @@ const failure = ({ res, error }) => {
 				success: false,
 				status: statusCodes.UNAUTHORIZED,
 				code: errorCodes.UNAUTHORIZED,
-				message: `Sorry, the access token is invalid!`,
+				message: `Sorry, the token is invalid!`,
 			});
 			break;
 
 		case "TokenExpiredError":
 			res.status(statusCodes.UNAUTHORIZED).json({
+				success: false,
+				status: statusCodes.UNAUTHORIZED,
 				code: errorCodes.UNAUTHORIZED,
-				message: `Sorry, your token is expired!`,
+				message: `Sorry, the token is expired!`,
 			});
 			break;
 

@@ -5,6 +5,7 @@ const { verify_token } = require("./../helpers/token");
 const Session = require("./../app/Models/Session.model");
 const { failure } = require("./../Errors/responseHandler");
 
+// TODO: make it auth instead of protect
 module.exports = async (req, res, next) => {
 	try {
 		const accessToken = req?.headers["authorization"]?.split(" ")[1];

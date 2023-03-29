@@ -1,3 +1,6 @@
+const STATUS = require("./../../../src/constants/statusCodes");
+const CODE = require("./../../../src/constants/errorCodes");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
@@ -5,7 +8,6 @@ const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const User = require("./../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
 
 const { generate_hash } = require("./../../../src/helpers/hash");
 
@@ -19,9 +21,8 @@ afterAll(async () => {
 	return await disconnect();
 });
 
-describe(`"GET" ${baseURL} - Delete User Account`, () => {
+describe(`"DELETE" ${baseURL} - Delete User Account`, () => {
 	it("1. Delete user account successfully", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -31,7 +32,6 @@ describe(`"GET" ${baseURL} - Delete User Account`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -40,27 +40,20 @@ describe(`"GET" ${baseURL} - Delete User Account`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Log user out!
 		const { status, body } = await request(app)
 			.delete(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: "Your account Will be deleted permenantly in 30 days, unless you cancelled the deletion later!",
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe(
-			"Account deleted successfully!\n(It Will be deleted permenantly after 30 days)"
-		);
 	});
 
 	it("2. Account is already deleted", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -70,7 +63,6 @@ describe(`"GET" ${baseURL} - Delete User Account`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -79,20 +71,22 @@ describe(`"GET" ${baseURL} - Delete User Account`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Log user out!
 		const { status, body } = await request(app)
 			.delete(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
-		});
+		expect(status).toBe(STATUS.FORBIDDEN);
+	});
 
-		// (5) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, your account is deleted!");
+	it("3. Account deletion route is private", async () => {
+		const { status, body } = await request(app).delete(baseURL);
+
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, the access token is required!",
+		});
 	});
 });
