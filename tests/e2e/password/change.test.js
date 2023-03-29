@@ -1,3 +1,6 @@
+const STATUS = require("./../../../src/constants/statusCodes");
+const CODE = require("./../../../src/constants/errorCodes");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
@@ -20,7 +23,6 @@ afterAll(async () => {
 
 describe(`"PUT" ${baseURL} - Change Password`, () => {
 	it("1. Change user password successfully", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -29,7 +31,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -38,7 +39,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -48,20 +48,16 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#1212",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: "Password changed successfully!",
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("Password changed successfully");
 	});
 
 	it("2. Given password is wrong", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -70,7 +66,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -79,8 +74,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
-		const { status, body, error } = await request(app)
+		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({
@@ -89,20 +83,18 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#1212",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, the given password is incorrect!",
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, the password is invalid!");
 	});
 
+	//==============================================================
+
 	it("3. newPassword and confirmNewPassword fields don't match", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -111,7 +103,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -120,7 +111,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -130,24 +120,16 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#234",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"confirmNewPassword" field doesn't match "password" field`],
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(
-			`"confirmNewPassword" field doesn't match "password" field`
-		);
 	});
 
-	//==============================================================
-
 	it("4. No user inputs are provided at all", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -156,7 +138,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -165,25 +146,24 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				'"oldPassword" field is required!',
+				'"newPassword" field is required!',
+				'"confirmNewPassword" is required',
+			],
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data.length).toEqual(3);
 	});
 
 	it("5. oldPassword field is not provided", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -192,7 +172,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -201,25 +180,21 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ newPassword: "tesTES@!#12", confirmNewPassword: "tesTES@!#12" });
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"oldPassword" field is required!'],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"oldPassword" field is required!');
 	});
 
 	it("6. newPassword field is not provided", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -228,7 +203,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -237,29 +211,24 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ oldPassword: "tesTES@!#12", confirmNewPassword: "tesTES@!#12" });
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				'"newPassword" field is required!',
+				`"confirmNewPassword" field doesn't match "password" field`,
+			],
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"newPassword" field is required!');
-		expect(body.data[1]).toBe(
-			`"confirmNewPassword" field doesn't match "password" field`
-		);
 	});
 
 	it("7. confirmNewPassword field is not provided", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -268,7 +237,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -277,28 +245,23 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ oldPassword: "tesTES@!#12", newPassword: "tesTES@!#12" });
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"confirmNewPassword" is required'],
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"confirmNewPassword" is required');
 	});
 
 	//==============================================================
 
 	it("8. oldPassword field is not of type string", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -307,7 +270,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -316,7 +278,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -326,20 +287,16 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"oldPassword" field has to be of type string!'],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"oldPassword" field has to be of type string!');
-		expect(body.data.length).toEqual(1);
 	});
 
 	it("9. oldPassword field is too short to be true", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -348,7 +305,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -357,7 +313,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -367,25 +322,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"oldPassword" field can't be less than 8 characters!`,
+				'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data.length).toEqual(2);
-		expect(body.data[0]).toBe(
-			`"oldPassword" field can't be less than 8 characters!`
-		);
-		expect(body.data[1]).toBe(
-			'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)'
-		);
 	});
 
 	it("10. oldPassword field is too long to be true", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -394,7 +343,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -403,7 +351,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -413,25 +360,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"oldPassword" field can't be more than 16 characers!`,
+				'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data.length).toEqual(2);
-		expect(body.data[0]).toBe(
-			`"oldPassword" field can't be more than 16 characers!`
-		);
-		expect(body.data[1]).toBe(
-			'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)'
-		);
 	});
 
 	it("11. oldPassword field can't be empty", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -440,7 +381,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -449,7 +389,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -459,20 +398,16 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"oldPassword" field can't be empty!`],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data.length).toEqual(1);
-		expect(body.data[0]).toBe(`"oldPassword" field can't be empty!`);
 	});
 
 	it("12. oldPassword field pattern is invalid", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -481,7 +416,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -490,7 +424,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -500,22 +433,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(
-			'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)'
-		);
 	});
 
 	//==============================================================
 	it("13. newPassword field is not of type string", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -524,7 +454,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -533,7 +462,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -543,23 +471,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				'"newPassword" field has to be of type string!',
+				`"confirmNewPassword" field doesn't match "password" field`,
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"newPassword" field has to be of type string!');
-		expect(body.data[1]).toBe(
-			`"confirmNewPassword" field doesn't match "password" field`
-		);
-		expect(body.data.length).toEqual(2);
 	});
 
 	it("14. newPassword field is too short to be true", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -568,7 +492,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -577,7 +500,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -587,28 +509,20 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"newPassword" field can't be less than 8 characters!`,
+				'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+				`"confirmNewPassword" field doesn't match "password" field`,
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data.length).toEqual(3);
-		expect(body.data[0]).toBe(
-			`"newPassword" field can't be less than 8 characters!`
-		);
-		expect(body.data[1]).toBe(
-			'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)'
-		);
-		expect(body.data[2]).toBe(
-			`"confirmNewPassword" field doesn't match "password" field`
-		);
 	});
 
 	it("15. newPassword field is too long to be true", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -617,7 +531,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -626,7 +539,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -636,28 +548,20 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"newPassword" field can't be more than 16 characers!`,
+				'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+				`"confirmNewPassword" field doesn't match "password" field`,
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data.length).toEqual(3);
-		expect(body.data[0]).toBe(
-			`"newPassword" field can't be more than 16 characers!`
-		);
-		expect(body.data[1]).toBe(
-			'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)'
-		);
-		expect(body.data[2]).toBe(
-			`"confirmNewPassword" field doesn't match "password" field`
-		);
 	});
 
 	it("16. newPassword field can't be empty", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -666,7 +570,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -675,7 +578,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -685,23 +587,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"newPassword" field can't be empty!`,
+				`"confirmNewPassword" field doesn't match "password" field`,
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data.length).toEqual(2);
-		expect(body.data[0]).toBe(`"newPassword" field can't be empty!`);
-		expect(body.data[1]).toBe(
-			`"confirmNewPassword" field doesn't match "password" field`
-		);
 	});
 
 	it("17. newPassword field pattern is invalid", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -710,7 +608,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -719,7 +616,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -729,27 +625,21 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
+				`"confirmNewPassword" field doesn't match "password" field`,
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data.length).toBe(2);
-		expect(body.data[0]).toBe(
-			'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)'
-		);
-		expect(body.data[1]).toBe(
-			`"confirmNewPassword" field doesn't match "password" field`
-		);
 	});
 
 	//==============================================================
 
 	it("18. confirmNewPassword is not of type string", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -758,7 +648,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -767,7 +656,6 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#12" });
 
-		// (3) Change password
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -777,18 +665,15 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: 112341234,
 			});
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken,
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"confirmNewPassword" field doesn't match "password" field`,
+				'"confirmNewPassword" must be a string',
+			],
 		});
-
-		expect(status).toBe(422);
-		expect(body.data.length).toBe(2);
-		expect(body.data[0]).toBe(
-			`"confirmNewPassword" field doesn't match "password" field`
-		);
-		expect(body.data[1]).toBe('"confirmNewPassword" must be a string');
 	});
 });

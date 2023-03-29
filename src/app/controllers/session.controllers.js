@@ -1,3 +1,6 @@
+const STATUS = require("./../../constants/statusCodes");
+const CODE = require("../../constants/errorCodes");
+
 const { success, failure } = require("../../Errors/responseHandler");
 const validate = require("./../../helpers/validate");
 const session_validators = require("./../Validators/session.validators");
@@ -11,7 +14,7 @@ const all_sessions_GET_controller = async (req, res, next) => {
 	try {
 		const result = await all_sessions_GET_service(req.userId);
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}
@@ -26,7 +29,7 @@ const cancel_session_POST_controller = async (req, res, next) => {
 			sessionId: validatedData.sessionId,
 		});
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}
@@ -40,7 +43,7 @@ const renew_session_POST_controller = async (req, res, next) => {
 			givenRefreshToken: validatedData.refreshToken,
 		});
 
-		return success({ res, result });
+		return success({ status: STATUS.CREATED, code: CODE.CREATED, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}

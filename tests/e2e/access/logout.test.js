@@ -1,12 +1,14 @@
+const STATUS = require("./../../../src/constants/statusCodes");
+const CODE = require("./../../../src/constants/errorCodes");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
+const { connect, disconnect } = require("../../db.config");
 const { generate_hash } = require("./../../../src/helpers/hash");
 
 const User = require("./../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/logout";
 
@@ -20,7 +22,6 @@ afterAll(async () => {
 
 describe(`"POST" ${baseURL} - Log user out`, () => {
 	it("1. it should log user out successfully", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -29,7 +30,6 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to have needed accessToken
 		const {
 			body: {
 				data: { accessToken },
@@ -38,29 +38,29 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Log user out!
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send();
+			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user._id });
-		await Session.findOneAndDelete({
-			userId: user._id,
-			accessToken: body.data.accessToken,
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: "Logged out successfully",
 		});
-
-		// (5) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("Logged out successfully");
 	});
 
 	it("2. No accessToken is provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, the access token is required!",
+		});
 	});
 
 	it("3. Malformed accessToken", async () => {
@@ -68,8 +68,13 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 			.post(baseURL)
 			.set("authorization", "Bearer test");
 
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, your token is malformed!");
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: `Sorry, the token is invalid!`,
+		});
 	});
 
 	it("4. Invalid accessToken", async () => {
@@ -80,7 +85,24 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 				`Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`
 			);
 
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, your token is invalid!");
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: `Sorry, the token is invalid!`,
+		});
+	});
+
+	it("5. Logout route is private", async () => {
+		const { status, body } = await request(app).post(baseURL);
+
+		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, the access token is required!",
+		});
 	});
 });

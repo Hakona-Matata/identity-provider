@@ -1,33 +1,29 @@
-const {
-	generate_token,
-	verify_token,
-	give_access,
-} = require("./../../helpers/token");
-const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const CustomError = require("./../../Errors/CustomError");
+const STATUS = require("../../constants/statusCodes");
+const CODE = require("../../constants/errorCodes");
+
+const { generate_token, verify_token } = require("./../../helpers/token");
+const give_access = require("./../../helpers/giveAccess");
+const { generate_hash, verify_hash } = require("./../../helpers/hash");
+const sendEmail = require("./../../helpers/email");
 
 const User = require("./../Models/User.model");
 const Session = require("../Models/Session.model");
-const sendEmail = require("./../../helpers/email");
 
 const signUp_POST_service = async (data) => {
-	// (1) Create user from given payload
-	const user = new User({
+	const user = await User.create({
 		...data,
 		password: await generate_hash(data.password),
 	});
 
-	// (2) Create verification token
 	const verificationToken = await generate_token({
 		payload: { _id: user._id },
 		secret: process.env.VERIFICATION_TOKEN_SECRET,
 		expiresIn: process.env.VERIFICATION_TOKEN_EXPIRES_IN,
 	});
 
-	// (3) Create verification link
 	const link = `${process.env.BASE_URL}:${process.env.PORT}/auth/verify-email/${verificationToken}`;
 
-	// (4) Send Verification email to user mailbox
 	if (process.env.NODE_ENV !== "test") {
 		await sendEmail({
 			from: "Hakona Matata company",
@@ -36,118 +32,116 @@ const signUp_POST_service = async (data) => {
 			text: `Hello, ${user.email}\nPlease click the link to verify your email (It's only valid for ${process.env.VERIFICATION_TOKEN_EXPIRES_IN})\n${link}\nthanks.`,
 		});
 	}
-	// (5) Update user document
-	user.verificationToken = verificationToken;
 
-	// (6) Save user into our DB
-	await user.save();
+	const isUserCreated = await User.findOneAndUpdate(
+		{ _id: user.id },
+		{ $set: { verificationToken } }
+	);
 
-	return "Please, check your mailbox to verify your email address.";
+	if (!isUserCreated) {
+		throw new CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Sorry, Sign up process failed!",
+		});
+	}
+
+	return "Please, check your mailbox to verify your email address!";
 };
 
 const verify_GET_service = async (data) => {
-	// (1) Verify token
-	const decoded = await verify_token({
+	const decodedVerificationToken = await verify_token({
 		token: data.verificationToken,
 		secret: process.env.VERIFICATION_TOKEN_SECRET,
 	});
 
-	// (2) Get user document
 	const user = await User.findOne({
-		_id: decoded._id,
+		_id: decodedVerificationToken._id,
 	})
 		.select("verificationToken isVerified")
 		.lean();
 
-	if (!user.verificationToken && user.isVerified === true) {
-		throw new CustomError("InvalidInput", "Your account is already verified!");
+	if (!user.verificationToken || user.isVerified) {
+		throw new CustomError({
+			status: STATUS.BAD_REQUEST,
+			code: CODE.BAD_REQUEST,
+			message: "Sorry, your account is already verified!",
+		});
 	}
 
-	// (3) Update and save user into our DB
 	await User.findOneAndUpdate(
-		{ _id: decoded._id },
+		{ _id: decodedVerificationToken._id },
 		{
 			$set: { isVerified: true, isVerifiedAt: new Date() },
 			$unset: { verificationToken: 1 },
 		}
 	);
 
-	return "Your account is verified successfully";
+	return "Your account is verified successfully!";
 };
 
-const login_POST_service = async (data) => {
-	// (1) Get user from DB
-	const user = await User.findOne({ email: data.email })
+const login_POST_service = async ({ email, password }) => {
+	const user = await User.findOne({ email })
 		.select(
-			"password isVerified isActive isOTPEnabled isSMSEnabled isTOTPEnabled"
+			"email password isVerified isActive isTempDeleted isOTPEnabled isSMSEnabled isTOTPEnabled"
 		)
 		.lean();
 
 	if (!user) {
-		throw new CustomError("InvalidInput", "Email or password is incorrect!");
+		throw new CustomError({
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, email or password are incorrect!",
+		});
 	}
 
-	// (2) Check password
+	if (!user.isVerified) {
+		throw new CustomError({
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, your email address isn't verified yet!",
+		});
+	}
+
+	if (!user.isActive) {
+		throw new CustomError({
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, your account is deactivated!",
+		});
+	}
+
+	if (user.isTempDeleted) {
+		throw new CustomError({
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, your account is temporarily deleted!",
+		});
+	}
+
 	const isPasswordCorrect = await verify_hash({
-		plainText: data.password,
+		plainText: password,
 		hash: user.password,
 	});
 
 	if (!isPasswordCorrect) {
-		throw new CustomError("InvalidInput", "Email or password is incorrect!");
+		throw new CustomError({
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, email or password are incorrect!",
+		});
 	}
 
-	// (3) Check email verification status
-	if (!user.isVerified) {
-		throw new CustomError(
-			"UnAuthorized",
-			"Sorry, your email address isn't verified yet!"
-		);
-	}
-
-	// (4) Check fore account activation status
-	if (!user.isActive) {
-		throw new CustomError(
-			"UnAuthorized",
-			"Sorry, you need to activate your email first!"
-		);
-	}
-
-	// (5) Check for all the enabled methods as 2FA!
-	const enabledMethods = [];
-
-	if (user.isOTPEnabled) {
-		enabledMethods.push({ isOTPEnabled: true });
-	}
-
-	if (user.isSMSEnabled) {
-		enabledMethods.push({ isSMSEnabled: true });
-	}
-
-	if (user.isTOTPEnabled) {
-		enabledMethods.push({ isTOTPEnabled: true });
-	}
-
-	// (5) The frontend should show the user all the enabled methods, so he can choose whatever he wants
-	if (enabledMethods.length >= 1) {
-		return {
-			message: "Please, choose one of the given 2FA methods!",
-			userId: user._id,
-			methods: enabledMethods,
-		};
-	}
-
-	// (6) If no methods are enabled, then just give him needed tokens!
-	return await give_access({ userId: user._id });
+	return await give_access({ user });
 };
 
 const logout_POST_service = async ({ userId, accessToken }) => {
-	const done = await Session.findOneAndDelete({
+	const isUserLoggedOut = await Session.findOneAndDelete({
 		userId,
 		accessToken,
 	});
 
-	if (!done) {
+	if (!isUserLoggedOut) {
 		throw new CustomError("ProcessFailed", "Sorry, the logout attempt failed");
 	}
 

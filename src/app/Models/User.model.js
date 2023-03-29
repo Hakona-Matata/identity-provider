@@ -62,4 +62,12 @@ const UserSchema = new Schema(
 	}
 );
 
+UserSchema.index(
+	{ isDeleted: 1 },
+	{
+		expireAfterSeconds: +process.env.DELETE_IN_30_DAYS,
+		partialFilterExpression: { isDeleted: true },
+	}
+);
+
 module.exports = mongoose.model("User", UserSchema);

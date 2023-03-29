@@ -1,46 +1,48 @@
+const STATUS = require("./../constants/statusCodes");
+const CODE = require("./../constants/errorCodes");
+
 const { verify_token } = require("./../helpers/token");
 const Session = require("./../app/Models/Session.model");
-const jwt_errors = require("../Errors/jwt");
+const { failure } = require("./../Errors/responseHandler");
 
+// TODO: make it auth instead of protect
 module.exports = async (req, res, next) => {
 	try {
-		// (1) Get access token from request
 		const accessToken = req?.headers["authorization"]?.split(" ")[1];
 
-		// TODO: Make it 401 status code!
 		if (!accessToken) {
-			return res.status(404).json({ data: "Sorry, access token is not found" });
+			return res.status(STATUS.UNAUTHORIZED).json({
+				success: false,
+				status: STATUS.UNAUTHORIZED,
+				code: CODE.UNAUTHORIZED,
+				message: "Sorry, the access token is required!",
+			});
 		}
 
-		// (2) Verify access token
 		const decoded = await verify_token({
 			token: accessToken,
 			secret: process.env.ACCESS_TOKEN_SECRET,
 		});
 
-		// (3) Get session from DB
-		const session = await Session.findOne({
+		const isSessionFound = await Session.findOne({
 			userId: decoded._id,
 			accessToken,
 		});
 
-		/*
-			This means that, the access token is
-			- valid signature
-			- not expired! 
-			- not manipulated/ malformed! 
-			Only, there is a window to use it! (user revoked it recently | deleted!)
-		*/
-		if (!session) {
-			return res
-				.status(400)
-				.json({ data: "Sorry, the access token is invalid!" });
+		if (!isSessionFound) {
+			return res.status(STATUS.UNAUTHORIZED).json({
+				success: false,
+				status: STATUS.UNAUTHORIZED,
+				code: CODE.UNAUTHORIZED,
+				message: "Sorry, the access token is revoked!",
+			});
 		}
 
 		req.userId = decoded._id;
-		req.accessToken = session.accessToken;
+		req.accessToken = isSessionFound.accessToken;
 		next();
 	} catch (error) {
-		return jwt_errors({ res, error });
+		// console.log({ error });
+		return failure({ res, error });
 	}
 };

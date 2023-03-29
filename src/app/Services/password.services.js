@@ -1,59 +1,79 @@
+const CustomError = require("./../../Errors/CustomError");
+const STATUS = require("../../constants/statusCodes");
+const CODE = require("../../constants/errorCodes");
+
 const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const { generate_token, verify_token } = require("./../../helpers/token");
-const CustomError = require("./../../Errors/CustomError");
 const sendEmail = require("./../../helpers/email");
 
 const User = require("./../Models/User.model");
 const Session = require("./../Models/Session.model");
 
 const changePassword_PUT_service = async (data) => {
-	// (1) Compare hashes!
 	const isPasswordValid = await verify_hash({
 		plainText: data.oldPassword,
-		hash: data.userPassword,
+		hash: data.currentUserPassword,
 	});
 
 	if (!isPasswordValid) {
-		throw new CustomError("UnAuthorized", "Sorry, the password is invalid!");
+		throw new CustomError({
+			status: STATUS.UNAUTHORIZED,
+			code: CODE.UNAUTHORIZED,
+			message: "Sorry, the given password is incorrect!",
+		});
 	}
 
-	// (2) create new hash
 	const newPassword = await generate_hash(data.newPassword);
 
-	// (3) Save new password
-	await User.findOneAndUpdate(
+	const isPasswordUpdated = await User.findOneAndUpdate(
 		{ _id: data.userId },
 		{ $set: { password: newPassword, passwordChangedAt: new Date() } }
 	);
 
-	// (4) Delete all sessions
-	await Session.deleteMany({ userId: data.userId });
+	if (!isPasswordUpdated) {
+		throw CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Password update failed.",
+		});
+	}
 
-	return "Password changed successfully";
+	const areOldSessionsDeleted = await Session.deleteMany({
+		userId: data.userId,
+	});
+
+	if (!areOldSessionsDeleted) {
+		throw CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Old sessions deletion failed",
+		});
+	}
+
+	return "Password changed successfully!";
 };
 
 const forgetPassword_POST_service = async (userEmail) => {
-	const message = `Please, check your mailbox, the link is only valid for ${process.env.RESET_PASSWORD_EXPIRES_IN}!`;
-
 	const user = await User.findOne({ email: userEmail })
 		.select("_id resetToken")
 		.lean();
 
 	if (!user) {
-		return message;
+		return `Please, check your mailbox!`;
 	}
 
 	if (user && user.resetToken) {
-		const decoded = await verify_token({
+		const decodedResetToken = await verify_token({
 			token: user.resetToken,
 			secret: process.env.RESET_PASSWORD_SECRET,
 		});
 
-		if (decoded) {
-			throw new CustomError(
-				"UnAuthorized",
-				"Sorry, your mailbox already have a valid link!"
-			);
+		if (decodedResetToken) {
+			throw new CustomError({
+				status: STATUS.FORBIDDEN,
+				code: CODE.FORBIDDEN,
+				message: "Sorry, your mailbox already has a valid reset link!",
+			});
 		}
 	}
 
@@ -74,57 +94,69 @@ const forgetPassword_POST_service = async (userEmail) => {
 		});
 	}
 
-	const done = await User.findOneAndUpdate(
+	const isForgetPasswordSucceeded = await User.findOneAndUpdate(
 		{ _id: user._id },
 		{ $set: { resetToken } }
 	).select("_id");
 
-	if (!done) {
-		throw new CustomError("ProcessFailed", "Sorry, Forget password failed");
+	if (!isForgetPasswordSucceeded) {
+		throw new CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Sorry, Forget password failed",
+		});
 	}
 
-	return message;
+	return `Please, check your mailbox!`;
 };
 
 const resetToken_PUT_service = async (data) => {
-	// (1) Verify given token
-	const decoded = await verify_token({
+	const decodedResetToken = await verify_token({
 		token: data.resetToken,
 		secret: process.env.RESET_PASSWORD_SECRET,
 	});
 
-	// (2) Get user, and check if he already asked for password reset!
-	const user = await User.findOne({ _id: decoded._id })
+	const user = await User.findOne({ _id: decodedResetToken._id })
 		.select("resetToken")
 		.lean();
 
-	if (!user || !user.resetToken) {
-		throw new CustomError(
-			"UnAuthorized",
-			"Sorry, you already reset your password!"
-		);
+	if (user && !user.resetToken) {
+		throw new CustomError({
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, you already reset your password!",
+		});
 	}
 
-	// (3) Create new password
-	const password = await generate_hash(data.password);
+	const newPassword = await generate_hash(data.password);
 
-	// (4) Delete all sessions found created by that forgetton password
-	await Session.deleteMany({ userId: user._id });
+	const areOldSessionsDeleted = await Session.deleteMany({ userId: user._id });
 
-	// (5) Update user document
-	const done = await User.findOneAndUpdate(
-		{ _id: decoded._id },
+	if (!areOldSessionsDeleted) {
+		throw new CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Old sessions deletion failed.",
+		});
+	}
+
+	const isPasswordResetSuccessfully = await User.findOneAndUpdate(
+		{ _id: decodedResetToken._id },
 		{
-			$set: { password, resetAt: new Date() },
+			$set: { password: newPassword, resetAt: new Date() },
 			$unset: { resetToken: 1 },
 		}
 	).select("_id");
 
-	if (!done) {
-		throw new CustomError("ProcessFailed", "Sorry, Reset password failed");
+	if (!isPasswordResetSuccessfully) {
+		throw new CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Sorry, Reset password failed",
+		});
 	}
 
-	return "Password reset was successful";
+	return "Password reset successfully!";
 };
 
 module.exports = {

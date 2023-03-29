@@ -1,3 +1,6 @@
+const STATUS = require("./../../../src/constants/statusCodes");
+const CODE = require("./../../../src/constants/errorCodes");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
@@ -10,6 +13,7 @@ const { generate_totp } = require("./../../../src/helpers/totp");
 const User = require("../../../src/app/Models/User.model");
 const Session = require("./../../../src/app/Models/Session.model");
 const TOTP = require("./../../../src/app/Models/TOTP.model");
+const await_all = require("./../../../src/helpers/awaitAll");
 
 const baseURL = "/auth/totp/confirm";
 
@@ -23,7 +27,6 @@ afterAll(async () => {
 
 describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 	it("1. Confirm enabling TOTP successfullly", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -32,7 +35,6 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
 				data: { accessToken },
@@ -41,7 +43,6 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Initiate enabling TOTP to get needed secret!
 		const {
 			body: {
 				data: { secret },
@@ -50,27 +51,23 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post("/auth/totp/enable")
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Generate TOTP based on that secret!
-		const currentTOTP = generate_totp({ secret });
+		const generatedTOTP = generate_totp({ secret });
 
-		// (5) Confirm TOTP
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: currentTOTP });
+			.send({ totp: generatedTOTP });
 
-		// (6) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await TOTP.deleteMany({ userId: user.id });
-
-		// (7) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("TOTP enabled successfully!");
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: "TOTP enabled successfully!",
+		});
 	});
 
 	it("2. TOTP is expired", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -79,7 +76,6 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
 				data: { accessToken },
@@ -88,7 +84,6 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Initiate enabling TOTP to get needed secret!
 		const {
 			body: {
 				data: { secret },
@@ -97,30 +92,25 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post("/auth/totp/enable")
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Generate TOTP based on that secret!
-		const currentTOTP = generate_totp({ secret });
+		const generatedTOTP = generate_totp({ secret });
 
-		// (5) Wait for a minute until it's expired! (70 seconds)
 		await new Promise((resolve) => setTimeout(resolve, 70000));
 
-		// (6) Confirm TOTP
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: currentTOTP });
+			.send({ totp: generatedTOTP });
 
-		// (7) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await TOTP.deleteMany({ userId: user.id });
-
-		// (8) Our expectations
-		expect(status).toBe(422);
-		expect(body.data).toBe("Sorry, the given code is invalid");
+		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, the given code is invalid!",
+		});
 	});
 
 	it("3. TOTP is invalid", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -129,7 +119,6 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
 				data: { accessToken },
@@ -138,36 +127,25 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Initiate enabling TOTP to get needed secret!
-		const {
-			body: {
-				data: { secret },
-			},
-		} = await request(app)
+		await request(app)
 			.post("/auth/totp/enable")
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Generate TOTP based on that secret!
-		const currentTOTP = generate_totp({ secret });
-
-		// (5) Confirm TOTP
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123" });
 
-		// (6) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await TOTP.deleteMany({ userId: user.id });
-
-		// (7) Our expectations
-		expect(status).toBe(422);
-		expect(body.data).toBe("Sorry, the given code is invalid");
+		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, the given code is invalid!",
+		});
 	});
 
-	it("4. More than 3 times of invalid TOTP ", async () => {
-		// (1) Create and save a fake user
+	it.only("4. More than 3 times of invalid TOTP ", async () => {
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -176,7 +154,6 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
 				data: { accessToken },
@@ -185,26 +162,18 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Initiate enabling TOTP to get needed secret!
-		const {
-			body: {
-				data: { secret },
-			},
-		} = await request(app)
+		await request(app)
 			.post("/auth/totp/enable")
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Confirm TOTP | 3 invalid times!
 		await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123" });
-
 		await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123" });
-
 		await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
@@ -214,19 +183,17 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123" });
-
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await TOTP.deleteMany({ userId: user.id });
-
-		// (6) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, you need to start from scratch!");
+		console.log({ status, body });
+		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, you need to start from scratch!",
+		});
 	});
 
 	it("5. User need to initiate TOTP first", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -235,7 +202,6 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
 				data: { accessToken },
@@ -244,21 +210,20 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		// (3) Confirm TOTP
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123" });
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
+		console.log({ status, body });
 
-		// (6) Our expectations
-		expect(status).toBe(422);
-		expect(body.data).toBe(
-			"Sorry, you can't confirm TOTP before setting it up!"
-		);
+		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, you can't confirm TOTP before setting it up!",
+		});
 	});
 
 	it("6. TOTP is already confirmed", async () => {

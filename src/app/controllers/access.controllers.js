@@ -1,3 +1,6 @@
+const STATUS = require("./../../constants/statusCodes");
+const CODE = require("../../constants/errorCodes");
+
 const { success, failure } = require("../../Errors/responseHandler");
 const validate = require("./../../helpers/validate");
 
@@ -17,7 +20,12 @@ const signUp_POST_controller = async (req, res, next) => {
 
 		const result = await signUp_POST_service(validatedData);
 
-		return success({ res, result });
+		return success({
+			status: STATUS.CREATED,
+			code: CODE.CREATED,
+			res,
+			result,
+		});
 	} catch (error) {
 		return failure({ res, error });
 	}
@@ -29,7 +37,7 @@ const verify_GET_controller = async (req, res, next) => {
 
 		const result = await verify_GET_service(validatedData);
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}
@@ -39,9 +47,9 @@ const login_POST_controller = async (req, res, next) => {
 	try {
 		const validatedData = await validate(access_validators.login, req.body);
 
-		const result = await login_POST_service(validatedData);
+		const result = await login_POST_service({ ...validatedData });
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}
@@ -54,7 +62,7 @@ const logout_POST_controller = async (req, res, next) => {
 			accessToken: req.accessToken,
 		});
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}

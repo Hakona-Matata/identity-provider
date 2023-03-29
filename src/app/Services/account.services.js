@@ -1,16 +1,24 @@
-const User = require("./../Models/User.model");
+const CustomError = require("./../../Errors/CustomError");
+const STATUS = require("../../constants/statusCodes");
+const CODE = require("../../constants/errorCodes");
+
 const { generate_token, verify_token } = require("./../../helpers/token");
 const sendEmail = require("./../../helpers/email");
-const CustomError = require("./../../Errors/CustomError");
+
+const User = require("./../Models/User.model");
 
 const deactivateAccount_PUT_service = async ({ userId }) => {
-	const done = await User.findOneAndUpdate(
+	const isUserDeactivated = await User.findOneAndUpdate(
 		{ _id: userId },
 		{ $set: { isActive: false, activeStatusChangedAt: new Date() } }
 	).select("isActive");
 
-	if (!done) {
-		throw new Error("Sorry, Account Deactivation failed");
+	if (!isUserDeactivated) {
+		throw new CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Sorry, Account Deactivation failed",
+		});
 	}
 
 	return "Account deactivated successfully!";
@@ -18,118 +26,184 @@ const deactivateAccount_PUT_service = async ({ userId }) => {
 
 const activateAccount_PUT_service = async ({ email }) => {
 	const user = await User.findOne({ email })
-		.select("email isActive activationToken")
+		.select("email isActive isVerified isDeleted activationToken")
 		.lean();
 
 	if (!user) {
 		return `Please, check your mailbox to confirm your account activation\nYou only have ${process.env.ACTIVATION_TOKEN_EXPIRES_IN}`;
 	}
 
-	if (user && user.isActive) {
-		throw new CustomError(
-			"UnAuthorized",
-			"Sorry, your account is already active!"
-		);
+	if (!user.isVerified) {
+		throw new CustomError({
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, your email address isn't verified yet!",
+		});
 	}
 
-	/* 
-        If already have a valid one
-        then don't create a new one!
-	
-    */
+	if (user.isDeleted) {
+		throw new CustomError({
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, your account is temporarily deleted!",
+		});
+	}
+
+	if (user.isActive) {
+		throw new CustomError({
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, your account is already active!",
+		});
+	}
+
 	if (user.activationToken) {
-		const decoded = await verify_token({
+		const decodedActivationToken = await verify_token({
 			token: user.activationToken,
 			secret: process.env.ACTIVATION_TOKEN_SECRET,
 		});
 
-		if (decoded) {
-			throw new CustomError(
-				"UnAuthorized",
-				"Sorry, you still have a valid link in your mailbox!"
-			);
+		if (decodedActivationToken) {
+			throw new CustomError({
+				status: STATUS.FORBIDDEN,
+				code: CODE.FORBIDDEN,
+				message: "Sorry, you still have a valid link in your mailbox!",
+			});
 		}
 	}
 
-	const activationToken = await generate_token({
+	const newActivationToken = await generate_token({
 		payload: { _id: user._id },
 		secret: process.env.ACTIVATION_TOKEN_SECRET,
 		expiresIn: process.env.ACTIVATION_TOKEN_EXPIRES_IN,
 	});
 
-	const activationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/account/activate/${activationToken}`;
+	const newActivationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/account/activate/${newActivationToken}`;
 
 	if (process.env.NODE_ENV !== "test") {
 		await sendEmail({
 			from: "Hakona Matata company",
 			to: user.email,
 			subject: "Email Activation",
-			text: `Hello, ${user.email}\nPlease click the link to activate your email (It's only valid for ${process.env.ACTIVATION_TOKEN_EXPIRES_IN})\n${activationLink}\nthanks.`,
+			text: `Hello, ${user.email}\nPlease click the link to activate your email (It's only valid for ${process.env.ACTIVATION_TOKEN_EXPIRES_IN})\n${newActivationLink}\nthanks.`,
 		});
 	}
 
-	const done = await User.findOneAndUpdate(
+	const isUserUpdated = await User.findOneAndUpdate(
 		{ email },
-		{ $set: { activationToken } }
+		{ $set: { activationToken: newActivationToken } }
 	).select("_id");
 
-	if (!done) {
-		throw new Error("Sorry, Email Activation failed");
+	if (!isUserUpdated) {
+		throw new CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Sorry, Email Activation failed",
+		});
 	}
 
-	// On the client side should be redirected to login page or so
 	return `Please, check your mailbox to confirm your account activation\nYou only have ${process.env.ACTIVATION_TOKEN_EXPIRES_IN}`;
 };
 
 const confirmActivation_GET_service = async ({ activationToken }) => {
-	// (1) Verify activation token
-	const decoded = await verify_token({
+	const decodedActivationToken = await verify_token({
 		token: activationToken,
 		secret: process.env.ACTIVATION_TOKEN_SECRET,
 	});
 
-	// (2) Get user from DB and check if the this token is actually assigned to him!
-	const user = await User.findOne({ _id: decoded._id, activationToken })
-		.select("activationToken")
+	const user = await User.findOne({
+		_id: decodedActivationToken._id,
+	})
+		.select("isActive isVerified isDeleted activationToken")
 		.lean();
 
-	if (!user) {
-		throw new CustomError(
-			"UnAuthorized",
-			"Sorry, you already confirmed your email activation!"
-		);
+	if (!user.isVerified) {
+		throw new CustomError({
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, your email address isn't verified yet!",
+		});
 	}
 
-	// (3 Update user document
-	const done = await User.findOneAndUpdate(
-		{ _id: decoded._id },
+	if (user.isDeleted) {
+		throw new CustomError({
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, your account is temporarily deleted!",
+		});
+	}
+
+	if (user.isActive) {
+		throw new CustomError({
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, your account is already active!",
+		});
+	}
+
+	const isUserActivated = await User.findOneAndUpdate(
+		{ _id: decodedActivationToken._id },
 		{
 			$set: { isActive: true, activeStatusChangedAt: new Date() },
 			$unset: { activationToken: 1 },
 		}
 	);
 
-	if (!done) {
-		throw new Error("Sorry, 'Email Activation' confirm failed");
+	if (!isUserActivated) {
+		throw new CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Sorry, 'Email Activation' confirm failed",
+		});
 	}
 
-	// client side should redirect to login page or so!
 	return "Account is activated successfully";
 };
 
 const deleteAccount_DELETE_service = async ({ userId }) => {
-	const done = await User.findOneAndUpdate(
+	const isUserDeleted = await User.findOneAndUpdate(
 		{ _id: userId },
 		{
 			$set: { isDeleted: true, isDeletedAt: new Date() },
 		}
 	).select("_id");
 
-	if (!done) {
-		throw new Error("Sorry, Account deletion failed");
+	if (!isUserDeleted) {
+		throw new CustomError({
+			status: STATUS.INTERNAL_SERVER_ERROR,
+			code: CODE.INTERNAL_SERVER_ERROR,
+			message: "Sorry, Account deletion failed",
+		});
 	}
 
-	return "Account deleted successfully!\n(It Will be deleted permenantly after 30 days)";
+	return `Your account Will be deleted permenantly in 30 days, unless you cancelled the deletion later!`;
+};
+
+const cancelDeleteAccount_PUT_service = async ({ email }) => {
+	const foundUser = await User.findOne({ email }).select("isDeleted").lean();
+
+	if (foundUser && !foundUser.isDeleted) {
+		throw new CustomError({
+			status: STATUS.BAD_REQUEST,
+			code: CODE.BAD_REQUEST,
+			message: "Sorry, you already canceled account deletion!",
+		});
+	}
+
+	const isUserUpdated = await User.findOneAndUpdate(
+		{ email },
+		{ $set: { isDeleted: false }, $unset: { isDeletedAt: 1 } }
+	);
+
+	if (!isUserUpdated) {
+		throw new CustomError({
+			status: STATUS.BAD_REQUEST,
+			code: CODE.BAD_REQUEST,
+			message: "Sorry, your account may be deleted permanently! (too late)",
+		});
+	}
+
+	return "You canceled the account deletion successfully!";
 };
 
 module.exports = {
@@ -137,4 +211,5 @@ module.exports = {
 	activateAccount_PUT_service,
 	confirmActivation_GET_service,
 	deleteAccount_DELETE_service,
+	cancelDeleteAccount_PUT_service,
 };

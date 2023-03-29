@@ -1,7 +1,8 @@
-const jwt_errors = require("./jwt");
+const statusCodes = require("../constants/statusCodes");
+const errorCodes = require("../constants/errorCodes");
 
-const success = ({ res, result }) => {
-	return res.status(200).json({ data: result });
+const success = ({ status, code, res, result }) => {
+	return res.status(status).json({ success: true, status, code, data: result });
 };
 
 const failure = ({ res, error }) => {
@@ -11,63 +12,96 @@ const failure = ({ res, error }) => {
 	// console.log("--------------");
 	// console.log(error.details);
 
-	// Validation errors
-	if (error.name === "ValidationError") {
-		return res
-			.status(422)
-			.json({ data: error.details.map((error) => error.message) });
+	switch (error.name) {
+		case "JsonWebTokenError":
+			res.status(statusCodes.UNAUTHORIZED).json({
+				success: false,
+				status: statusCodes.UNAUTHORIZED,
+				code: errorCodes.UNAUTHORIZED,
+				message: `Sorry, the token is invalid!`,
+			});
+			break;
+
+		case "TokenExpiredError":
+			res.status(statusCodes.UNAUTHORIZED).json({
+				success: false,
+				status: statusCodes.UNAUTHORIZED,
+				code: errorCodes.UNAUTHORIZED,
+				message: `Sorry, the token is expired!`,
+			});
+			break;
+
+		case "ValidationError":
+			// console.log("-----------------------");
+			// console.log({ error });
+			// console.log("-----------------------");
+
+			res.status(statusCodes.UNPROCESSABLE_ENTITY).json({
+				success: false,
+				status: statusCodes.UNPROCESSABLE_ENTITY,
+				code: errorCodes.UNPROCESSABLE_ENTITY,
+				message: error.details.map((error) => error.message),
+			});
+			break;
+
+		case "MongoServerError":
+			if (error.code === 11000) {
+				res.status(statusCodes.UNPROCESSABLE_ENTITY).json({
+					success: false,
+					status: statusCodes.UNPROCESSABLE_ENTITY,
+					code: errorCodes.UNPROCESSABLE_ENTITY,
+					message: Object.keys(error.keyValue).map(
+						(field) => (field = `Sorry, this ${field} may be already taken!`)
+					)[0],
+				});
+			}
+			break;
+
+		case "MongooseError":
+			if (error.message.includes("timed out")) {
+				return res.status(statusCodes.REQUEST_TIMEOUT).json({
+					success: false,
+					status: statusCodes.REQUEST_TIMEOUT,
+					code: errorCodes.REQUEST_TIMEOUT,
+					message: "Sorry, request timed out!",
+				});
+			}
+
+		case "Error":
+			if (error.code === "ESOCKET") {
+				return res.status(statusCodes.BAD_REQUEST).json({
+					success: false,
+					status: statusCodes.BAD_REQUEST,
+					code: errorCodes.BAD_REQUEST,
+					message: "Sorry, the connection needs to be secure!",
+				});
+			}
+			break;
+
+		// case "RangeError":
+		// 	console.log({ error });
+		// 	res.status(400).send("shit from range error");
+		// 	break;
+
+		case "CustomError":
+			res.status(error.status).json({
+				success: false,
+				status: error.status,
+				code: error.code,
+				message: error.message,
+			});
+			break;
+
+		default:
+			console.log("Unhandled error!!!!!!!!!!!!!!!");
+			console.log("--------------------------------------------");
+			console.log({ name: error.name });
+			console.log({ message: error.message });
+			console.log({ code: error.code });
+			console.log("--------------------------------------------");
+			res.status(500).json({ data: "Something went wrong" });
+			break;
 	}
-
-	// MongoDB Duplication Error
-	if (error.name === "MongoServerError" && error.code === 11000) {
-		return res.status(422).json({
-			data: Object.keys(error.keyValue).map(
-				(field) => (field = `Sorry, this ${field} may be already taken!`)
-			),
-		});
-	}
-
-	// Nodemailer SSL Error
-
-	if (error.code === "ESOCKET") {
-		return res.status(422).json({
-			data: "Sorry, the connection needs to be secure using SSL!",
-		});
-	}
-
-	// Custom message || InvalidInput
-	if (error.name === "CustomError" && error.code === "InvalidInput") {
-		return res.status(422).json({
-			data: error.message,
-		});
-	}
-
-	// Custom message | UnAuthorized
-	if (error.name === "CustomError" && error.code === "UnAuthorized") {
-		return res.status(401).json({
-			data: error.message,
-		});
-	}
-
-	if (error.name === "CustomError" && error.code === "ProcessFailed") {
-		return res.status(500).json({ data: error.message });
-	}
-
-	if (error.name === "CustomError" && error.code === "AlreadyDone") {
-		return res.status(400).json({ data: error.message });
-	}
-
-	// JWT Errors
-	if (error.name.toLowerCase().includes("token")) {
-		return jwt_errors({ res, error });
-	}
-
-	console.log("Unhandledd error!!!!!!!!!!!!!!!");
-	console.log("--------------------------------------------");
-	console.log({ error });
-	console.log("--------------------------------------------");
-
-	return res.status(500).json({ data: "Something went wrong" });
 };
 
 module.exports = { success, failure };

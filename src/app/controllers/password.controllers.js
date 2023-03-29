@@ -1,3 +1,6 @@
+const STATUS = require("./../../constants/statusCodes");
+const CODE = require("../../constants/errorCodes");
+
 const validate = require("./../../helpers/validate");
 const { success, failure } = require("./../../Errors/responseHandler");
 const password_validators = require("./../Validators/password.validators");
@@ -17,10 +20,10 @@ const changePassword_PUT_controller = async (req, res, next) => {
 		const result = await changePassword_PUT_service({
 			...validatedData,
 			userId: req.userId,
-			userPassword: req.password,
+			currentUserPassword: req.password,
 		});
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}
@@ -35,7 +38,7 @@ const forgetPassword_POST_controller = async (req, res, next) => {
 
 		const result = await forgetPassword_POST_service(validatedData.email);
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}
@@ -50,7 +53,7 @@ const resetPassword_PUT_controller = async (req, res, next) => {
 
 		const result = await resetToken_PUT_service(validatedData);
 
-		return success({ res, result });
+		return success({ status: STATUS.OK, code: CODE.OK, res, result });
 	} catch (error) {
 		return failure({ res, error });
 	}

@@ -1,3 +1,6 @@
+const STATUS = require("./../../../src/constants/statusCodes");
+const CODE = require("./../../../src/constants/errorCodes");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
@@ -21,7 +24,6 @@ afterAll(async () => {
 
 describe(`"POST" ${baseURL} - Forget Password`, () => {
 	it("1. Initiate forget password successfully", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -30,36 +32,34 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Initiate password forgetting
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
 		});
 
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user._id });
-
-		// (4) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe(
-			`Please, check your mailbox, the link is only valid for ${process.env.RESET_PASSWORD_EXPIRES_IN}!`
-		);
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: `Please, check your mailbox!`,
+		});
 	});
 
 	it("2. Email is not among our DB users", async () => {
-		// (1) Initiate password forgetting
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ email: "blabla@gmail.com" });
 
-		// (2) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe(
-			`Please, check your mailbox, the link is only valid for ${process.env.RESET_PASSWORD_EXPIRES_IN}!`
-		);
+		expect(status).toBe(STATUS.OK);
+		expect(body).toEqual({
+			success: true,
+			status: STATUS.OK,
+			code: CODE.OK,
+			data: `Please, check your mailbox!`,
+		});
 	});
 
 	it("3. User already intiated forget password (should check his mailbox)", async () => {
-		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
@@ -68,27 +68,25 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			password: await generate_hash("tesTES@!#12"),
 		});
 
-		// (2) Generate resetToken
 		const resetToken = await generate_token({
 			payload: { _id: user._id },
 			secret: process.env.RESET_PASSWORD_SECRET,
 			expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN,
 		});
 
-		// (3) Update user document
 		await User.findOneAndUpdate({ _id: user._id }, { $set: { resetToken } });
 
-		// (4) Initiate password forgetting
 		const { status, body } = await request(app).post(baseURL).send({
 			email: user.email,
 		});
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-
-		// (6) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, your mailbox already have a valid link!");
+		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.FORBIDDEN,
+			code: CODE.FORBIDDEN,
+			message: "Sorry, your mailbox already has a valid reset link!",
+		});
 	});
 
 	//===============================================================
@@ -96,8 +94,13 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 	it("4. Email field is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"email" field is required!');
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: ['"email" field is required!'],
+		});
 	});
 
 	it("5. Email field can't be empty", async () => {
@@ -105,8 +108,13 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			.post(baseURL)
 			.send({ email: "" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"email" field can't be empty!`);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"email" field can't be empty!`],
+		});
 	});
 
 	it("6. Email field too short to be true", async () => {
@@ -114,10 +122,13 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			.post(baseURL)
 			.send({ email: "q@gmail.com" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(
-			`"email" field can't be less than 15 characters!`
-		);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"email" field can't be less than 15 characters!`],
+		});
 	});
 
 	it("7. Email field too long to be true", async () => {
@@ -125,8 +136,16 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			.post(baseURL)
 			.send({ email: `${"s".repeat(200)}@gmail.com` });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"email" field can't be more than 40 characers!`);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [
+				`"email" field can't be more than 40 characers!`,
+				`"email" field has to be a valid email!`,
+			],
+		});
 	});
 
 	it("8. Email field is not a valid email", async () => {
@@ -134,16 +153,26 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			.post(baseURL)
 			.send({ email: `dsfaasdfsadfadfgmailcom` });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"email" field has to be a valid email!`);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"email" field has to be a valid email!`],
+		});
 	});
 
-	it("8. Email field is not of type string", async () => {
+	it("9. Email field is not of type string", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ email: 1111111111111111111111111 });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"email" field has to be of type string!`);
+		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: STATUS.UNPROCESSABLE_ENTITY,
+			code: CODE.UNPROCESSABLE_ENTITY,
+			message: [`"email" field has to be of type string!`],
+		});
 	});
 });

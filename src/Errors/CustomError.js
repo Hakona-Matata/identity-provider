@@ -1,6 +1,7 @@
-function CustomError(code, message) {
+function CustomError({ status, code, message }) {
 	const error = new Error(message);
 	Object.setPrototypeOf(error, CustomError.prototype);
+	error.status = status;
 	error.code = code;
 	throw error;
 }
