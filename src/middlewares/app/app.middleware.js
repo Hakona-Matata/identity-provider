@@ -10,23 +10,28 @@ const SMS_routes = require("./../../app/Routes/SMS.routes");
 const TOTP_routes = require("../../app/Routes/TOTP.routes");
 const backup_routes = require("../../app/Routes/backup.routes");
 
+const CandidateRoutes = require("./../../app/account/candidate/candidate.routes");
+
 const routes_middleware = (app) => {
-	app.use("/auth", access_routes);
-	app.use("/auth/sessions", session_routes);
-	app.use("/auth/account", account_routes);
-	app.use("/auth/password", password_routes);
-	app.use("/auth/otp", OTP_routes);
-	app.use("/auth/sms", SMS_routes);
-	app.use("/auth/totp", TOTP_routes);
-	app.use("/auth/backup", backup_routes);
-	app.use((req, res, next) => {
-		res.status(STATUS.NOT_FOUND).json({
-			success: false,
-			status: STATUS.NOT_FOUND,
-			code: CODE.NOT_FOUND,
-			message: "Sorry, this endpoint is not found!",
-		});
-	});
+	app.use("/auth/account/candidate", CandidateRoutes);
+
+	// app.use("/auth", access_routes);
+	// app.use("/auth/sessions", session_routes);
+	// app.use("/auth/account", account_routes);
+	// app.use("/auth/password", password_routes);
+	// app.use("/auth/otp", OTP_routes);
+	// app.use("/auth/sms", SMS_routes);
+	// app.use("/auth/totp", TOTP_routes);
+	// app.use("/auth/backup", backup_routes);
+
+	// app.use((req, res, next) => {
+	// 	res.status(STATUS.NOT_FOUND).json({
+	// 		success: false,
+	// 		status: STATUS.NOT_FOUND,
+	// 		code: CODE.NOT_FOUND,
+	// 		message: "Sorry, this endpoint is not found!",
+	// 	});
+	// });
 };
 
 module.exports = routes_middleware;

@@ -1,7 +1,12 @@
 const statusCodes = require("../constants/statusCodes");
 const errorCodes = require("../constants/errorCodes");
 
-const success = ({ status, code, res, result }) => {
+const success = ({
+	status = statusCodes.OK,
+	code = errorCodes.OK,
+	res,
+	result,
+}) => {
 	return res.status(status).json({ success: true, status, code, data: result });
 };
 
