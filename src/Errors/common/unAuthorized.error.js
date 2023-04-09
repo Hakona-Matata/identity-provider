@@ -1,14 +1,14 @@
 const StatusCodeConstant = require("../../constants/statusCodes");
 const ErrorCodeConstant = require("../../constants/errorCodes");
 
-const BaseAppError = require("../baseAppException");
+const BaseAppError = require("../baseAppError");
 
 module.exports = class unAuthorizedException extends BaseAppError {
-	constructor() {
+	constructor(message) {
 		super(
 			ErrorCodeConstant.UNAUTHORIZED,
 			StatusCodeConstant.UNAUTHORIZED,
-			"Sorry, you are not authorized to do this!"
+			message || "Sorry, you are not authorized to do this!"
 		);
 	}
 };

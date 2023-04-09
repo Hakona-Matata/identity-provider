@@ -45,11 +45,7 @@ const verify_GET_controller = async (req, res, next) => {
 
 const login_POST_controller = async (req, res, next) => {
 	try {
-		const validatedData = await validate(access_validators.login, req.body);
-
-		const result = await login_POST_service({ ...validatedData });
-
-		return success({ status: STATUS.OK, code: CODE.OK, res, result });
+		
 	} catch (error) {
 		return failure({ res, error });
 	}

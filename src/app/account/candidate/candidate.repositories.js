@@ -1,3 +1,4 @@
+const { addAbortSignal } = require("nodemailer/lib/xoauth2");
 const ROLES = require("./../../../constants/roles");
 const AccountModel = require("./../account.model");
 
@@ -23,20 +24,22 @@ class CandidateRepository {
 		}).lean();
 	}
 
-	static async updateCandidateToBeVerified(candidateId) {
+	static async updateCandidateWithVerificationToken(candidateId, verificationToken) {
 		return await AccountModel.findOneAndUpdate(
-			{ _id: candidateId },
+			{ _id: candidateId, role: ROLES.candidate },
 			{
-				$set: { isVerified: true, isVerifiedAt: new Date() },
-				$unset: { verificationToken: 1 },
+				$set: verificationToken,
 			}
 		);
 	}
 
-	static async updateCandidate({ filter, setPayload, unSetPayload }) {
+	static async updateCandidateToBeVerified(candidateId) {
 		return await AccountModel.findOneAndUpdate(
-			{ filter },
-			{ $set: { ...setPayload }, $unset: { ...unSetPayload } }
+			{ _id: candidateId, role: ROLES.candidate },
+			{
+				$set: { isVerified: true, isVerifiedAt: new Date() },
+				$unset: { verificationToken: 1 },
+			}
 		);
 	}
 }

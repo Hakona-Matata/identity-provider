@@ -4,11 +4,11 @@ const ErrorCodeConstant = require("../../constants/errorCodes");
 const BaseAppError = require("../baseAppError");
 
 module.exports = class ForbiddenError extends BaseAppError {
-	constructor() {
+	constructor(message) {
 		super(
 			ErrorCodeConstant.FORBIDDEN,
 			StatusCodeConstant.FORBIDDEN,
-			"Sorry, you are not allowed to do this!"
+			message || "Sorry, you are not allowed to do this!"
 		);
 	}
 };

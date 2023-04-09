@@ -1,18 +1,14 @@
 const statusCodes = require("../constants/statusCodes");
 const errorCodes = require("../constants/errorCodes");
 
-const success = ({
-	status = statusCodes.OK,
-	code = errorCodes.OK,
-	res,
-	result,
-}) => {
+const success = ({ status = statusCodes.OK, code = errorCodes.OK, res, result }) => {
 	return res.status(status).json({ success: true, status, code, data: result });
 };
 
 const failure = ({ res, error }) => {
-	// console.log({ error });
-	// console.log("--------------");
+	console.log("--------------");
+	console.log({ error });
+	console.log("--------------");
 	// console.log(error.name);
 	// console.log("--------------");
 	// console.log(error.details);
@@ -49,9 +45,7 @@ const failure = ({ res, error }) => {
 				success: false,
 				status: statusCodes.UNPROCESSABLE_ENTITY,
 				code: errorCodes.UNPROCESSABLE_ENTITY,
-				message:
-					error.message.split(": ")[2] ||
-					error.details.map((error) => error.message),
+				message: error.message.split(": ")[2] || error.details.map((error) => error.message),
 			});
 			break;
 

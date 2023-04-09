@@ -1,0 +1,3 @@
+module.exports = {
+	IDENTITY_PROVIDER: "IDENTITY_PROVIDER",
+};
