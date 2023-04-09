@@ -16,6 +16,10 @@ const failure = ({ res, error }) => {
 	// console.log(error.name);
 	// console.log("--------------");
 	// console.log(error.details);
+	console.log("---------------------");
+	console.log({ name: error.name });
+	console.log({ message: error.message });
+	console.log({ code: error.code });
 
 	switch (error.name) {
 		case "JsonWebTokenError":
@@ -45,13 +49,15 @@ const failure = ({ res, error }) => {
 				success: false,
 				status: statusCodes.UNPROCESSABLE_ENTITY,
 				code: errorCodes.UNPROCESSABLE_ENTITY,
-				message: error.details.map((error) => error.message),
+				message:
+					error.message.split(": ")[2] ||
+					error.details.map((error) => error.message),
 			});
 			break;
 
 		case "MongoServerError":
 			if (error.code === 11000) {
-				res.status(statusCodes.UNPROCESSABLE_ENTITY).json({
+				return res.status(statusCodes.UNPROCESSABLE_ENTITY).json({
 					success: false,
 					status: statusCodes.UNPROCESSABLE_ENTITY,
 					code: errorCodes.UNPROCESSABLE_ENTITY,
@@ -81,6 +87,13 @@ const failure = ({ res, error }) => {
 					message: "Sorry, the connection needs to be secure!",
 				});
 			}
+
+			return res.status(error.statusCode).json({
+				success: false,
+				status: error.statusCode,
+				code: error.errorCode,
+				message: error.message,
+			});
 			break;
 
 		// case "RangeError":

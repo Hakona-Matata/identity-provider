@@ -24,14 +24,14 @@ const routes_middleware = (app) => {
 	// app.use("/auth/totp", TOTP_routes);
 	// app.use("/auth/backup", backup_routes);
 
-	// app.use((req, res, next) => {
-	// 	res.status(STATUS.NOT_FOUND).json({
-	// 		success: false,
-	// 		status: STATUS.NOT_FOUND,
-	// 		code: CODE.NOT_FOUND,
-	// 		message: "Sorry, this endpoint is not found!",
-	// 	});
-	// });
+	app.use((req, res, next) => {
+		res.status(STATUS.NOT_FOUND).json({
+			success: false,
+			status: STATUS.NOT_FOUND,
+			code: CODE.NOT_FOUND,
+			message: "Sorry, this endpoint is not found!",
+		});
+	});
 };
 
 module.exports = routes_middleware;

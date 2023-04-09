@@ -1,14 +1,28 @@
 const jwt = require("jsonwebtoken");
 
-const generate_token = async ({ payload, secret, expiresIn }) => {
+const generateToken = async ({ payload, secret, expiresIn }) => {
 	return await jwt.sign(payload, secret, { expiresIn });
 };
 
-const verify_token = async ({ token, secret }) => {
+const verifyToken = async ({ token, secret }) => {
 	return await jwt.verify(token, secret);
 };
 
-module.exports = {
-	generate_token,
-	verify_token,
-};
+class TokenHelper {
+	static async generateVerificationToken(payload) {
+		return await generateToken({
+			payload,
+			secret: process.env.VERIFICATION_TOKEN_SECRET,
+			expiresIn: process.env.VERIFICATION_TOKEN_EXPIRES_IN,
+		});
+	}
+
+	static async verifyVerificationToken(verificationToken) {
+		return await verifyToken({
+			token: verificationToken,
+			secret: process.env.VERIFICATION_TOKEN_SECRET,
+		});
+	}
+}
+
+module.exports = TokenHelper;

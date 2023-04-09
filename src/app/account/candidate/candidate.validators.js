@@ -48,5 +48,13 @@ module.exports = {
 				"any.only": `"confirmPassword" field doesn't match "password" field`,
 			}),
 	}),
-	verify: Joi.object({}),
+	verify: Joi.object({
+		verificationToken: Joi.string().trim().min(3).max(200).required().messages({
+			"string.base": `"verificationToken" param has to be of type string!`,
+			"string.empty": `"verificationToken" param can't be empty!`,
+			"string.min": `"verificationToken" param can't be true!`,
+			"string.max": `"verificationToken" param can't be true!`,
+			"any.required": `"verificationToken" param is required!`,
+		}),
+	}),
 };

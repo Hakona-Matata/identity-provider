@@ -1,6 +1,7 @@
 const CustomError = require("./../../Errors/CustomError");
 const STATUS = require("../../constants/statusCodes");
 const CODE = require("../../constants/errorCodes");
+// const MESSAGE = require("../../constants/successMessages");
 
 const { generate_token, verify_token } = require("./../../helpers/token");
 const give_access = require("./../../helpers/giveAccess");
@@ -22,14 +23,14 @@ const signUp_POST_service = async (data) => {
 		expiresIn: process.env.VERIFICATION_TOKEN_EXPIRES_IN,
 	});
 
-	const link = `${process.env.BASE_URL}:${process.env.PORT}/auth/verify-email/${verificationToken}`;
+	const verificationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/verify-email/${verificationToken}`;
 
 	if (process.env.NODE_ENV !== "test") {
 		await sendEmail({
 			from: "Hakona Matata company",
 			to: user.email,
 			subject: "Email Verification",
-			text: `Hello, ${user.email}\nPlease click the link to verify your email (It's only valid for ${process.env.VERIFICATION_TOKEN_EXPIRES_IN})\n${link}\nthanks.`,
+			text: `Hello, ${user.email}\nPlease click the link to verify your email (It's only valid for ${process.env.VERIFICATION_TOKEN_EXPIRES_IN})\n${verificationLink}\nthanks.`,
 		});
 	}
 
@@ -46,7 +47,7 @@ const signUp_POST_service = async (data) => {
 		});
 	}
 
-	return "Please, check your mailbox to verify your email address!";
+	// return MESSAGE.CHECK_MAILBOX_AFTER_SIGN_UP;
 };
 
 const verify_GET_service = async (data) => {

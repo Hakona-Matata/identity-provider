@@ -16,6 +16,12 @@ const AccountSchema = new mongoose.Schema(
 		password: String,
 		passwordChangedAt: Date,
 
+		role: {
+			type: String,
+			enum: ["ADMIN", "RECRUITER", "CANDIDATE"],
+			required: true,
+		},
+
 		phone: String,
 		isPhoneVerified: { type: Boolean, default: false },
 
