@@ -1,4 +1,4 @@
-const { success } = require("./../../../Errors/responseHandler");
+const { success } = require("../../../Exceptions/responseHandler");
 const STATUS = require("./../../../constants/statusCodes");
 const CODE = require("./../../../constants/errorCodes");
 
@@ -37,7 +37,14 @@ class CandidateControllers {
 		return success({ res, result });
 	}
 
-	static async logOut() {}
+	static async logOut(req, res, next) {
+		const result = await CandidateServices.logOut({
+			userId: req.userId,
+			accessToken: req.accessToken,
+		});
+
+		return success({ res, result });
+	}
 }
 
 module.exports = CandidateControllers;

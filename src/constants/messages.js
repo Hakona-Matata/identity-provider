@@ -2,6 +2,7 @@ module.exports = {
 	SUCCESS_MESSAGES: {
 		SIGN_UP_SUCCESSFULLY: "Please, check your mailbox to verify your email address!",
 		ACCOUNT_VERIFIED_SUCCESSFULLY: "Your account is verified successfully!",
+		LOGGED_OUT_SUCCESSFULLY: "Logged out successfully"
 	},
 
 	FAILIURE_MESSAGES: {
@@ -10,5 +11,7 @@ module.exports = {
 		ACCOUNT_NEET_TO_BE_ACTIVE: "Sorry, your account is deactivated!",
 		ACCOUNT_TEMP_DELETED: "Sorry, your account is temporarily deleted!",
 		WRONG_EMAIL_OR_PASSWORD: "Sorry, email or password are incorrect!",
+
+		ACCESS_TOKEN_NOT_FOUND: "Sorry, the access token is not found",
 	},
 };

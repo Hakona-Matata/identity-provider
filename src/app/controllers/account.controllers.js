@@ -1,7 +1,7 @@
 const STATUS = require("./../../constants/statusCodes");
 const CODE = require("../../constants/errorCodes");
 
-const { success, failure } = require("./../../Errors/responseHandler");
+const { success, failure } = require("./../../Exceptions/responseHandler");
 const {
 	deactivateAccount_PUT_service,
 	activateAccount_PUT_service,

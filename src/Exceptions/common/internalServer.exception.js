@@ -1,9 +1,9 @@
 const StatusCodeConstant = require("../../constants/statusCodes");
 const ErrorCodeConstant = require("../../constants/errorCodes");
 
-const BaseAppError= require("../baseAppError");
+const BaseAppException = require("../baseAppException");
 
-module.exports = class InternalServerError extends BaseAppError {
+module.exports = class InternalServerException extends BaseAppException {
 	constructor() {
 		super(
 			ErrorCodeConstant.INTERNAL_SERVER_ERROR,

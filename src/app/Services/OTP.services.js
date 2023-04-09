@@ -5,7 +5,7 @@ const OTP = require("./../Models/OTP.model");
 const { generate_randomNumber } = require("./../../helpers/randomNumber");
 const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const sendEmail = require("./../../helpers/email");
-const CustomError = require("./../../Errors/CustomError");
+const CustomError = require("../../Exceptions/CustomError");
 const { give_access } = require("./../../helpers/token");
 
 const enableOTP_GET_service = async ({ userId, email, isOTPEnabled }) => {

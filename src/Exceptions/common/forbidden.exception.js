@@ -1,9 +1,9 @@
 const StatusCodeConstant = require("../../constants/statusCodes");
 const ErrorCodeConstant = require("../../constants/errorCodes");
 
-const BaseAppError = require("../baseAppError");
+const BaseAppException = require("../baseAppException");
 
-module.exports = class ForbiddenError extends BaseAppError {
+module.exports = class ForbiddenException extends BaseAppException {
 	constructor(message) {
 		super(
 			ErrorCodeConstant.FORBIDDEN,

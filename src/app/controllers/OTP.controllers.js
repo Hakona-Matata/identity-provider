@@ -2,7 +2,7 @@ const STATUS = require("./../../constants/statusCodes");
 const CODE = require("../../constants/errorCodes");
 
 const validate = require("../../helpers/validate");
-const { success, failure } = require("../../Errors/responseHandler");
+const { success, failure } = require("../../Exceptions/responseHandler");
 const OTP_validators = require("../Validators/OTP.validators");
 const {
 	enableOTP_GET_service,

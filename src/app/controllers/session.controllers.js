@@ -1,7 +1,7 @@
 const STATUS = require("./../../constants/statusCodes");
 const CODE = require("../../constants/errorCodes");
 
-const { success, failure } = require("../../Errors/responseHandler");
+const { success, failure } = require("../../Exceptions/responseHandler");
 const validate = require("./../../helpers/validate");
 const session_validators = require("./../Validators/session.validators");
 const {

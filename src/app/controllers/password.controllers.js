@@ -2,7 +2,7 @@ const STATUS = require("./../../constants/statusCodes");
 const CODE = require("../../constants/errorCodes");
 
 const validate = require("./../../helpers/validate");
-const { success, failure } = require("./../../Errors/responseHandler");
+const { success, failure } = require("./../../Exceptions/responseHandler");
 const password_validators = require("./../Validators/password.validators");
 const {
 	changePassword_PUT_service,

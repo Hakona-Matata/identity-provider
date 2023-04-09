@@ -3,7 +3,7 @@ const {
 	verify_delete_backup_code,
 } = require("./../../helpers/backup");
 const { give_access } = require("./../../helpers/token");
-const CustomError = require("./../../Errors/CustomError");
+const CustomError = require("./../../Exceptions/CustomError");
 
 const User = require("./../Models/User.model");
 const Backup = require("./../Models/Backup.model");

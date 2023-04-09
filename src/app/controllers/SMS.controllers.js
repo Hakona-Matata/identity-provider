@@ -1,5 +1,5 @@
 const validate = require("./../../helpers/validate");
-const { success, failure } = require("./../../Errors/responseHandler");
+const { success, failure } = require("./../../Exceptions/responseHandler");
 const SMS_validators = require("./../Validators/SMS.validators");
 const {
 	enableSMS_POST_service,

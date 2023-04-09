@@ -2,8 +2,8 @@ const CandidateRepository = require("./candidate.repositories");
 const { SUCCESS_MESSAGES, FAILIURE_MESSAGES } = require("../../../constants/messages");
 const ROLES = require("./../../../constants/roles");
 
-const BadRequestError = require("./../../../Errors/common/badRequest.error");
-const UnAuthorizedError = require("./../../../Errors/common/unAuthorized.error");
+const BadRequestError = require("../../../Exceptions/common/badRequest.exception");
+const UnAuthorizedError = require("../../../Exceptions/common/unAuthorized.exception");
 
 const TokenHelper = require("./../../../helpers/token");
 const HashHelper = require("./../../../helpers/hash");
@@ -73,7 +73,16 @@ class CandidateServices {
 		return await TokenHelper.generateAccessRefreshTokens({ _id: foundCandidate._id, role: ROLES.candidate });
 	}
 
-	static async logOut() {}
+	static async logOut({ userId, accessToken }) {
+		console.log({ userId, accessToken });
+		// TODO: Deal with sesion service!
+		// const isUserLoggedOut = await Session.findOneAndDelete({
+		// 	userId,
+		// 	accessToken,
+		// });
+
+		return SUCCESS_MESSAGES.LOGGED_OUT_SUCCESSFULLY;
+	}
 
 	// TODO: work more on temp delete and deleted
 	static #isCandidateVerifiedActiveNotDeleted(candidate) {

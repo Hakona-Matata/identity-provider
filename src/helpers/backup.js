@@ -2,7 +2,7 @@ const { generate_randomNumber } = require("./randomNumber");
 const { generate_hash, verify_hash } = require("./hash");
 
 const Backup = require("./../app/Models/Backup.model");
-const CustomError = require("./../Errors/CustomError");
+const CustomError = require("./../Exceptions/CustomError");
 
 const generate_backup_codes = async ({ userId, backupCodeNumbers }) => {
 	const codes = [],

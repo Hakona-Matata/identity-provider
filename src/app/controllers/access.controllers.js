@@ -1,7 +1,7 @@
 const STATUS = require("./../../constants/statusCodes");
 const CODE = require("../../constants/errorCodes");
 
-const { success, failure } = require("../../Errors/responseHandler");
+const { success, failure } = require("./../../Exceptions/responseHandler");
 const validate = require("./../../helpers/validate");
 
 const access_validators = require("../Validators/access.validators.js");
@@ -45,7 +45,6 @@ const verify_GET_controller = async (req, res, next) => {
 
 const login_POST_controller = async (req, res, next) => {
 	try {
-		
 	} catch (error) {
 		return failure({ res, error });
 	}

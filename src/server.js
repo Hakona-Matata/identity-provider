@@ -10,7 +10,7 @@ const connect_DB = require("./utils/db.connection.js");
 // const configure_middlewares = require("./app.js");
 const app_middlewares = require("./middlewares/app/app.middleware");
 const thirdParty_middlewares = require("./middlewares/app/thirdParth.middlewares");
-const { failure } = require("./Errors/responseHandler.js");
+const { failure } = require("./Exceptions/responseHandler.js");
 
 //==================================================
 const app = express();

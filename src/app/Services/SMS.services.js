@@ -6,7 +6,7 @@ const { generate_randomNumber } = require("./../../helpers/randomNumber");
 const { generate_hash, verify_hash } = require("./../../helpers/hash");
 const { give_access } = require("./../../helpers/token");
 
-const CustomError = require("./../../Errors/CustomError");
+const CustomError = require("../../Exceptions/CustomError");
 
 const enableSMS_POST_service = async ({
 	userId,

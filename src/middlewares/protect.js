@@ -3,7 +3,7 @@ const CODE = require("./../constants/errorCodes");
 
 const { verify_token } = require("./../helpers/token");
 const Session = require("./../app/Models/Session.model");
-const { failure } = require("./../Errors/responseHandler");
+const { failure } = require("../Exceptions/responseHandler");
 
 // TODO: make it auth instead of protect
 module.exports = async (req, res, next) => {

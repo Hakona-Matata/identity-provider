@@ -1,4 +1,4 @@
-const CustomError = require("./../../Errors/CustomError");
+const CustomError = require("./../../Exceptions/CustomError");
 const STATUS = require("../../constants/statusCodes");
 const CODE = require("../../constants/errorCodes");
 

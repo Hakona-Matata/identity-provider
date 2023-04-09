@@ -1,4 +1,4 @@
-const { success, failure } = require("../../Errors/responseHandler");
+const { success, failure } = require("../../Exceptions/responseHandler");
 const validate = require("./../../helpers/validate");
 
 const backup_validators = require("../Validators/backup.validators.js");
