@@ -14,7 +14,22 @@ class SessionServices {
 		return await SessionServices.#categorizeAndSortSessionsByValidity(foundAccountSessions);
 	}
 
-	static async cancel() {}
+	static async cancel({ userId, sessionId }) {
+		const isCurrentSessionDeleted = await Session.findOneAndDelete({
+			userId,
+			_id: sessionId,
+		});
+
+		if (!isCurrentSessionDeleted) {
+			throw new CustomError({
+				status: STATUS.FORBIDDEN,
+				code: CODE.FORBIDDEN,
+				message: "Sorry, you can't cancel this session!",
+			});
+		}
+
+		return "Session is cancelled successfully!";
+	}
 
 	static async renew() {}
 

@@ -5,7 +5,9 @@ class SessionRepository {
 	static async createReturnSession(payload) {
 		const { accessToken, refreshToken } = await TokenHelper.generateAccessRefreshTokens(payload);
 
-		return await SessionModel.create({ accessToken, refreshToken, accountId: payload.accountId });
+		const createdSession = await SessionModel.create({ accessToken, refreshToken, accountId: payload.accountId });
+		console.log({ createdSession });
+		return createdSession;
 	}
 
 	static async findAccountSesssions(accountId) {
