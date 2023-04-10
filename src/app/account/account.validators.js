@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const ROLES = require("./../../constants/roles");
 
 module.exports = {
 	signUp: Joi.object({
@@ -34,9 +35,18 @@ module.exports = {
 		confirmPassword: Joi.string().required().valid(Joi.ref("password")).messages({
 			"any.only": `"confirmPassword" field doesn't match "password" field`,
 		}),
+		role: Joi.string()
+			.valid(...Object.keys(ROLES))
+			.required()
+			.messages({
+				"any.required": `"role" field is required!`,
+				"any.only": `Sorry, the only allowed roles are [${Object.keys(ROLES)}]!`,
+				"string.empty": `"role" field can't be empty!`,
+				"string.base": `"role" field has to be of type string!`,
+			}),
 	}),
 	verify: Joi.object({
-		verificationToken: Joi.string().trim().min(3).max(200).required().messages({
+		verificationToken: Joi.string().trim().min(3).max(300).required().messages({
 			"string.base": `"verificationToken" param has to be of type string!`,
 			"string.empty": `"verificationToken" param can't be empty!`,
 			"string.min": `"verificationToken" param can't be true!`,

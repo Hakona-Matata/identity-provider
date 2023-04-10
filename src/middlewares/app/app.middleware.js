@@ -10,10 +10,10 @@ const SMS_routes = require("./../../app/Routes/SMS.routes");
 const TOTP_routes = require("../../app/Routes/TOTP.routes");
 const backup_routes = require("../../app/Routes/backup.routes");
 
-const CandidateRoutes = require("./../../app/account/candidate/candidate.routes");
+const accountRoutes = require("./../../app/account/account.routes");
 
 const routes_middleware = (app) => {
-	app.use("/auth/account/candidate", CandidateRoutes);
+	app.use("/auth", accountRoutes);
 
 	// app.use("/auth", access_routes);
 	// app.use("/auth/sessions", session_routes);

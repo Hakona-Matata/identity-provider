@@ -1,3 +1,5 @@
+const ROLES = require("./../../constants/roles");
+
 const mongoose = require("mongoose");
 
 const AccountSchema = new mongoose.Schema(
@@ -18,7 +20,7 @@ const AccountSchema = new mongoose.Schema(
 
 		role: {
 			type: String,
-			enum: ["ADMIN", "RECRUITER", "CANDIDATE"],
+			enum: Object.values(ROLES),
 			required: true,
 		},
 

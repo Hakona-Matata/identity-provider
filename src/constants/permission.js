@@ -1,7 +1,0 @@
-module.exports = {
-	READ: "READ",
-	WRITE: "WRITE",
-	DELETE: "DELETE",
-	READ_WRITE: "READ_WRITE",
-	READ_WRITE_DELETE: "READ_WRITE_DELETE",
-};

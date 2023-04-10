@@ -1,11 +1,11 @@
 const jwt = require("jsonwebtoken");
-const ORIGIN = require("../constants/origin");
-const PERMISSION = require("./../constants/permission");
 
+const ORIGIN = require("../constants/origin");
+const TOKENS = require("../constants/tokens");
 class TokenHelper {
 	static async generateVerificationToken(payload) {
 		return await TokenHelper.#generateToken(
-			payload,
+			{ ...payload, label: TOKENS.VERIFICATION_TOKEN },
 			process.env.VERIFICATION_TOKEN_SECRET,
 			process.env.VERIFICATION_TOKEN_EXPIRES_IN
 		);
@@ -17,13 +17,13 @@ class TokenHelper {
 
 	static async generateAccessRefreshTokens(payload) {
 		const accessToken = await TokenHelper.#generateToken(
-			payload,
+			{ ...payload, label: TOKENS.ACCESS_TOKEN },
 			process.env.ACCESS_TOKEN_SECRET,
 			process.env.ACCESS_TOKEN_EXPIRES_IN
 		);
 
 		const refreshToken = await TokenHelper.#generateToken(
-			payload,
+			{ ...payload, label: TOKENS.REFRESH_TOKEN },
 			process.env.REFRESH_TOKEN_SECRET,
 			process.env.REFRESH_TOKEN_EXPIRES_IN
 		);
@@ -40,9 +40,7 @@ class TokenHelper {
 	}
 
 	static async #generateToken(payload, secret, expiresIn) {
-		payload = { ...payload, origin: ORIGIN.IDENTITY_PROVIDER, permission: PERMISSION.READ_WRITE_DELETE };
-
-		return await jwt.sign(payload, secret, {
+		return await jwt.sign({ ...payload, origin: ORIGIN.IDENTITY_PROVIDER }, secret, {
 			expiresIn,
 		});
 	}
