@@ -2,7 +2,7 @@ const express = require("express");
 
 const session_controllers = require("./../controllers/session.controllers");
 const protect = require("./../../middlewares/protect");
-const isVerified = require("./../../middlewares/isVerified");
+const isVerified = require("../../middlewares/isVerified.middleware");
 
 const router = express.Router();
 

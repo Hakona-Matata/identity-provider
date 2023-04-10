@@ -1,22 +1,14 @@
 const STATUS = require("./../../constants/statusCodes");
 const CODE = require("./../../constants/errorCodes");
 
-const access_routes = require("../../app/Routes/access.routes");
-const session_routes = require("../../app/Routes/session.routes");
-const account_routes = require("../../app/Routes/account.routes");
-const password_routes = require("../../app/Routes/password.routes");
-const OTP_routes = require("../../app/Routes/OTP.routes");
-const SMS_routes = require("./../../app/Routes/SMS.routes");
-const TOTP_routes = require("../../app/Routes/TOTP.routes");
-const backup_routes = require("../../app/Routes/backup.routes");
-
 const accountRoutes = require("./../../app/account/account.routes");
+const sessionRoutes = require("../../app/session/session.routes");
 
 const routes_middleware = (app) => {
 	app.use("/auth", accountRoutes);
+	app.use("/auth/sessions", sessionRoutes);
 
 	// app.use("/auth", access_routes);
-	// app.use("/auth/sessions", session_routes);
 	// app.use("/auth/account", account_routes);
 	// app.use("/auth/password", password_routes);
 	// app.use("/auth/otp", OTP_routes);

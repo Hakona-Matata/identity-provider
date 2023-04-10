@@ -1,4 +1,6 @@
+const SessionServices = require("./../session/session.services");
 const AccountRepository = require("./account.repositories");
+
 const { SUCCESS_MESSAGES, FAILIURE_MESSAGES } = require("../../constants/messages");
 
 const BadRequestError = require("./../../Exceptions/common/badRequest.exception");
@@ -57,8 +59,8 @@ class AccountServices {
 
 		// TODO: what is 2fa are enalbed? refactor!
 
-		return await TokenHelper.generateAccessRefreshTokens({
-			_id: foundAccount._id,
+		return await SessionServices.create({
+			accountId: foundAccount._id,
 			role: foundAccount.role,
 		});
 	}
