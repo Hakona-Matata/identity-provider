@@ -14,7 +14,16 @@ class SessionControllers {
 		return success({ res, result });
 	}
 
-	static async cancel(req, res, next) {}
+	static async cancel(req, res, next) {
+		const accountData = await validate(SessionValidators.cancel, req.body);
+
+		const result = await SessionServices.cancel({
+			userId: req.userId,
+			sessionId: accountData.sessionId,
+		});
+
+		return success({ res, result });
+	}
 
 	static async renew(req, res, next) {}
 }

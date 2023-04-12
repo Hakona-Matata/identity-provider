@@ -2,7 +2,8 @@ module.exports = {
 	SUCCESS_MESSAGES: {
 		SIGN_UP_SUCCESSFULLY: "Please, check your mailbox to verify your email address!",
 		ACCOUNT_VERIFIED_SUCCESSFULLY: "Your account is verified successfully!",
-		LOGGED_OUT_SUCCESSFULLY: "Logged out successfully"
+		LOGGED_OUT_SUCCESSFULLY: "Logged out successfully!",
+		SESSION_CANCELED_SUCCESSFULLY: "The session is canceled successfully!",
 	},
 
 	FAILIURE_MESSAGES: {
@@ -13,5 +14,10 @@ module.exports = {
 		WRONG_EMAIL_OR_PASSWORD: "Sorry, email or password are incorrect!",
 
 		ACCESS_TOKEN_NOT_FOUND: "Sorry, the access token is not found",
+
+		SESSION_NOT_FOUND: "Sorry, the session is not found!",
+
+		FORBIDDEN: "Sorry, you are not allowed to do this!",
+		FORBIDDEN_CANCELED_SESSION: "Sorry, the session may be already canceled!",
 	},
 };

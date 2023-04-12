@@ -1,11 +1,18 @@
 const TokenHelper = require("./../../helpers/token");
 const SessionRepository = require("./session.repositories");
 
+const { SUCCESS_MESSAGES, FAILIURE_MESSAGES } = require("./../../constants/messages");
+const NotFoundException = require("./../../Exceptions/common/notFound.exception");
+
 class SessionServices {
 	static async create(payload) {
 		const { accessToken, refreshToken } = await SessionRepository.createReturnSession(payload);
 
 		return { accessToken, refreshToken };
+	}
+
+	static async isSessionFound(accountId, accessToken) {
+		return await SessionRepository.findSession(accountId, accessToken);
 	}
 
 	static async getAll(accountId) {
@@ -15,20 +22,13 @@ class SessionServices {
 	}
 
 	static async cancel({ userId, sessionId }) {
-		const isCurrentSessionDeleted = await Session.findOneAndDelete({
-			userId,
-			_id: sessionId,
-		});
+		const isSessionFoundAndDeleted = await SessionRepository.cancelSession(sessionId, userId);
 
-		if (!isCurrentSessionDeleted) {
-			throw new CustomError({
-				status: STATUS.FORBIDDEN,
-				code: CODE.FORBIDDEN,
-				message: "Sorry, you can't cancel this session!",
-			});
+		if (!isSessionFoundAndDeleted) {
+			throw new NotFoundException(FAILIURE_MESSAGES.SESSION_NOT_FOUND);
 		}
 
-		return "Session is cancelled successfully!";
+		return SUCCESS_MESSAGES.SESSION_CANCELED_SUCCESSFULLY;
 	}
 
 	static async renew() {}
