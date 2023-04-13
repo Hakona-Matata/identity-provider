@@ -1,15 +1,17 @@
-const { FAILIURE_MESSAGES } = require("../constants/messages");
+const SessionServices = require("./../app/session/session.services");
+const TokenHelper = require("../helpers/token");
+
 const NotFoundException = require("../Exceptions/common/notFound.exception");
 const ForbiddenException = require("./../Exceptions/common/forbidden.exception");
-
-const TokenHelper = require("../helpers/token");
-const SessionServices = require("./../app/session/session.services");
+const {
+	FAILIURE_MESSAGES: { ACCESS_TOKEN_NOT_FOUND, FORBIDDEN_CANCELED_SESSION },
+} = require("../constants/messages");
 
 module.exports = async (req, res, next) => {
 	const accessToken = req?.headers["authorization"]?.split(" ")[1];
 
 	if (!accessToken) {
-		throw new NotFoundException(FAILIURE_MESSAGES.ACCESS_TOKEN_NOT_FOUND);
+		throw new NotFoundException(ACCESS_TOKEN_NOT_FOUND);
 	}
 
 	const { accountId, role, origin, permission } = await TokenHelper.verifyAccessToken(accessToken);
@@ -17,7 +19,7 @@ module.exports = async (req, res, next) => {
 	const isSessionFound = await SessionServices.findOne(accountId, accessToken);
 
 	if (!isSessionFound) {
-		throw new ForbiddenException(FAILIURE_MESSAGES.FORBIDDEN_CANCELED_SESSION);
+		throw new ForbiddenException(FORBIDDEN_CANCELED_SESSION);
 	}
 
 	req.accountId = accountId;

@@ -1,5 +1,5 @@
-const TokenHelper = require("./../../helpers/token");
 const SessionRepository = require("./session.repositories");
+const TokenHelper = require("./../../helpers/token");
 
 const { SUCCESS_MESSAGES, FAILIURE_MESSAGES } = require("./../../constants/messages");
 const NotFoundException = require("./../../Exceptions/common/notFound.exception");
@@ -19,11 +19,15 @@ class SessionServices {
 	static async findAll(accountId) {
 		const foundAccountSessions = await SessionRepository.findAllSesssions(accountId);
 
-		return await SessionServices.#categorizeAndSortSessionsByValidity(foundAccountSessions);
+		return foundAccountSessions.map((session) => {
+			return {
+				sessionId: session._id,
+			};
+		});
 	}
 
 	static async cancel(accountId, sessionId) {
-		const isSessionFoundAndDeleted = await SessionRepository.cancelSessionBySessionId(sessionId, accountId);
+		const isSessionFoundAndDeleted = await SessionRepository.deleteSessionBySessionId(sessionId, accountId);
 
 		if (!isSessionFoundAndDeleted) {
 			throw new NotFoundException(FAILIURE_MESSAGES.SESSION_NOT_FOUND);
@@ -41,28 +45,12 @@ class SessionServices {
 			throw new ForbiddenException(FAILIURE_MESSAGES.FORBIDDEN_EXPIRED_SESSION);
 		}
 
-		await SessionRepository.cancelSessionByRefreshToken(refreshToken, accountId);
+		await SessionRepository.deleteSessionByRefreshToken(refreshToken, accountId);
 
 		return await SessionServices.create({
 			accountId,
 			role,
 		});
-	}
-
-	static async #categorizeAndSortSessionsByValidity(sessions) {
-		const categorizedSessionsByIsValid = await Promise.all(
-			sessions.map(async (session) => {
-				try {
-					await TokenHelper.verifyRefreshToken(session.refreshToken);
-
-					return (session = { _id: session._id, isValid: true });
-				} catch (error) {
-					return (session = { _id: session._id, isValid: false });
-				}
-			})
-		);
-
-		return categorizedSessionsByIsValid.sort((a, b) => Number(b.isValid) - Number(a.isValid));
 	}
 }
 

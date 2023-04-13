@@ -1,14 +1,16 @@
-const STATUS = require("../constants/statusCodes");
-const CODE = require("../constants/errorCodes");
-
-const date_to_days_hours_minutes = require("../helpers/date");
-const User = require("../app/Models/User.model");
+const AccountRepository = require("../app/account/account.repositories");
+const AccountServices = require("../app/account/account.services");
 
 module.exports = async (req, res, next) => {
-	console.log("isVerified middleware");
+	const account = await AccountRepository.findAccountById(req.accountId);
+	AccountServices.isVerified(account.isVerified);
 
+	req.isAccountVerified = account.isVerified;
+	req.isAccountActive = account.isActive;
+	req.isAccountDeleted = account.isDeleted;
 	next();
 };
+
 // // TODO: Create new end point to create new verify email address!
 
 // // * Note: This middleware needs to be after "protect" middleware to get userId from request!!

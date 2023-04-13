@@ -1,14 +1,11 @@
-const { SsmlPhoneme } = require("twilio/lib/twiml/VoiceResponse");
-const TokenHelper = require("./../../helpers/token");
 const SessionModel = require("./session.model");
+const TokenHelper = require("./../../helpers/token");
 
 class SessionRepository {
 	static async createReturnSession(payload = { accountId: "", role: "" }) {
 		const { accessToken, refreshToken } = await TokenHelper.generateAccessRefreshTokens(payload);
 
-		const createdSession = await SessionModel.create({ accessToken, refreshToken, accountId: payload.accountId });
-
-		return createdSession;
+		return await SessionModel.create({ accessToken, refreshToken, accountId: payload.accountId });
 	}
 
 	static async findOneSession(accountId, accessToken) {
@@ -19,14 +16,14 @@ class SessionRepository {
 		return await SessionModel.find({ accountId }).lean();
 	}
 
-	static async cancelSessionBySessionId(sessionId, accountId) {
+	static async deleteSessionBySessionId(sessionId, accountId) {
 		return await SessionModel.findOneAndDelete({
 			_id: sessionId,
 			accountId,
 		});
 	}
 
-	static async cancelSessionByRefreshToken(refreshToken, accountId) {
+	static async deleteSessionByRefreshToken(refreshToken, accountId) {
 		return await SessionModel.findOneAndDelete({
 			refreshToken,
 			accountId,

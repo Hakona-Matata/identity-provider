@@ -49,7 +49,7 @@ class AccountServices {
 			throw new UnAuthorizedError(FAILIURE_MESSAGES.WRONG_EMAIL_OR_PASSWORD);
 		}
 
-		AccountServices.#isAccountVerifiedActiveNotDeleted(foundAccount);
+		AccountServices.isVerifiedActiveNotDeleted(foundAccount);
 
 		const isPasswordCorrect = await HashHelper.verify(password, foundAccount.password);
 
@@ -77,25 +77,25 @@ class AccountServices {
 	}
 
 	// TODO: work more on temp delete and deleted
-	static #isAccountVerifiedActiveNotDeleted(account) {
-		AccountServices.#isAccountVerified(account.isVerified);
-		AccountServices.#isAccountActive(account.isActive);
-		AccountServices.#isAccountDeleted(account.isTempDeleted);
+	static isVerifiedActiveNotDeleted(account) {
+		AccountServices.isVerified(account.isVerified);
+		AccountServices.isActive(account.isActive);
+		AccountServices.isNotDeleted(account.isTempDeleted);
 	}
 
-	static #isAccountVerified(isVerified) {
+	static isVerified(isVerified) {
 		if (!isVerified) {
 			throw new UnAuthorizedError(FAILIURE_MESSAGES.ACCOUNT_NEED_TO_BE_VERIFIED);
 		}
 	}
 
-	static #isAccountActive(isActive) {
+	static isActive(isActive) {
 		if (!isActive) {
 			throw new UnAuthorizedError(FAILIURE_MESSAGES.ACCOUNT_NEET_TO_BE_ACTIVE);
 		}
 	}
 
-	static #isAccountDeleted(isTempDeleted) {
+	static isNotDeleted(isTempDeleted) {
 		if (isTempDeleted) {
 			throw new UnAuthorizedError(FAILIURE_MESSAGES.ACCOUNT_TEMP_DELETED);
 		}
