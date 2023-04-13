@@ -9,7 +9,7 @@ const router = express.Router();
 
 router
 	.route("/")
-	.get(isAuthenticated, isVerified, SessionControllers.getAll)
+	.get(isAuthenticated, isVerified, SessionControllers.findAll)
 	.post(isAuthenticated, isVerified, SessionControllers.cancel);
 
 router.route("/renew").post(SessionControllers.renew);

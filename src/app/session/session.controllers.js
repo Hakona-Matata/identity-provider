@@ -8,24 +8,27 @@ const SessionValidators = require("./session.validators");
 const SessionServices = require("./session.services");
 
 class SessionControllers {
-	static async getAll(req, res, next) {
-		const result = await SessionServices.getAll(req.accountId);
+	static async findAll(req, res, next) {
+		const result = await SessionServices.findAll(req.accountId);
 
 		return success({ res, result });
 	}
 
 	static async cancel(req, res, next) {
-		const accountData = await validate(SessionValidators.cancel, req.body);
+		const { sessionId } = await validate(SessionValidators.cancel, req.body);
 
-		const result = await SessionServices.cancel({
-			userId: req.userId,
-			sessionId: accountData.sessionId,
-		});
+		const result = await SessionServices.cancel(req.accountId, sessionId);
 
 		return success({ res, result });
 	}
 
-	static async renew(req, res, next) {}
+	static async renew(req, res, next) {
+		const { refreshToken } = await validate(SessionValidators.renew, req.body);
+
+		const result = await SessionServices.renew(refreshToken);
+
+		return success({ status: STATUS.CREATED, code: CODE.CREATED, res, result });
+	}
 }
 
 module.exports = SessionControllers;

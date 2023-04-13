@@ -17,4 +17,13 @@ module.exports = {
 				"any.required": `"sessionId" field is required!`,
 			}),
 	}),
+	renew: Joi.object({
+		refreshToken: Joi.string().trim().min(3).max(300).required().messages({
+			"string.base": `"refreshToken" field has to be of type string!`,
+			"string.empty": `"refreshToken" field can't be empty!`,
+			"string.min": `"refreshToken" field can't be true!`,
+			"string.max": `"refreshToken" field can't be true!`,
+			"any.required": `"refreshToken" field is required!`,
+		}),
+	}),
 };

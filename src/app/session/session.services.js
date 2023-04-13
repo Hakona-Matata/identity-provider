@@ -3,26 +3,27 @@ const SessionRepository = require("./session.repositories");
 
 const { SUCCESS_MESSAGES, FAILIURE_MESSAGES } = require("./../../constants/messages");
 const NotFoundException = require("./../../Exceptions/common/notFound.exception");
+const ForbiddenException = require("../../Exceptions/common/forbidden.exception");
 
 class SessionServices {
-	static async create(payload) {
+	static async create(payload = { accountId: "", role: "" }) {
 		const { accessToken, refreshToken } = await SessionRepository.createReturnSession(payload);
 
 		return { accessToken, refreshToken };
 	}
 
-	static async isSessionFound(accountId, accessToken) {
-		return await SessionRepository.findSession(accountId, accessToken);
+	static async findOne(accountId, accessToken) {
+		return await SessionRepository.findOneSession(accountId, accessToken);
 	}
 
-	static async getAll(accountId) {
-		const foundAccountSessions = await SessionRepository.findAccountSesssions(accountId);
+	static async findAll(accountId) {
+		const foundAccountSessions = await SessionRepository.findAllSesssions(accountId);
 
 		return await SessionServices.#categorizeAndSortSessionsByValidity(foundAccountSessions);
 	}
 
-	static async cancel({ userId, sessionId }) {
-		const isSessionFoundAndDeleted = await SessionRepository.cancelSession(sessionId, userId);
+	static async cancel(accountId, sessionId) {
+		const isSessionFoundAndDeleted = await SessionRepository.cancelSessionBySessionId(sessionId, accountId);
 
 		if (!isSessionFoundAndDeleted) {
 			throw new NotFoundException(FAILIURE_MESSAGES.SESSION_NOT_FOUND);
@@ -31,7 +32,22 @@ class SessionServices {
 		return SUCCESS_MESSAGES.SESSION_CANCELED_SUCCESSFULLY;
 	}
 
-	static async renew() {}
+	static async renew(refreshToken) {
+		const { accountId, role } = await TokenHelper.verifyRefreshToken(refreshToken);
+
+		const isSessionFound = await SessionRepository.renewSession(accountId, refreshToken);
+
+		if (!isSessionFound) {
+			throw new ForbiddenException(FAILIURE_MESSAGES.FORBIDDEN_EXPIRED_SESSION);
+		}
+
+		await SessionRepository.cancelSessionByRefreshToken(refreshToken, accountId);
+
+		return await SessionServices.create({
+			accountId,
+			role,
+		});
+	}
 
 	static async #categorizeAndSortSessionsByValidity(sessions) {
 		const categorizedSessionsByIsValid = await Promise.all(

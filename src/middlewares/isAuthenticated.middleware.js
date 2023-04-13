@@ -14,7 +14,7 @@ module.exports = async (req, res, next) => {
 
 	const { accountId, role, origin, permission } = await TokenHelper.verifyAccessToken(accessToken);
 
-	const isSessionFound = await SessionServices.isSessionFound(accountId, accessToken);
+	const isSessionFound = await SessionServices.findOne(accountId, accessToken);
 
 	if (!isSessionFound) {
 		throw new ForbiddenException(FAILIURE_MESSAGES.FORBIDDEN_CANCELED_SESSION);

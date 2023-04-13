@@ -15,7 +15,7 @@ class TokenHelper {
 		return await TokenHelper.#verifyToken(verificationToken, process.env.VERIFICATION_TOKEN_SECRET);
 	}
 
-	static async generateAccessRefreshTokens(payload) {
+	static async generateAccessRefreshTokens(payload = { accountId: "", role: "" }) {
 		const accessToken = await TokenHelper.#generateToken(
 			{ ...payload, label: TOKENS.ACCESS_TOKEN },
 			process.env.ACCESS_TOKEN_SECRET,
