@@ -1,17 +1,15 @@
 const express = require("express");
 
-const SessionControllers = require("./session.controllers");
-
-const isAuthenticated = require("../../middlewares/isAuthenticated.middleware");
-const isAccountVerifiedActiveNotDeleted = require("../../middlewares/isVerified.middleware");
+const { findAll, cancel, renew } = require("./session.controllers");
+const { isAuthenticated, isVerified, isActive, isNotDeleted } = require("./../../middlewares/index");
 
 const router = express.Router();
 
 router
 	.route("/")
-	.get(isAuthenticated, isAccountVerifiedActiveNotDeleted, SessionControllers.findAll)
-	.post(isAuthenticated, isAccountVerifiedActiveNotDeleted, SessionControllers.cancel);
+	.get([isAuthenticated, isVerified, isActive, isNotDeleted], findAll)
+	.post([isAuthenticated, isVerified, isActive, isNotDeleted], cancel);
 
-router.route("/renew").post(SessionControllers.renew);
+router.route("/renew").post(renew);
 
 module.exports = router;

@@ -42,7 +42,7 @@ class SessionServices {
 		const isSessionFound = await SessionRepository.renewSession(accountId, refreshToken);
 
 		if (!isSessionFound) {
-			throw new ForbiddenException(FAILIURE_MESSAGES.FORBIDDEN_EXPIRED_SESSION);
+			throw new ForbiddenException(FAILIURE_MESSAGES.SESSION_EXPIRED);
 		}
 
 		await SessionRepository.deleteSessionByRefreshToken(refreshToken, accountId);

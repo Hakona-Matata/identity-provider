@@ -18,7 +18,7 @@ module.exports = {
 		SESSION_NOT_FOUND: "Sorry, the session is not found!",
 
 		FORBIDDEN: "Sorry, you are not allowed to do this!",
-		FORBIDDEN_CANCELED_SESSION: "Sorry, the session is already canceled!",
-		FORBIDDEN_EXPIRED_SESSION: "Sorry, the session is already expired!",
+		SESSION_CANCELED: "Sorry, the session is already canceled!",
+		SESSION_EXPIRED: "Sorry, the session is already expired!",
 	},
 };

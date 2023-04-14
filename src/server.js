@@ -31,8 +31,6 @@ app.use((error, req, res, next) => {
 	if (error) {
 		return failure({ res, error });
 	}
-
-	console.log("hi from here");
 });
 
 module.exports = app;

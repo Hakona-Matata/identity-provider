@@ -1,16 +1,16 @@
 const express = require("express");
 
-const AccountControllers = require("./account.controllers");
-const isAuthenticated = require("../../middlewares/isAuthenticated.middleware");
+const { signUp, verify, logIn, logOut } = require("./account.controllers");
+const { isAuthenticated, isVerified, isActive, isNotDeleted } = require("./../../middlewares/index");
 
 const router = express.Router();
 
-router.route("/sign-up").post(AccountControllers.signUp);
+router.route("/sign-up").post(signUp);
 
-router.route("/verify-email/:verificationToken").get(AccountControllers.verify);
+router.route("/verify-email/:verificationToken").get(verify);
 
-router.route("/login").post(AccountControllers.logIn);
+router.route("/login").post(logIn);
 
-router.route("/logout").post(isAuthenticated, AccountControllers.logOut);
+router.route("/logout").post([isAuthenticated, isVerified, isActive, isNotDeleted], logOut);
 
 module.exports = router;
