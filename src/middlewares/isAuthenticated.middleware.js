@@ -8,7 +8,6 @@ const {
 } = require("../constants/messages");
 
 module.exports = async (req, res, next) => {
-	console.log("auth")
 	const accessToken = req?.headers["authorization"]?.split(" ")[1];
 
 	if (!accessToken) {
