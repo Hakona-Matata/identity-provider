@@ -4,6 +4,7 @@ module.exports = {
 		ACCOUNT_VERIFIED_SUCCESSFULLY: "Your account is verified successfully!",
 		LOGGED_OUT_SUCCESSFULLY: "Logged out successfully!",
 		SESSION_CANCELED_SUCCESSFULLY: "The session is canceled successfully!",
+		PASSWORD_CHANGED_SUCCESSFULLY: "The password is changed successfully!",
 	},
 
 	FAILIURE_MESSAGES: {
@@ -20,5 +21,7 @@ module.exports = {
 		FORBIDDEN: "Sorry, you are not allowed to do this!",
 		SESSION_CANCELED: "Sorry, the session is already canceled!",
 		SESSION_EXPIRED: "Sorry, the session is already expired!",
+
+		INCORRECT_PASSWORD: "Sorry, the given password is incorrect!",
 	},
 };

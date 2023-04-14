@@ -38,6 +38,15 @@ class AccountRepository {
 			}
 		);
 	}
+
+	static async updateAccountPassword(accountId, accountNewPassword) {
+		return await AccountModel.findOneAndUpdate(
+			{ _id: accountId },
+			{
+				$set: { password: accountNewPassword, passwordChangedAt: new Date() },
+			}
+		);
+	}
 }
 
 module.exports = AccountRepository;

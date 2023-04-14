@@ -8,6 +8,8 @@ module.exports = async (req, res, next) => {
 	req.isAccountVerified = account.isVerified;
 	req.isAccountActive = account.isActive;
 	req.isAccountDeleted = account.isDeleted;
+	req.accountPassword = account.password;
+
 	next();
 };
 

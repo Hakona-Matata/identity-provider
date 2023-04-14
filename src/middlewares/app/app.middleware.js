@@ -1,16 +1,16 @@
 const STATUS = require("./../../constants/statusCodes");
 const CODE = require("./../../constants/errorCodes");
 
-const accountRoutes = require("./../../app/account/account.routes");
-const sessionRoutes = require("../../app/session/session.routes");
-
+const AccountRoutes = require("./../../app/account/account.routes");
+const SessionRoutes = require("../../app/session/session.routes");
+const PasswordRoutes = require("./../../app/password/password.routes");
 const routes_middleware = (app) => {
-	app.use("/auth", accountRoutes);
-	app.use("/auth/sessions", sessionRoutes);
+	app.use("/auth", AccountRoutes);
+	app.use("/auth/sessions", SessionRoutes);
+	app.use("/auth/password", PasswordRoutes);
 
 	// app.use("/auth", access_routes);
 	// app.use("/auth/account", account_routes);
-	// app.use("/auth/password", password_routes);
 	// app.use("/auth/otp", OTP_routes);
 	// app.use("/auth/sms", SMS_routes);
 	// app.use("/auth/totp", TOTP_routes);

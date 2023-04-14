@@ -30,6 +30,10 @@ class SessionRepository {
 		});
 	}
 
+	static async deleteAllSessionsByAccountId(accountId) {
+		return await SessionModel.deleteMany({ _id: accountId });
+	}
+
 	static async renewSession(accountId, refreshToken) {
 		return await SessionModel.findOne({ accountId, refreshToken }).lean();
 	}
