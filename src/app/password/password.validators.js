@@ -6,11 +6,7 @@ module.exports = {
 			.trim()
 			.min(8)
 			.max(16)
-			.pattern(
-				new RegExp(
-					"^(?=(.*[a-z]){2,})(?=(.*[A-Z]){2,})(?=(.*[0-9]){2,})(?=(.*[!@#$%^&*()-__+.]){2,}).{8,16}$"
-				)
-			)
+			.pattern(new RegExp("^(?=(.*[a-z]){2,})(?=(.*[A-Z]){2,})(?=(.*[0-9]){2,})(?=(.*[!@#$%^&*()-__+.]){2,}).{8,16}$"))
 			.required()
 			.messages({
 				"string.base": `"oldPassword" field has to be of type string!`,
@@ -24,11 +20,7 @@ module.exports = {
 			.trim()
 			.min(8)
 			.max(16)
-			.pattern(
-				new RegExp(
-					"^(?=(.*[a-z]){2,})(?=(.*[A-Z]){2,})(?=(.*[0-9]){2,})(?=(.*[!@#$%^&*()-__+.]){2,}).{8,16}$"
-				)
-			)
+			.pattern(new RegExp("^(?=(.*[a-z]){2,})(?=(.*[A-Z]){2,})(?=(.*[0-9]){2,})(?=(.*[!@#$%^&*()-__+.]){2,}).{8,16}$"))
 			.required()
 			.messages({
 				"string.base": `"newPassword" field has to be of type string!`,
@@ -38,12 +30,9 @@ module.exports = {
 				"any.required": `"newPassword" field is required!`,
 				"string.pattern.base": `"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)`,
 			}),
-		confirmNewPassword: Joi.string()
-			.required()
-			.valid(Joi.ref("newPassword"))
-			.messages({
-				"any.only": `"confirmNewPassword" field doesn't match "password" field`,
-			}),
+		confirmNewPassword: Joi.string().required().valid(Joi.ref("newPassword")).messages({
+			"any.only": `"confirmNewPassword" field doesn't match "password" field`,
+		}),
 	}),
 	forget: Joi.object({
 		email: Joi.string().trim().min(15).max(40).email().required().messages({
@@ -56,7 +45,7 @@ module.exports = {
 		}),
 	}),
 	reset: Joi.object({
-		resetToken: Joi.string().trim().min(3).max(200).required().messages({
+		resetToken: Joi.string().trim().min(3).max(300).required().messages({
 			"string.base": `"resetToken" param has to be of type string!`,
 			"string.empty": `"resetToken" param can't be empty!`,
 			"string.min": `"resetToken" param can't be true!`,
@@ -67,11 +56,7 @@ module.exports = {
 			.trim()
 			.min(8)
 			.max(16)
-			.pattern(
-				new RegExp(
-					"^(?=(.*[a-z]){2,})(?=(.*[A-Z]){2,})(?=(.*[0-9]){2,})(?=(.*[!@#$%^&*()-__+.]){2,}).{8,16}$"
-				)
-			)
+			.pattern(new RegExp("^(?=(.*[a-z]){2,})(?=(.*[A-Z]){2,})(?=(.*[0-9]){2,})(?=(.*[!@#$%^&*()-__+.]){2,}).{8,16}$"))
 			.required()
 			.messages({
 				"string.base": `"password" field has to be of type string!`,
@@ -81,11 +66,8 @@ module.exports = {
 				"any.required": `"password" field is required!`,
 				"string.pattern.base": `"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)`,
 			}),
-		confirmPassword: Joi.string()
-			.required()
-			.valid(Joi.ref("password"))
-			.messages({
-				"any.only": `"confirmPassword" field doesn't match "password" field`,
-			}),
+		confirmPassword: Joi.string().required().valid(Joi.ref("password")).messages({
+			"any.only": `"confirmPassword" field doesn't match "password" field`,
+		}),
 	}),
 };

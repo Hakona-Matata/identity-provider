@@ -16,9 +16,21 @@ class PasswordControllers {
 		return success({ res, result });
 	}
 
-	static async forget(req, res, next) {}
+	static async forget(req, res, next) {
+		const { email: accountEmail } = await validate(PasswordValidators.forget, req.body);
 
-	static async reset(req, res, next) {}
+		const result = await PasswordServices.forget(accountEmail);
+
+		return success({ res, result });
+	}
+
+	static async reset(req, res, next) {
+		const resetAccountData = await validate(PasswordValidators.reset, req.body);
+
+		const result = await PasswordServices.reset(resetAccountData);
+
+		return success({ res, result });
+	}
 }
 
 module.exports = PasswordControllers;

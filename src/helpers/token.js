@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const ORIGIN = require("../constants/origin");
 const TOKENS = require("../constants/tokens");
 class TokenHelper {
-	static async generateVerificationToken(payload) {
+	static async generateVerificationToken(payload = { accountId: "", role: "" }) {
 		return await TokenHelper.#generateToken(
 			{ ...payload, label: TOKENS.VERIFICATION_TOKEN },
 			process.env.VERIFICATION_TOKEN_SECRET,
@@ -37,6 +37,18 @@ class TokenHelper {
 
 	static async verifyRefreshToken(refreshToken) {
 		return await TokenHelper.#verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+	}
+
+	static async generateResetToken(payload = { accountId: "", role: "" }) {
+		return await TokenHelper.#generateToken(
+			{ ...payload, label: TOKENS.RESET_TOKEN },
+			process.env.RESET_TOKEN_SECRET,
+			process.env.RESET_TOKEN_EXPIRES_IN
+		);
+	}
+
+	static async verifyResetToken(resetToken) {
+		return await TokenHelper.#verifyToken(resetToken, process.env.RESET_TOKEN_SECRET);
 	}
 
 	static async #generateToken(payload, secret, expiresIn) {

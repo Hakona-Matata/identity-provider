@@ -47,6 +47,20 @@ class AccountRepository {
 			}
 		);
 	}
+
+	static async updateAccountWithResetTokenByAccountId(accountId, resetToken) {
+		return await AccountModel.findOneAndUpdate({ _id: accountId }, { $set: { resetToken } });
+	}
+
+	static async resetAccountPassword(accountId, password) {
+		return await AccountModel.findOneAndUpdate(
+			{ _id: accountId },
+			{
+				$set: { password, resetAt: new Date() },
+				$unset: { resetToken: 1 },
+			}
+		);
+	}
 }
 
 module.exports = AccountRepository;

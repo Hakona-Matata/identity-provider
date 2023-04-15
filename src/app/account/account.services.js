@@ -14,7 +14,7 @@ class AccountServices {
 		const account = await AccountRepository.createAccount({ ...payload });
 
 		const verificationToken = await TokenHelper.generateVerificationToken({
-			_id: account.id,
+			accountId: account.id,
 			role: account.role,
 		});
 
