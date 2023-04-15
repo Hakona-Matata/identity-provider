@@ -5,9 +5,9 @@ const AccountRoutes = require("./../../app/account/account.routes");
 const SessionRoutes = require("../../app/session/session.routes");
 const PasswordRoutes = require("./../../app/password/password.routes");
 const routes_middleware = (app) => {
-	app.use("/auth", AccountRoutes);
-	app.use("/auth/sessions", SessionRoutes);
-	app.use("/auth/password", PasswordRoutes);
+	app.use("/auth/account", AccountRoutes);
+	app.use("/auth/account/sessions", SessionRoutes);
+	app.use("/auth/account/password", PasswordRoutes);
 
 	// app.use("/auth", access_routes);
 	// app.use("/auth/account", account_routes);

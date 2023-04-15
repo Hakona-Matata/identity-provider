@@ -8,8 +8,8 @@ const SessionSchema = new mongoose.Schema(
 			index: true,
 			required: true,
 		},
-		accessToken: String,
-		refreshToken: String,
+		accessToken: { type: String, index: true },
+		refreshToken: { type: String, index: true },
 		createdAt: {
 			type: Date,
 			default: Date.now,

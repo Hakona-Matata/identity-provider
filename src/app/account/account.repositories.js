@@ -2,63 +2,28 @@ const AccountModel = require("./account.model");
 const HashHelper = require("./../../helpers/hash");
 
 class AccountRepository {
-	static async createAccount(accountPayload) {
+	static async create(accountPayload) {
 		const password = await HashHelper.generate(accountPayload.password);
 
 		return await AccountModel.create({ ...accountPayload, password });
 	}
 
-	static async findAccountById(accountId) {
+	static async findOneById(accountId) {
 		return await AccountModel.findOne({
 			_id: accountId,
 		}).lean();
 	}
 
-	static async findAccountByEmail(accountEmail) {
+	static async findOne(accountEmail) {
 		return await AccountModel.findOne({
 			email: accountEmail,
 		}).lean();
 	}
 
-	static async updateAccountWithVerificationToken(accountId, verificationToken) {
+	static async updateOne(accountId, setPayload, unsetPayload = null) {
 		return await AccountModel.findOneAndUpdate(
 			{ _id: accountId },
-			{
-				$set: { verificationToken },
-			}
-		);
-	}
-
-	static async updateAccountToBeVerified(accountId) {
-		return await AccountModel.findOneAndUpdate(
-			{ _id: accountId },
-			{
-				$set: { isVerified: true, isVerifiedAt: new Date() },
-				$unset: { verificationToken: 1 },
-			}
-		);
-	}
-
-	static async updateAccountPassword(accountId, accountNewPassword) {
-		return await AccountModel.findOneAndUpdate(
-			{ _id: accountId },
-			{
-				$set: { password: accountNewPassword, passwordChangedAt: new Date() },
-			}
-		);
-	}
-
-	static async updateAccountWithResetTokenByAccountId(accountId, resetToken) {
-		return await AccountModel.findOneAndUpdate({ _id: accountId }, { $set: { resetToken } });
-	}
-
-	static async resetAccountPassword(accountId, password) {
-		return await AccountModel.findOneAndUpdate(
-			{ _id: accountId },
-			{
-				$set: { password, resetAt: new Date() },
-				$unset: { resetToken: 1 },
-			}
+			{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } }
 		);
 	}
 }

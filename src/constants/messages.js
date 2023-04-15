@@ -7,12 +7,15 @@ module.exports = {
 		PASSWORD_CHANGED_SUCCESSFULLY: "The password is changed successfully!",
 		CHECK_MAIL_BOX: "Please, check your mail box!",
 		ACCOUNT_RESET_SUCCESSFULLY: "Password reset successfully!",
+		DEACTIVATED_SUCCESSFULLY: "Account deactivated successfully!",
+		ACTIVATED_SUCCESSFULLY: "Account is activated successfully",
 	},
 
 	FAILIURE_MESSAGES: {
 		ACCOUNT_ALREADY_VERIFIED: "Sorry, your account is already verified!",
 		ACCOUNT_NEED_TO_BE_VERIFIED: "Sorry, your email address isn't verified yet!",
-		ACCOUNT_NEET_TO_BE_ACTIVE: "Sorry, your account is deactivated!",
+		ACCOUNT_NEET_TO_BE_ACTIVE: "Sorry, your account is currently deactivated!",
+		ACCOUNT_ALREADY_ACTIVE: "Sorry, your account is already active!",
 		ACCOUNT_TEMP_DELETED: "Sorry, your account is temporarily deleted!",
 		WRONG_EMAIL_OR_PASSWORD: "Sorry, email or password are incorrect!",
 
@@ -26,6 +29,7 @@ module.exports = {
 
 		INCORRECT_PASSWORD: "Sorry, the given password is incorrect!",
 		ALREADY_HAVE_VALID_RESET_LINK: "Sorry, your mailbox already has a valid reset link!",
+		ALREADY_HAVE_VALID_ACTIVATION_LINK: "Sorry, you still have a valid activation link in your mailbox!",
 		ALREADY_RESET_ACCOUNT: "Sorry, you already reset your password!",
 	},
 };

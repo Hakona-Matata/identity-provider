@@ -2,40 +2,28 @@ const SessionModel = require("./session.model");
 const TokenHelper = require("./../../helpers/token");
 
 class SessionRepository {
-	static async createReturnSession(payload = { accountId: "", role: "" }) {
-		const { accessToken, refreshToken } = await TokenHelper.generateAccessRefreshTokens(payload);
+	static async create(payload) {
+		const { accessToken, refreshToken } = await TokenHelper.generateAccessRefreshTokens({ ...payload });
 
 		return await SessionModel.create({ accessToken, refreshToken, accountId: payload.accountId });
 	}
 
-	static async findOneSession(accountId, accessToken) {
-		return await SessionModel.findOne({ accountId, accessToken }).lean();
+	static async findOne(payload) {
+		return await SessionModel.findOne({ ...payload }).lean();
 	}
 
-	static async findAllSesssions(accountId) {
+	static async find(accountId) {
 		return await SessionModel.find({ accountId }).lean();
 	}
 
-	static async deleteSessionBySessionId(sessionId, accountId) {
+	static async deleteOne(payload) {
 		return await SessionModel.findOneAndDelete({
-			_id: sessionId,
-			accountId,
+			...payload,
 		});
 	}
 
-	static async deleteSessionByRefreshToken(refreshToken, accountId) {
-		return await SessionModel.findOneAndDelete({
-			refreshToken,
-			accountId,
-		});
-	}
-
-	static async deleteAllSessionsByAccountId(accountId) {
-		return await SessionModel.deleteMany({ _id: accountId });
-	}
-
-	static async renewSession(accountId, refreshToken) {
-		return await SessionModel.findOne({ accountId, refreshToken }).lean();
+	static async deleteMany(accountId) {
+		return await SessionModel.deleteMany({ accountId });
 	}
 }
 

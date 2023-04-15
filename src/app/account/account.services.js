@@ -1,21 +1,40 @@
+const {
+	SUCCESS_MESSAGES: {
+		SIGN_UP_SUCCESSFULLY,
+		ACCOUNT_VERIFIED_SUCCESSFULLY,
+		LOGGED_OUT_SUCCESSFULLY,
+		DEACTIVATED_SUCCESSFULLY,
+		CHECK_MAIL_BOX,
+		ACTIVATED_SUCCESSFULLY,
+	},
+	FAILIURE_MESSAGES: {
+		ACCOUNT_ALREADY_VERIFIED,
+		WRONG_EMAIL_OR_PASSWORD,
+		ACCOUNT_NEED_TO_BE_VERIFIED,
+		ACCOUNT_NEET_TO_BE_ACTIVE,
+		ACCOUNT_ALREADY_ACTIVE,
+		ACCOUNT_TEMP_DELETED,
+		ALREADY_HAVE_VALID_ACTIVATION_LINK,
+	},
+} = require("../../constants/messages");
+
+const BadRequestException = require("./../../Exceptions/common/badRequest.exception");
+const UnAuthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
+
 const SessionServices = require("./../session/session.services");
+const SessionRepository = require("../session/session.repositories");
 const AccountRepository = require("./account.repositories");
-
-const { SUCCESS_MESSAGES, FAILIURE_MESSAGES } = require("../../constants/messages");
-
-const BadRequestError = require("./../../Exceptions/common/badRequest.exception");
-const UnAuthorizedError = require("./../../Exceptions/common/unAuthorized.exception");
 
 const TokenHelper = require("./../../helpers/token");
 const HashHelper = require("./../../helpers/hash");
 
 class AccountServices {
 	static async signUp(payload) {
-		const account = await AccountRepository.createAccount({ ...payload });
+		const { _id: accountId, role } = await AccountRepository.create({ ...payload });
 
 		const verificationToken = await TokenHelper.generateVerificationToken({
-			accountId: account.id,
-			role: account.role,
+			accountId,
+			role,
 		});
 
 		const verificationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/verify-email/${verificationToken}`;
@@ -23,30 +42,34 @@ class AccountServices {
 		// TODO: Send email
 		console.log({ verificationLink });
 
-		await AccountRepository.updateAccountWithVerificationToken(account._id, verificationToken);
+		await AccountRepository.updateOne(accountId, { verificationToken });
 
-		return SUCCESS_MESSAGES.SIGN_UP_SUCCESSFULLY;
+		return SIGN_UP_SUCCESSFULLY;
 	}
 
-	static async verify(token) {
-		const { _id: accountId } = await TokenHelper.verifyVerificationToken(token);
+	static async confirmVerification(token) {
+		const { accountId } = await TokenHelper.verifyVerificationToken(token);
 
-		const foundAccount = await AccountRepository.findAccountById(accountId);
+		const foundAccount = await AccountRepository.findOneById(accountId);
 
 		if (foundAccount && foundAccount.isVerified) {
-			throw new BadRequestError(FAILIURE_MESSAGES.ACCOUNT_ALREADY_VERIFIED);
+			throw new BadRequestException(ACCOUNT_ALREADY_VERIFIED);
 		}
 
-		await AccountRepository.updateAccountToBeVerified(accountId);
+		await AccountRepository.updateOne(
+			accountId,
+			{ isVerified: true, isVerifiedAt: new Date() },
+			{ verificationToken: 1 }
+		);
 
-		return SUCCESS_MESSAGES.ACCOUNT_VERIFIED_SUCCESSFULLY;
+		return ACCOUNT_VERIFIED_SUCCESSFULLY;
 	}
 
 	static async logIn({ email, password }) {
-		const foundAccount = await AccountRepository.findAccountByEmail(email);
+		const foundAccount = await AccountRepository.findOne(email);
 
 		if (!foundAccount) {
-			throw new UnAuthorizedError(FAILIURE_MESSAGES.WRONG_EMAIL_OR_PASSWORD);
+			throw new UnAuthorizedException(WRONG_EMAIL_OR_PASSWORD);
 		}
 
 		AccountServices.isVerifiedActiveNotDeleted(foundAccount);
@@ -54,7 +77,7 @@ class AccountServices {
 		const isPasswordCorrect = await HashHelper.verify(password, foundAccount.password);
 
 		if (!isPasswordCorrect) {
-			throw new UnAuthorizedError(FAILIURE_MESSAGES.WRONG_EMAIL_OR_PASSWORD);
+			throw new UnAuthorizedException(WRONG_EMAIL_OR_PASSWORD);
 		}
 
 		// TODO: what is 2fa are enalbed? refactor!
@@ -65,15 +88,66 @@ class AccountServices {
 		});
 	}
 
-	static async logOut({ userId, accessToken }) {
-		console.log({ userId, accessToken });
-		// TODO: Deal with sesion service!
-		// const isUserLoggedOut = await Session.findOneAndDelete({
-		// 	userId,
-		// 	accessToken,
-		// });
+	static async logOut({ accountId, accessToken }) {
+		await SessionRepository.deleteOne({ accountId, accessToken });
 
-		return SUCCESS_MESSAGES.LOGGED_OUT_SUCCESSFULLY;
+		return LOGGED_OUT_SUCCESSFULLY;
+	}
+
+	static async deactivate(accountId) {
+		await AccountRepository.updateOne(accountId, { isActive: false, activeStatusChangedAt: new Date() });
+
+		await SessionRepository.deleteMany(accountId);
+
+		return DEACTIVATED_SUCCESSFULLY;
+	}
+
+	static async activate(accountEmail) {
+		const account = await AccountRepository.findOne(accountEmail);
+
+		if (!account) {
+			return CHECK_MAIL_BOX;
+		}
+
+		if (account && account.isActive) {
+			throw new BadRequestException(ACCOUNT_ALREADY_ACTIVE);
+		}
+
+		await AccountServices.isVerified(account.isVerified);
+		await AccountServices.isNotDeleted(account.isDeleted);
+		await AccountServices.#checkIfActivationTokenExists(account.activationToken);
+
+		const activationToken = await TokenHelper.generateActivationToken({
+			accountId: account._id,
+			role: account.role,
+		});
+
+		const activationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/account/activate/${activationToken}`;
+
+		// TODO: Send email
+		console.log({ activationLink });
+
+		await AccountRepository.updateOne(account._id, { activationToken });
+
+		return CHECK_MAIL_BOX;
+	}
+
+	static async confirmActivation(activationToken) {
+		const { accountId } = await TokenHelper.verifyActivationToken(activationToken);
+
+		const account = await AccountRepository.findOneById(accountId);
+
+		await AccountServices.#isAlreadyActive(account.isActive);
+		await AccountServices.isVerified(account.isVerified);
+		await AccountServices.isNotDeleted(account.isDeleted);
+
+		await AccountRepository.updateOne(
+			accountId,
+			{ isActive: true, activeStatusChangedAt: new Date() },
+			{ activationToken: 1 }
+		);
+
+		return ACTIVATED_SUCCESSFULLY;
 	}
 
 	// TODO: work more on temp delete and deleted
@@ -85,19 +159,35 @@ class AccountServices {
 
 	static isVerified(isVerified) {
 		if (!isVerified) {
-			throw new UnAuthorizedError(FAILIURE_MESSAGES.ACCOUNT_NEED_TO_BE_VERIFIED);
+			throw new UnAuthorizedException(ACCOUNT_NEED_TO_BE_VERIFIED);
 		}
 	}
 
 	static isActive(isActive) {
 		if (!isActive) {
-			throw new UnAuthorizedError(FAILIURE_MESSAGES.ACCOUNT_NEET_TO_BE_ACTIVE);
+			throw new UnAuthorizedException(ACCOUNT_NEET_TO_BE_ACTIVE);
 		}
 	}
 
 	static isNotDeleted(isTempDeleted) {
 		if (isTempDeleted) {
-			throw new UnAuthorizedError(FAILIURE_MESSAGES.ACCOUNT_TEMP_DELETED);
+			throw new UnAuthorizedException(ACCOUNT_TEMP_DELETED);
+		}
+	}
+
+	static #isAlreadyActive(isActive) {
+		if (isActive) {
+			throw new BadRequestException(ACCOUNT_ALREADY_ACTIVE);
+		}
+	}
+
+	static async #checkIfActivationTokenExists(activationToken) {
+		if (activationToken) {
+			const decodedActivationToken = await TokenHelper.verifyActivationToken(activationToken);
+
+			if (decodedActivationToken) {
+				throw new BadRequestException(ALREADY_HAVE_VALID_ACTIVATION_LINK);
+			}
 		}
 	}
 }

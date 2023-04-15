@@ -21,10 +21,10 @@ class AccountControllers {
 		});
 	}
 
-	static async verify(req, res, next) {
-		const { verificationToken } = await validate(AccountValidators.verify, req.params);
+	static async confirmVerification(req, res, next) {
+		const { verificationToken } = await validate(AccountValidators.confirmVerification, req.params);
 
-		const result = await AccountServices.verify(verificationToken);
+		const result = await AccountServices.confirmVerification(verificationToken);
 
 		return success({ res, result });
 	}
@@ -39,9 +39,31 @@ class AccountControllers {
 
 	static async logOut(req, res, next) {
 		const result = await AccountServices.logOut({
-			userId: req.userId,
+			accountId: req.accountId,
 			accessToken: req.accessToken,
 		});
+
+		return success({ res, result });
+	}
+
+	static async deactivate(req, res, next) {
+		const result = await AccountServices.deactivate(req.accountId);
+
+		return success({ res, result });
+	}
+
+	static async activate(req, res, next) {
+		const { email } = await validate(AccountValidators.activate, req.body);
+
+		const result = await AccountServices.activate(email);
+
+		return success({ result, res });
+	}
+
+	static async confirmActivation(req, res, next) {
+		const { activationToken } = await validate(AccountValidators.confirmActivation, req.params);
+
+		const result = await AccountServices.confirmActivation(activationToken);
 
 		return success({ res, result });
 	}

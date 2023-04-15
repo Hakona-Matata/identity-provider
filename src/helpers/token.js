@@ -1,11 +1,17 @@
 const jwt = require("jsonwebtoken");
 
-const ORIGIN = require("../constants/origin");
-const TOKENS = require("../constants/tokens");
+const { IDENTITY_PROVIDER } = require("../constants/origin");
+const {
+	VERIFICATION_TOKEN,
+	ACCESS_TOKEN,
+	REFRESH_TOKEN,
+	RESET_TOKEN,
+	ACTIVATION_TOKEN,
+} = require("../constants/tokens");
 class TokenHelper {
-	static async generateVerificationToken(payload = { accountId: "", role: "" }) {
+	static async generateVerificationToken({ accountId, role }) {
 		return await TokenHelper.#generateToken(
-			{ ...payload, label: TOKENS.VERIFICATION_TOKEN },
+			{ accountId, role, label: VERIFICATION_TOKEN },
 			process.env.VERIFICATION_TOKEN_SECRET,
 			process.env.VERIFICATION_TOKEN_EXPIRES_IN
 		);
@@ -15,15 +21,17 @@ class TokenHelper {
 		return await TokenHelper.#verifyToken(verificationToken, process.env.VERIFICATION_TOKEN_SECRET);
 	}
 
-	static async generateAccessRefreshTokens(payload = { accountId: "", role: "" }) {
+	static async generateAccessRefreshTokens({ accountId, role }) {
+		const payload = { accountId, role };
+
 		const accessToken = await TokenHelper.#generateToken(
-			{ ...payload, label: TOKENS.ACCESS_TOKEN },
+			{ ...payload, label: ACCESS_TOKEN },
 			process.env.ACCESS_TOKEN_SECRET,
 			process.env.ACCESS_TOKEN_EXPIRES_IN
 		);
 
 		const refreshToken = await TokenHelper.#generateToken(
-			{ ...payload, label: TOKENS.REFRESH_TOKEN },
+			{ ...payload, label: REFRESH_TOKEN },
 			process.env.REFRESH_TOKEN_SECRET,
 			process.env.REFRESH_TOKEN_EXPIRES_IN
 		);
@@ -39,9 +47,9 @@ class TokenHelper {
 		return await TokenHelper.#verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 	}
 
-	static async generateResetToken(payload = { accountId: "", role: "" }) {
+	static async generateResetToken({ accountId, role }) {
 		return await TokenHelper.#generateToken(
-			{ ...payload, label: TOKENS.RESET_TOKEN },
+			{ accountId, role, label: RESET_TOKEN },
 			process.env.RESET_TOKEN_SECRET,
 			process.env.RESET_TOKEN_EXPIRES_IN
 		);
@@ -51,8 +59,20 @@ class TokenHelper {
 		return await TokenHelper.#verifyToken(resetToken, process.env.RESET_TOKEN_SECRET);
 	}
 
+	static async generateActivationToken({ accountId, role }) {
+		return await TokenHelper.#generateToken(
+			{ accountId, role, label: ACTIVATION_TOKEN },
+			process.env.ACTIVATION_TOKEN_SECRET,
+			process.env.ACTIVATION_TOKEN_EXPIRES_IN
+		);
+	}
+
+	static async verifyActivationToken(activationToken) {
+		return await TokenHelper.#verifyToken(activationToken, process.env.ACTIVATION_TOKEN_SECRET);
+	}
+
 	static async #generateToken(payload, secret, expiresIn) {
-		return await jwt.sign({ ...payload, origin: ORIGIN.IDENTITY_PROVIDER }, secret, {
+		return await jwt.sign({ ...payload, origin: IDENTITY_PROVIDER }, secret, {
 			expiresIn,
 		});
 	}
