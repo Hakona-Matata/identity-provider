@@ -47,7 +47,11 @@ const AccountSchema = new mongoose.Schema(
 			type: Boolean,
 			default: false,
 		},
-		isDeletedAt: Date,
+		// Only delete document after 30 days if isDeleted value is true!
+		isDeletedAt: {
+			type: Date,
+			index: { expireAfterSeconds: 60 * 60 * 24 * 30, partialFilterExpression: { isDeleted: true } },
+		},
 
 		resetToken: String,
 		resetAt: Date,
@@ -67,14 +71,6 @@ const AccountSchema = new mongoose.Schema(
 	{
 		timestamps: true,
 		versionKey: false,
-	}
-);
-
-AccountSchema.index(
-	{ isDeleted: 1 },
-	{
-		expireAfterSeconds: +process.env.DELETE_IN_30_DAYS,
-		partialFilterExpression: { isDeleted: true },
 	}
 );
 

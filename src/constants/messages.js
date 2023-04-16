@@ -9,6 +9,8 @@ module.exports = {
 		ACCOUNT_RESET_SUCCESSFULLY: "Password reset successfully!",
 		DEACTIVATED_SUCCESSFULLY: "Account deactivated successfully!",
 		ACTIVATED_SUCCESSFULLY: "Account is activated successfully",
+		ACCOUNT_DELETED_SUCCESSFULLY: "Your account Will be deleted permenantly in 30 days!",
+		CANCELED_ACCOUNT_DELETION: "You canceled the account deletion successfully!",
 	},
 
 	FAILIURE_MESSAGES: {
@@ -16,7 +18,7 @@ module.exports = {
 		ACCOUNT_NEED_TO_BE_VERIFIED: "Sorry, your email address isn't verified yet!",
 		ACCOUNT_NEET_TO_BE_ACTIVE: "Sorry, your account is currently deactivated!",
 		ACCOUNT_ALREADY_ACTIVE: "Sorry, your account is already active!",
-		ACCOUNT_TEMP_DELETED: "Sorry, your account is temporarily deleted!",
+		ACCOUNT_TEMPORARY_DELETED: "Sorry, your account is temporarily deleted!",
 		WRONG_EMAIL_OR_PASSWORD: "Sorry, email or password are incorrect!",
 
 		ACCESS_TOKEN_NOT_FOUND: "Sorry, the access token is not found",
@@ -31,5 +33,9 @@ module.exports = {
 		ALREADY_HAVE_VALID_RESET_LINK: "Sorry, your mailbox already has a valid reset link!",
 		ALREADY_HAVE_VALID_ACTIVATION_LINK: "Sorry, you still have a valid activation link in your mailbox!",
 		ALREADY_RESET_ACCOUNT: "Sorry, you already reset your password!",
+		ALREADY_CANCELED_ACCOUNT_DELETION: "Sorry, you already canceled account deletion!",
+
+		ACCOUNT_NOT_FOUND: "Sorry, Account is not found!",
+		ACCOUNT_CREATION_FAILED: "Sorry, we couldn't create your account!",
 	},
 };

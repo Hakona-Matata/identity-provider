@@ -1,10 +1,12 @@
 const STATUS = require("./../../constants/statusCodes");
 const CODE = require("./../../constants/errorCodes");
 
+const AuthRoutes = require("./../../app/auth/auth.routes");
 const AccountRoutes = require("./../../app/account/account.routes");
 const SessionRoutes = require("../../app/session/session.routes");
 const PasswordRoutes = require("./../../app/password/password.routes");
 const routes_middleware = (app) => {
+	app.use("/auth", AuthRoutes);
 	app.use("/auth/account", AccountRoutes);
 	app.use("/auth/account/sessions", SessionRoutes);
 	app.use("/auth/account/password", PasswordRoutes);

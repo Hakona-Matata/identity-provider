@@ -8,7 +8,7 @@ module.exports = class InternalServerException extends BaseAppException {
 		super(
 			ErrorCodeConstant.INTERNAL_SERVER_ERROR,
 			StatusCodeConstant.INTERNAL_SERVER_ERROR,
-			"Sorry, something went wrong!"
+			"Sorry, the process went wrong!"
 		);
 	}
 };
