@@ -4,12 +4,13 @@ const TokenHelper = require("./../../helpers/token");
 const {
 	SUCCESS_MESSAGES: { SESSION_CANCELED_SUCCESSFULLY },
 	FAILIURE_MESSAGES: { SESSION_CANCELED, SESSION_NOT_FOUND, SESSION_EXPIRED },
-} = require("./../../constants/messages");
+} = require("./session.constants");
+
 const NotFoundException = require("./../../Exceptions/common/notFound.exception");
 const ForbiddenException = require("../../Exceptions/common/forbidden.exception");
 
 class SessionServices {
-	static async create(payload	) {
+	static async create(payload) {
 		const { accessToken, refreshToken } = await SessionRepository.create(payload);
 
 		return { accessToken, refreshToken };

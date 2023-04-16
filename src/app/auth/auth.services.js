@@ -1,7 +1,7 @@
 const {
 	SUCCESS_MESSAGES: { SIGN_UP_SUCCESSFULLY, ACCOUNT_VERIFIED_SUCCESSFULLY, LOGGED_OUT_SUCCESSFULLY },
 	FAILIURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
-} = require("../../constants/messages");
+} = require("./auth.constants");
 
 const TokenHelper = require("./../../helpers/token");
 const HashHelper = require("./../../helpers/hash");

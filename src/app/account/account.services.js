@@ -13,7 +13,7 @@ const {
 		ALREADY_HAVE_VALID_ACTIVATION_LINK,
 		ALREADY_CANCELED_ACCOUNT_DELETION,
 	},
-} = require("../../constants/messages");
+} = require("./account.constants");
 
 const BadRequestException = require("./../../Exceptions/common/badRequest.exception");
 const UnAuthorizedException = require("./../../Exceptions/common/unAuthorized.exception");

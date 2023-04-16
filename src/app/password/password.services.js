@@ -6,7 +6,7 @@ const HashHelper = require("./../../helpers/hash");
 const {
 	SUCCESS_MESSAGES: { PASSWORD_CHANGED_SUCCESSFULLY, CHECK_MAIL_BOX, ACCOUNT_RESET_SUCCESSFULLY },
 	FAILIURE_MESSAGES: { INCORRECT_PASSWORD, ALREADY_HAVE_VALID_RESET_LINK, ALREADY_RESET_ACCOUNT },
-} = require("./../../constants/messages");
+} = require("./password.constants");
 
 class PasswordServices {
 	static async change({ oldPassword, newPassword, accountId, accountPassword }) {

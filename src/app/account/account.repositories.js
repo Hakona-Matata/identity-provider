@@ -4,7 +4,7 @@ const InternalServerException = require("./../../Exceptions/common/internalServe
 const NotFoundException = require("../../Exceptions/common/notFound.exception");
 const {
 	FAILIURE_MESSAGES: { ACCOUNT_NOT_FOUND, ACCOUNT_CREATION_FAILED },
-} = require("./../../constants/messages");
+} = require("./account.constants");
 const BadRequestException = require("../../Exceptions/common/badRequest.exception");
 
 class AccountRepository {
