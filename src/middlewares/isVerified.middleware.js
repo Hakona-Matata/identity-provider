@@ -11,6 +11,7 @@ module.exports = async (req, res, next) => {
 	req.isAccountDeleted = account.isDeleted;
 	req.accountPassword = account.password;
 
+	req.account = account;
 	next();
 };
 

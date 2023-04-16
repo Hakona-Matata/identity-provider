@@ -11,6 +11,8 @@ const {
 	sendOTP_POST_service,
 	verifyOTP_POST_service,
 } = require("../Services/OTP.services");
+const OTPValidators = require("../Validators/OTP.validators");
+const OTPServices = require("../otp/otp.services");
 
 const enableOTP_GET_controller = async (req, res, next) => {
 	try {
@@ -28,11 +30,11 @@ const enableOTP_GET_controller = async (req, res, next) => {
 
 const confirmOTP_POST_controller = async (req, res, next) => {
 	try {
-		const validatedData = await validate(OTP_validators.confirmOTP, req.body);
+		const { otp } = await validate(OTPValidators.confirmOTP, req.body);
 
-		const result = await confirmOTP_POST_service({
-			userId: req.userId,
-			givenOTP: validatedData.otp,
+		const result = await OTPServices.confirm({
+			accountId: req.accountId,
+			givenOTP: otp,
 		});
 
 		return success({ res, result });

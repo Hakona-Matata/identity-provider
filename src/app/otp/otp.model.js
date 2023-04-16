@@ -4,13 +4,13 @@ const Schema = mongoose.Schema;
 
 const OTPSchema = new Schema(
 	{
-		userId: {
+		accountId: {
 			type: mongoose.Schema.Types.ObjectId,
-			ref: "User",
+			ref: "Account",
 			index: true,
 			required: true,
 		},
-		otp: String,
+		hashedOTP: String,
 		by: {
 			// The OTP sending way!
 			type: String,
@@ -29,9 +29,6 @@ const OTPSchema = new Schema(
 	}
 );
 
-OTPSchema.index(
-	{ createdAt: 1 },
-	{ expireAfterSeconds: +process.env.OTP_EXPIRES_IN_SECONDS }
-);
+OTPSchema.index({ createdAt: 1 }, { expireAfterSeconds: +process.env.OTP_EXPIRES_IN_SECONDS });
 
 module.exports = mongoose.model("OTP", OTPSchema);
