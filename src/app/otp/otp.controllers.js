@@ -39,7 +39,16 @@ class OTPControllers {
 		return success({ res, result });
 	}
 
-	static async verify(req, res, next) {}
+	static async verify(req, res, next) {
+		const OTPData = await validate(OTPValidators.verify, req.body);
+
+		const result = await OTPServices.verify({
+			accountId: OTPData.accountId,
+			givenOTP: OTPData.otp,
+		});
+
+		return success({ res, result });
+	}
 }
 
 module.exports = OTPControllers;

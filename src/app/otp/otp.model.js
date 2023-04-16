@@ -21,6 +21,8 @@ const OTPSchema = new Schema(
 		createdAt: {
 			type: Date,
 			default: Date.now,
+			index: true,
+			expires: "1h",
 		},
 		count: { type: Number, default: 0 }, // number of wrong tries
 	},
@@ -28,7 +30,5 @@ const OTPSchema = new Schema(
 		versionKey: false,
 	}
 );
-
-OTPSchema.index({ createdAt: 1 }, { expireAfterSeconds: +process.env.OTP_EXPIRES_IN_SECONDS });
 
 module.exports = mongoose.model("OTP", OTPSchema);

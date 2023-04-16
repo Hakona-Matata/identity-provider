@@ -10,5 +10,6 @@ module.exports = {
 		ALREADY_HAVE_VALID_OTP: "Sorry, you still have a valid OTP in your mailbox!",
 		EXPIRED_OTP: "Sorry, the otp may be expired!",
 		INVALID_OTP: "Sorry, your OTP is invalid!",
+		REACHED_MAXIMUM_WRONG_TRIES: "Sorry, You have reached your maximum wrong tries!",
 	},
 };

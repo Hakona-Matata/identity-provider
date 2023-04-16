@@ -28,7 +28,7 @@ module.exports = {
 			}),
 	}),
 	verify: Joi.object({
-		userId: Joi.string()
+		accountId: Joi.string()
 			.required()
 			.custom((value, helper) => {
 				const valid = isValidId(`${value}`);
@@ -36,10 +36,10 @@ module.exports = {
 				return valid ? value : helper.error("any.custom");
 			})
 			.messages({
-				"string.base": `"userId" field has to be of type string!`,
-				"string.empty": `"userId" field can't be empty!`,
-				"any.custom": `"userId" field is not a valid ID`,
-				"any.required": `"userId" field is required!`,
+				"string.base": `"accountId" field has to be of type string!`,
+				"string.empty": `"accountId" field can't be empty!`,
+				"any.custom": `"accountId" field is not a valid ID`,
+				"any.required": `"accountId" field is required!`,
 			}),
 		otp: Joi.number().integer().positive().required().min(100_000).max(999999).messages({
 			"any.required": `"otp" field is required!`,

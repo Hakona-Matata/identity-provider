@@ -13,8 +13,15 @@ class OTPRepository {
 		return isOTPCreated;
 	}
 
-	static async findOne(accountId) {
-		return await OTPModel.findOne({ accountId, by: "EMAIL" }).lean();
+	static async findOne(payload) {
+		return await OTPModel.findOne({ ...payload, by: "EMAIL" }).lean();
+	}
+
+	static async updateOne(OTPId, setPayload, unsetPayload) {
+		return await OTPModel.updateOne(
+			{ _id: OTPId },
+			{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } }
+		);
 	}
 
 	static async deleteOne(OTPId) {
