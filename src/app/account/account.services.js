@@ -32,6 +32,11 @@ const HashHelper = require("./../../helpers/hash");
 const InternalServerException = require("../../Exceptions/common/internalServer.exception");
 
 class AccountServices {
+	/* 
+		=======================================
+			Public methods 
+		=======================================
+	*/
 	static async deactivate(accountId) {
 		await AccountRepository.updateOne(accountId, { isActive: false, activeStatusChangedAt: new Date() });
 
@@ -105,7 +110,6 @@ class AccountServices {
 		return CANCELED_ACCOUNT_DELETION;
 	}
 
-	// TODO: work more on temp delete and deleted
 	static isVerifiedActive(account) {
 		AccountServices.isVerified(account.isVerified);
 		AccountServices.isActive(account.isActive);
@@ -138,6 +142,18 @@ class AccountServices {
 			}
 		}
 	}
+
+	/* 
+		=======================================
+			Private methods 
+		=======================================
+	*/
+
+	/* 
+		=======================================
+			Crud methods 
+		=======================================
+	*/
 
 	//-------------------------------------------------------------
 	//-------------------------------------------------------------
