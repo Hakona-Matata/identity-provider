@@ -1,12 +1,14 @@
-const ForbiddenException = require("./../../Exceptions/common/forbidden.exception");
-const AccountRepository = require("./../account/account.repositories");
-const SessionRepository = require("./../session/session.repositories");
 const TokenHelper = require("./../../helpers/token");
 const HashHelper = require("./../../helpers/hash");
 const {
 	SUCCESS_MESSAGES: { PASSWORD_CHANGED_SUCCESSFULLY, CHECK_MAIL_BOX, ACCOUNT_RESET_SUCCESSFULLY },
 	FAILIURE_MESSAGES: { INCORRECT_PASSWORD, ALREADY_HAVE_VALID_RESET_LINK, ALREADY_RESET_ACCOUNT },
 } = require("./password.constants");
+
+const ForbiddenException = require("./../../Exceptions/common/forbidden.exception");
+
+const AccountServices = require("../account/account.services");
+const SessionServices = require("../session/session.services");
 
 class PasswordServices {
 	static async change({ oldPassword, newPassword, accountId, accountPassword }) {
@@ -18,19 +20,15 @@ class PasswordServices {
 
 		const hashedPassword = await HashHelper.generate(newPassword);
 
-		await AccountRepository.updateOne(accountId, { password: hashedPassword, passwordChangedAt: new Date() });
+		await AccountServices.updateOne(accountId, { password: hashedPassword, passwordChangedAt: new Date() });
 
-		await SessionRepository.deleteMany(accountId);
+		await SessionServices.delete(accountId);
 
 		return PASSWORD_CHANGED_SUCCESSFULLY;
 	}
 
-	static async forget(accountEmail) {
-		const account = await AccountRepository.findOne(accountEmail);
-
-		if (!account) {
-			return CHECK_MAIL_BOX;
-		}
+	static async forget(email) {
+		const account = await AccountServices.findOne({ email });
 
 		if (account && account.resetToken) {
 			const decodedResetToken = await TokenHelper.verifyResetToken(account.resetToken);
@@ -47,7 +45,7 @@ class PasswordServices {
 		// TODO: Send Email
 		console.log({ resetLink });
 
-		await AccountRepository.updateOne(account._id, { resetToken, resetAt: new Date() }, { resetToken: 1 });
+		await AccountServices.updateOne(account._id, { resetToken, resetAt: new Date() }, { resetToken: 1 });
 
 		return CHECK_MAIL_BOX;
 	}
@@ -55,7 +53,7 @@ class PasswordServices {
 	static async reset({ resetToken: givenAccountResetToken, password: givenAccountPassword }) {
 		const { accountId } = await TokenHelper.verifyResetToken(givenAccountResetToken);
 
-		const account = await AccountRepository.findOneById(accountId);
+		const account = await AccountServices.findById(accountId);
 
 		if (account && !account.resetToken) {
 			throw new ForbiddenException(ALREADY_RESET_ACCOUNT);
@@ -63,9 +61,9 @@ class PasswordServices {
 
 		const hashedPassword = await HashHelper.generate(givenAccountPassword);
 
-		await AccountRepository.updateOne(accountId, { password: hashedPassword, resetAt: new Date() }, { resetToken: 1 });
+		await AccountServices.updateOne(accountId, { password: hashedPassword, resetAt: new Date() }, { resetToken: 1 });
 
-		await SessionRepository.deleteMany(accountId);
+		await SessionServices.delete(accountId);
 
 		return ACCOUNT_RESET_SUCCESSFULLY;
 	}

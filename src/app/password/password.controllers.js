@@ -17,9 +17,9 @@ class PasswordControllers {
 	}
 
 	static async forget(req, res, next) {
-		const { email: accountEmail } = await validate(PasswordValidators.forget, req.body);
+		const { email } = await validate(PasswordValidators.forget, req.body);
 
-		const result = await PasswordServices.forget(accountEmail);
+		const result = await PasswordServices.forget(email);
 
 		return success({ res, result });
 	}
