@@ -4,7 +4,7 @@ const AccountServices = require("../app/account/account.services");
 module.exports = async (req, res, next) => {
 	const account = await AccountRepository.findOneById(req.accountId);
 
-	AccountServices.isVerified(account.isVerified);
+	AccountServices.isAccountVerified(account.isVerified);
 
 	req.isAccountVerified = account.isVerified;
 	req.isAccountActive = account.isActive;

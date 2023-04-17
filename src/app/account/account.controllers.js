@@ -12,10 +12,10 @@ class AccountControllers {
 		return success({ res, result });
 	}
 
-	static async activate(req, res, next) {
+	static async initiateActivation(req, res, next) {
 		const { email } = await validate(AccountValidators.activate, req.body);
 
-		const result = await AccountServices.activate(email);
+		const result = await AccountServices.initiateActivation(email);
 
 		return success({ result, res });
 	}

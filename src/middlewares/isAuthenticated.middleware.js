@@ -12,7 +12,7 @@ module.exports = async (req, res, next) => {
 
 	const { accountId, role, origin, permission } = await TokenHelper.verifyAccessToken(accessToken);
 
-	await SessionServices.findOne(accountId, accessToken);
+	await SessionServices.findOne({ accountId, accessToken });
 
 	req.accountId = accountId;
 	req.accountRole = role;

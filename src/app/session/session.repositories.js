@@ -1,6 +1,6 @@
 const SessionModel = require("./session.model");
 const TokenHelper = require("./../../helpers/token");
-	
+
 class SessionRepository {
 	static async create(payload) {
 		const { accessToken, refreshToken } = await TokenHelper.generateAccessRefreshTokens({ ...payload });
@@ -22,7 +22,7 @@ class SessionRepository {
 		});
 	}
 
-	static async deleteMany(accountId) {
+	static async delete(accountId) {
 		return await SessionModel.deleteMany({ accountId });
 	}
 }

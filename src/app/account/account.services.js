@@ -22,14 +22,12 @@ const {
 
 const BadRequestException = require("./../../Exceptions/common/badRequest.exception");
 const UnAuthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
+const InternalServerException = require("../../Exceptions/common/internalServer.exception");
 
 const SessionServices = require("./../session/session.services");
-const SessionRepository = require("../session/session.repositories");
 const AccountRepository = require("./account.repositories");
 
 const TokenHelper = require("./../../helpers/token");
-const HashHelper = require("./../../helpers/hash");
-const InternalServerException = require("../../Exceptions/common/internalServer.exception");
 
 class AccountServices {
 	/* 
@@ -38,27 +36,25 @@ class AccountServices {
 		=======================================
 	*/
 	static async deactivate(accountId) {
-		await AccountRepository.updateOne(accountId, { isActive: false, activeStatusChangedAt: new Date() });
+		await AccountServices.updateOne(accountId, { isActive: false, activeStatusChangedAt: new Date() });
 
-		await SessionRepository.deleteMany(accountId);
+		await SessionServices.delete(accountId);
 
 		return DEACTIVATED_SUCCESSFULLY;
 	}
 
-	static async activate(accountEmail) {
-		const account = await AccountRepository.findOne(accountEmail);
+	static async initiateActivation(email) {
+		const account = await AccountServices.findOne({ email });
 
 		if (!account) {
 			return CHECK_MAIL_BOX;
 		}
 
-		if (account && account.isActive) {
-			throw new BadRequestException(ACCOUNT_ALREADY_ACTIVE);
-		}
+		account && account.isActive && AccountServices.#isAccountAlreadyActive(account.isActive);
 
 		await AccountServices.isVerified(account.isVerified);
 
-		await AccountServices.#checkIfActivationTokenExists(account.activationToken);
+		await AccountServices.#hasValidActivationToken(account.activationToken);
 
 		const activationToken = await TokenHelper.generateActivationToken({
 			accountId: account._id,
@@ -70,7 +66,7 @@ class AccountServices {
 		// TODO: Send email
 		console.log({ activationLink });
 
-		await AccountRepository.updateOne(account._id, { activationToken });
+		await AccountServices.updateOne(account._id, { activationToken });
 
 		return CHECK_MAIL_BOX;
 	}
@@ -78,12 +74,13 @@ class AccountServices {
 	static async confirmActivation(activationToken) {
 		const { accountId } = await TokenHelper.verifyActivationToken(activationToken);
 
-		const account = await AccountRepository.findOneById(accountId);
+		const account = await AccountServices.findById(accountId);
 
-		await AccountServices.#isAlreadyActive(account.isActive);
+		await AccountServices.#isAccountAlreadyActive(account.isActive);
+
 		await AccountServices.isVerified(account.isVerified);
 
-		await AccountRepository.updateOne(
+		await AccountServices.updateOne(
 			accountId,
 			{ isActive: true, activeStatusChangedAt: new Date() },
 			{ activationToken: 1 }
@@ -93,53 +90,37 @@ class AccountServices {
 	}
 
 	static async terminate(accountId) {
-		await AccountRepository.updateOne(accountId, { isDeleted: true, isDeletedAt: new Date() });
+		await AccountServices.updateOne(accountId, { isDeleted: true, isDeletedAt: new Date() });
 
 		return ACCOUNT_DELETED_SUCCESSFULLY;
 	}
 
 	static async cancelTermination(accountId) {
-		const foundAccount = await AccountRepository.findOneById(accountId);
+		const foundAccount = await AccountServices.findById(accountId);
 
 		if (!foundAccount.isDeleted) {
 			throw new BadRequestException(ALREADY_CANCELED_ACCOUNT_DELETION);
 		}
 
-		await AccountRepository.updateOne(accountId, { isDeleted: false }, { isDeletedAt: 1 });
+		await AccountServices.updateOne(accountId, { isDeleted: false }, { isDeletedAt: 1 });
 
 		return CANCELED_ACCOUNT_DELETION;
 	}
 
-	static isVerifiedActive(account) {
-		AccountServices.isVerified(account.isVerified);
-		AccountServices.isActive(account.isActive);
+	static isAccountVerifiedActive(account) {
+		AccountServices.isAccountVerified(account.isVerified);
+		AccountServices.isAccountActive(account.isActive);
 	}
 
-	static isVerified(isVerified) {
+	static isAccountVerified(isVerified) {
 		if (!isVerified) {
 			throw new UnAuthorizedException(ACCOUNT_NEED_TO_BE_VERIFIED);
 		}
 	}
 
-	static isActive(isActive) {
+	static isAccountActive(isActive) {
 		if (!isActive) {
 			throw new UnAuthorizedException(ACCOUNT_NEET_TO_BE_ACTIVE);
-		}
-	}
-
-	static #isAlreadyActive(isActive) {
-		if (isActive) {
-			throw new BadRequestException(ACCOUNT_ALREADY_ACTIVE);
-		}
-	}
-
-	static async #checkIfActivationTokenExists(activationToken) {
-		if (activationToken) {
-			const decodedActivationToken = await TokenHelper.verifyActivationToken(activationToken);
-
-			if (decodedActivationToken) {
-				throw new BadRequestException(ALREADY_HAVE_VALID_ACTIVATION_LINK);
-			}
 		}
 	}
 
@@ -149,18 +130,38 @@ class AccountServices {
 		=======================================
 	*/
 
+	static #isAccountAlreadyActive(isActive) {
+		if (isActive) {
+			throw new BadRequestException(ACCOUNT_ALREADY_ACTIVE);
+		}
+	}
+
+	static async #hasValidActivationToken(activationToken) {
+		if (activationToken) {
+			const decodedActivationToken = await TokenHelper.verifyActivationToken(activationToken);
+
+			if (decodedActivationToken) {
+				throw new BadRequestException(ALREADY_HAVE_VALID_ACTIVATION_LINK);
+			}
+		}
+	}
 	/* 
 		=======================================
-			Crud methods 
+			CRUD methods 
 		=======================================
 	*/
 
-	//-------------------------------------------------------------
-	//-------------------------------------------------------------
-	//-------------------------------------------------------------
-	//-------------------------------------------------------------
+	static async create(payload) {
+		const isAccountCreated = await AccountRepository.create(payload);
 
-	static async findeOneById(accountId) {
+		if (!isAccountCreated) {
+			throw new InternalServerException(ACCOUNT_CREATE_FAILED);
+		}
+
+		return isAccountCreated;
+	}
+
+	static async findById(accountId) {
 		const isAccountFound = await AccountRepository.findOne({ _id: accountId });
 
 		if (!isAccountFound) {
@@ -170,7 +171,7 @@ class AccountServices {
 		return isAccountFound;
 	}
 
-	static async findeOne(payload) {
+	static async findOne(payload) {
 		const isAccountFound = await AccountRepository.findOne(payload);
 
 		if (!isAccountFound) {
@@ -188,6 +189,14 @@ class AccountServices {
 		}
 
 		return isAccountUpdated;
+	}
+
+	static async deleteOne(accountId) {
+		const { deletedCount } = await AccountRepository.deleteOne(accountId);
+
+		if (deletedCount === 0) {
+			throw new InternalServerException(ACCOUNT_DELETE_FAILED);
+		}
 	}
 }
 

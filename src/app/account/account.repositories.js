@@ -30,6 +30,10 @@ class AccountRepository {
 			{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } }
 		);
 	}
+
+	static async deleteOne(accountId) {
+		return await AccountModel.deleteOne({ _id: accountId });
+	}
 }
 
 module.exports = AccountRepository;

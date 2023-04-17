@@ -1,10 +1,10 @@
 module.exports = {
 	SUCCESS_MESSAGES: {
-		ACTIVATED_SUCCESSFULLY: "Account is activated successfully",
-		ACCOUNT_DELETED_SUCCESSFULLY: "Your account Will be deleted permenantly in 30 days!",
-		CANCELED_ACCOUNT_DELETION: "You canceled the account deletion successfully!",
+		ACTIVATED_SUCCESSFULLY: "The account is activated successfully!",
+		ACCOUNT_DELETED_SUCCESSFULLY: "The account Will be deleted permenantly in 30 days!",
+		CANCELED_ACCOUNT_DELETION: "The account canceled successfully!",
 		CHECK_MAIL_BOX: "Please, check your mail box!",
-		DEACTIVATED_SUCCESSFULLY: "Account deactivated successfully!",
+		DEACTIVATED_SUCCESSFULLY: "The account is deactivated successfully!",
 	},
 	FAILIURE_MESSAGES: {
 		ACCOUNT_NEED_TO_BE_VERIFIED: "Sorry, your email address isn't verified yet!",

@@ -7,14 +7,11 @@ const TokenHelper = require("./../../helpers/token");
 const HashHelper = require("./../../helpers/hash");
 
 const AccountServices = require("./../account/account.services");
-const AccountRepository = require("./../account/account.repositories");
-
 const SessionServices = require("./../session/session.services");
-const SessionRepository = require("./../session/session.repositories");
 
 class AuthServices {
 	static async signUp(payload) {
-		const { _id: accountId, role } = await AccountRepository.create({ ...payload });
+		const { _id: accountId, role } = await AccountServices.create(payload);
 
 		const verificationToken = await TokenHelper.generateVerificationToken({
 			accountId,
@@ -26,21 +23,21 @@ class AuthServices {
 		// TODO: Send email
 		console.log({ verificationLink });
 
-		await AccountRepository.updateOne(accountId, { verificationToken });
+		await AccountServices.updateOne(accountId, { verificationToken });
 
 		return SIGN_UP_SUCCESSFULLY;
 	}
 
-	static async verify(token) {
-		const { accountId } = await TokenHelper.verifyVerificationToken(token);
+	static async verify(verificationToken) {
+		const { accountId } = await TokenHelper.verifyVerificationToken(verificationToken);
 
-		const foundAccount = await AccountRepository.findOneById(accountId);
+		const foundAccount = await AccountServices.findById(accountId);
 
 		if (foundAccount && foundAccount.isVerified) {
 			throw new BadRequestException(ACCOUNT_ALREADY_VERIFIED);
 		}
 
-		await AccountRepository.updateOne(
+		await AccountServices.updateOne(
 			accountId,
 			{ isVerified: true, isVerifiedAt: new Date() },
 			{ verificationToken: 1 }
@@ -50,13 +47,13 @@ class AuthServices {
 	}
 
 	static async logIn({ email, password }) {
-		const foundAccount = await AccountRepository.findOne(email);
+		const foundAccount = await AccountServices.findOne({ email });
 
 		if (!foundAccount) {
 			throw new UnAuthorizedException(WRONG_EMAIL_OR_PASSWORD);
 		}
 
-		AccountServices.isVerifiedActive(foundAccount);
+		AccountServices.isAccountVerifiedActive(foundAccount);
 
 		const isPasswordCorrect = await HashHelper.verify(password, foundAccount.password);
 
@@ -73,7 +70,7 @@ class AuthServices {
 	}
 
 	static async logOut({ accountId, accessToken }) {
-		await SessionRepository.deleteOne({ accountId, accessToken });
+		await SessionServices.deleteOne({ accountId, accessToken });
 
 		return LOGGED_OUT_SUCCESSFULLY;
 	}

@@ -1,13 +1,19 @@
 const express = require("express");
 
-const { deactivate, activate, confirmActivation, terminate, cancelTermination } = require("./account.controllers");
+const {
+	deactivate,
+	initiateActivation,
+	confirmActivation,
+	terminate,
+	cancelTermination,
+} = require("./account.controllers");
 const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
 
 const router = express.Router();
 
 router.route("/deactivate").put([isAuthenticated, isVerified], deactivate);
 
-router.route("/activate").put(activate);
+router.route("/activate").put(initiateActivation);
 
 router.route("/activate/:activationToken").get(confirmActivation);
 

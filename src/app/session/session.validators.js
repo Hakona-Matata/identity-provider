@@ -26,4 +26,14 @@ module.exports = {
 			"any.required": `"refreshToken" field is required!`,
 		}),
 	}),
+
+	validate: Joi.object({
+		accessToken: Joi.string().trim().min(3).max(300).required().messages({
+			"string.base": `"accessToken" field has to be of type string!`,
+			"string.empty": `"accessToken" field can't be empty!`,
+			"string.min": `"accessToken" field can't be true!`,
+			"string.max": `"accessToken" field can't be true!`,
+			"any.required": `"accessToken" field is required!`,
+		}),
+	}),
 };
