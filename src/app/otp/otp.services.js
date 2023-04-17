@@ -113,7 +113,7 @@ class OtpServices {
 		}
 	}
 
-	static async generateHashedOtp() {
+	static async generatSendOtp() {
 		const plainTextOtp = RandomHelper.generateRandomNumber(6);
 
 		const hashedOtp = await HashHelper.generate(plainTextOtp);
@@ -125,12 +125,7 @@ class OtpServices {
 	}
 
 	static async #generateSaveHashedOtp(accountId) {
-		const plainTextOtp = RandomHelper.generateRandomNumber(6);
-
-		const hashedOtp = await HashHelper.generate(plainTextOtp);
-
-		// TODO: Send email
-		console.log({ plainTextOtp, hashedOtp });
+		const hashedOtp = await OtpServices.generatSendOtp(accountId);
 
 		await OtpRepository.create({ accountId, hashedOtp });
 

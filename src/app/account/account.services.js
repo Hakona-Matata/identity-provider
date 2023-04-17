@@ -144,6 +144,26 @@ class AccountServices {
 	//-------------------------------------------------------------
 	//-------------------------------------------------------------
 
+	static async findeOneById(accountId) {
+		const isAccountFound = await AccountRepository.findOne({ _id: accountId });
+
+		if (!isAccountFound) {
+			throw new InternalServerException(ACCOUNT_READ_FAILED);
+		}
+
+		return isAccountFound;
+	}
+
+	static async findeOne(payload) {
+		const isAccountFound = await AccountRepository.findOne(payload);
+
+		if (!isAccountFound) {
+			throw new InternalServerException(ACCOUNT_READ_FAILED);
+		}
+
+		return isAccountFound;
+	}
+
 	static async updateOne(acountId, setPayload, unsetPayload = null) {
 		const isAccountUpdated = await AccountRepository.updateOne(acountId, setPayload, unsetPayload);
 

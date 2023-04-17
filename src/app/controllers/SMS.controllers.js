@@ -71,7 +71,7 @@ const sendSMS_POST_controller = async (req, res, next) => {
 
 const verifySMS_post_controller = async (req, res, next) => {
 	try {
-		const validatedData = await validate(SMS_validators.verifySMS, req.body);
+		const validatedData = await validate(smsvali, req.body);
 
 		const result = await verifySMS_post_service({
 			...validatedData,

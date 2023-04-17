@@ -1,8 +1,9 @@
 module.exports = {
 	SUCCESS_MESSAGES: {
-		SMS_SENT_SUCCESSFULLY: "OTP code sent to your phone successfully!",
+		SMS_SENT_SUCCESSFULLY: "The OTP code sent to your phone successfully!",
 		SMS_ENABLED_SUCCESSFULLY: "The OTP over SMS feature is enabled successfully!",
 		SMS_DISABLED_SUCCESSFULLY: "The OTP over SMS feature disabled successfully!",
+		SMS_VERIFIED_SUCCESSFULLY: "the OTP is verified successfully!",
 	},
 	FAILURE_MESSAGES: {
 		SMS_ALREADY_ENABLED: "Sorry, you already enabled SMS!",

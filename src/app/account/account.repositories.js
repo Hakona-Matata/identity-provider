@@ -18,9 +18,9 @@ class AccountRepository {
 		}).lean();
 	}
 
-	static async findOne(accountEmail) {
+	static async findOne(payload) {
 		return await AccountModel.findOne({
-			email: accountEmail,
+			...payload,
 		}).lean();
 	}
 

@@ -40,6 +40,17 @@ class SmsControllers {
 
 		return success({ res, result });
 	}
+
+	static async verify(req, res, next) {
+		const { accountId, otp } = await validate(SmsValidators.verify, req.body);
+
+		const result = await SmsServices.verify({
+			accountId,
+			givenOtp: otp,
+		});
+
+		return success({ res, result });
+	}
 }
 
 module.exports = SmsControllers;
