@@ -28,6 +28,11 @@ const BadRequestException = require("./../../Exceptions/common/badRequest.except
 const InternalServerException = require("../../Exceptions/common/internalServer.exception");
 
 class SmsServices {
+	/* 
+		=======================================
+			Public methods 
+		=======================================
+	*/
 	static async enable({ accountId, isSmsEnabled, phone, country }) {
 		if (isSmsEnabled) {
 			throw new BadRequestException(SMS_ALREADY_ENABLED);
@@ -75,6 +80,40 @@ class SmsServices {
 
 	/* 
 		=======================================
+			Private methods 
+		=======================================
+	*/
+
+	static async #generateSaveSendOtp(accountId) {
+		const isSmsFound = await SmsServices.findOneById(accountId);
+
+		if (isSmsFound) {
+			throw new BadRequestException(ALREADY_HAVE_VALID_SMS);
+		}
+
+		const hashedOtp = await OtpServices.generateSendOtp();
+
+		await SmsServices.create({ accountId, hashedOtp });
+	}
+
+	static async #verifyDeleteOtp(accountId, givenOtp) {
+		const isSmsFound = await SmsServices.findOneById(accountId);
+
+		if (!isSmsFound) {
+			throw new BadRequestException(EXPIRED_SMS);
+		}
+
+		const isOtpValid = await HashHelper.verify(givenOtp, isSmsFound.hashedOtp);
+
+		if (!isOtpValid) {
+			throw new ForbiddenException(INVALID_OTP);
+		}
+
+		await SmsServices.deleteOne(isSmsFound._id);
+	}
+
+	/* 
+		=======================================
 			CRUD methods 
 		=======================================
 	*/
@@ -89,8 +128,8 @@ class SmsServices {
 		return isSmsCreated;
 	}
 
-	static async findOne(payload) {
-		const isSmsFound = await SmsRepository.findOne(payload);
+	static async findOneById(smsId) {
+		const isSmsFound = await SmsRepository.findOne({ _id: smsId });
 
 		if (!isSmsFound) {
 			throw new InternalServerException(SMS_READ_FAILED);
@@ -115,40 +154,6 @@ class SmsServices {
 		if (deletedCount === 0) {
 			throw new InternalServerException(SMS_DELETE_FAILED);
 		}
-	}
-
-	/* 
-		=======================================
-			Private methods 
-		=======================================
-	*/
-
-	static async #generateSaveSendOtp(accountId) {
-		const isSmsFound = await SmsServices.findOne({ accountId });
-
-		if (isSmsFound) {
-			throw new BadRequestException(ALREADY_HAVE_VALID_SMS);
-		}
-
-		const hashedOtp = await OtpServices.generateSendOtp();
-
-		await SmsServices.create({ accountId, hashedOtp });
-	}
-
-	static async #verifyDeleteOtp(accountId, givenOtp) {
-		const isSmsFound = await SmsServices.findOne({ accountId });
-
-		if (!isSmsFound) {
-			throw new BadRequestException(EXPIRED_SMS);
-		}
-
-		const isOtpValid = await HashHelper.verify(givenOtp, isSmsFound.hashedOtp);
-
-		if (!isOtpValid) {
-			throw new ForbiddenException(INVALID_OTP);
-		}
-
-		await SmsServices.deleteOne(isSmsFound._id);
 	}
 }
 

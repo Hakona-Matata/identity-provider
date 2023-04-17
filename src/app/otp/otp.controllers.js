@@ -26,15 +26,7 @@ class OtpControllers {
 	}
 
 	static async disable(req, res, next) {
-		const result = await OtpServices.disable(req.accountId);
-
-		return success({ res, result });
-	}
-
-	static async send(req, res, next) {
-		const { accountId } = await validate(OtpValidators.send, req.body);
-
-		const result = await OtpServices.send(accountId);
+		const result = await OtpServices.disable({ accountId: req.accountId, isOtpEnabled: req.account.isOtpEnabled });
 
 		return success({ res, result });
 	}

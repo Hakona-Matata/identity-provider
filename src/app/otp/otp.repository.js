@@ -23,7 +23,7 @@ class OtpRepository {
 		);
 	}
 
-	static async deleteOne(OtpId) {
+	static async deleteOneById(OtpId) {
 		return await OtpModel.findOneAndDelete({ _id: OtpId });
 	}
 }
