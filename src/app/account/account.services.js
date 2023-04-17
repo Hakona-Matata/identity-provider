@@ -12,6 +12,11 @@ const {
 		ACCOUNT_ALREADY_ACTIVE,
 		ALREADY_HAVE_VALID_ACTIVATION_LINK,
 		ALREADY_CANCELED_ACCOUNT_DELETION,
+
+		ACCOUNT_CREATE_FAILED,
+		ACCOUNT_READ_FAILED,
+		ACCOUNT_UPDATE_FAILED,
+		ACCOUNT_DELETE_FAILED,
 	},
 } = require("./account.constants");
 
@@ -24,6 +29,7 @@ const AccountRepository = require("./account.repositories");
 
 const TokenHelper = require("./../../helpers/token");
 const HashHelper = require("./../../helpers/hash");
+const InternalServerException = require("../../Exceptions/common/internalServer.exception");
 
 class AccountServices {
 	static async deactivate(accountId) {
@@ -131,6 +137,21 @@ class AccountServices {
 				throw new BadRequestException(ALREADY_HAVE_VALID_ACTIVATION_LINK);
 			}
 		}
+	}
+
+	//-------------------------------------------------------------
+	//-------------------------------------------------------------
+	//-------------------------------------------------------------
+	//-------------------------------------------------------------
+
+	static async updateOne(acountId, setPayload, unsetPayload = null) {
+		const isAccountUpdated = await AccountRepository.updateOne(acountId, setPayload, unsetPayload);
+
+		if (!isAccountUpdated) {
+			throw new InternalServerException(ACCOUNT_UPDATE_FAILED);
+		}
+
+		return isAccountUpdated;
 	}
 }
 

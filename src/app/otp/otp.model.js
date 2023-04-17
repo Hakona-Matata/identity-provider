@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
-const OTPSchema = new Schema(
+const OtpSchema = new Schema(
 	{
 		accountId: {
 			type: mongoose.Schema.Types.ObjectId,
@@ -10,7 +10,7 @@ const OTPSchema = new Schema(
 			index: true,
 			required: true,
 		},
-		hashedOTP: String,
+		hashedOtp: String,
 		by: {
 			// The OTP sending way!
 			type: String,
@@ -31,4 +31,4 @@ const OTPSchema = new Schema(
 	}
 );
 
-module.exports = mongoose.model("OTP", OTPSchema);
+module.exports = mongoose.model("OTP", OtpSchema);

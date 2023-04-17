@@ -8,10 +8,11 @@ const {
 	sendSMS_POST_service,
 	verifySMS_post_service,
 } = require("./../../app/Services/SMS.services");
+const smsValidators = require("../sms/sms.validators");
 
 const enableSMS_POST_controller = async (req, res, next) => {
 	try {
-		const validatedData = await validate(SMS_validators.enableSMS, req.body);
+		const { validatedData } = await validate(SMS_validators.enableSMS, req.body);
 
 		const result = await enableSMS_POST_service({
 			userId: req.userId,
@@ -30,7 +31,7 @@ const enableSMS_POST_controller = async (req, res, next) => {
 
 const confirmSMS_POST_controller = async (req, res, next) => {
 	try {
-		const validatedData = await validate(SMS_validators.confirmSMS, req.body);
+		const { otp } = await validate(Smsvali.confirm, req.body);
 
 		const result = await confirmSMS_POST_service({
 			userId: req.userId,

@@ -26,10 +26,13 @@ const AccountSchema = new mongoose.Schema(
 
 		phone: String,
 		isPhoneVerified: { type: Boolean, default: false },
+		phoneVerifiedAt: Date,
 
-		countryCode: String,
-		countryName: String,
-		countryIso2: String,
+		country: {
+			name: String,
+			code: String,
+			iso2: String,
+		},
 
 		verificationToken: String,
 		isVerified: { type: Boolean, default: false },
@@ -56,14 +59,14 @@ const AccountSchema = new mongoose.Schema(
 		resetToken: String,
 		resetAt: Date,
 
-		isOTPEnabled: { type: Boolean, default: false },
-		OTPEnabledAt: Date,
+		isOtpEnabled: { type: Boolean, default: false },
+		otpEnabledAt: Date,
 
-		isSMSEnabled: { type: Boolean, default: false },
-		SMSEnabledAt: Date,
+		isSmsEnabled: { type: Boolean, default: false },
+		smsEnabledAt: Date,
 
-		isTOTPEnabled: { type: Boolean, default: false },
-		TOTPEnabledAt: Date,
+		isTotpEnabled: { type: Boolean, default: false },
+		TotpEnabledAt: Date,
 
 		isBackupEnabled: { type: Boolean, default: false },
 		BackupEnabledAt: Date,

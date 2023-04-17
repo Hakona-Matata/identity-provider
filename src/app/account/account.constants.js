@@ -14,5 +14,10 @@ module.exports = {
 		ALREADY_CANCELED_ACCOUNT_DELETION: "Sorry, you already canceled account deletion!",
 		ACCOUNT_NOT_FOUND: "Sorry, Account is not found!",
 		ACCOUNT_CREATION_FAILED: "Sorry, we couldn't create your account!",
+
+		ACCOUNT_CREATE_FAILED: "Sorry, the account create process failed!",
+		ACCOUNT_READ_FAILED: "Sorry, the accoutn find process failed!",
+		ACCOUNT_UPDATE_FAILED: "Sorry, the account update process failed!",
+		ACCOUNT_DELETE_FAILED: "sorry, the account delete process failed!",
 	},
 };

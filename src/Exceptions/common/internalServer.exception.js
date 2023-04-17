@@ -4,11 +4,11 @@ const ErrorCodeConstant = require("../../constants/errorCodes");
 const BaseAppException = require("../baseAppException");
 
 module.exports = class InternalServerException extends BaseAppException {
-	constructor() {
+	constructor(message) {
 		super(
 			ErrorCodeConstant.INTERNAL_SERVER_ERROR,
 			StatusCodeConstant.INTERNAL_SERVER_ERROR,
-			"Sorry, the process went wrong!"
+			message || "Sorry, the process went wrong!"
 		);
 	}
 };

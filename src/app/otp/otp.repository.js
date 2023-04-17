@@ -1,32 +1,31 @@
 const InternalServerException = require("./../../Exceptions/common/internalServer.exception");
-const otpModel = require("./otp.model");
 
-const OTPModel = require("./otp.model");
-class OTPRepository {
+const OtpModel = require("./otp.model");
+class OtpRepository {
 	static async create(payload) {
-		const isOTPCreated = await OTPModel.create({ ...payload, by: "EMAIL" });
+		const isOtpCreated = await OtpModel.create({ ...payload, by: "EMAIL" });
 
-		if (!isOTPCreated) {
+		if (!isOtpCreated) {
 			throw new InternalServerException();
 		}
 
-		return isOTPCreated;
+		return isOtpCreated;
 	}
 
 	static async findOne(payload) {
-		return await OTPModel.findOne({ ...payload, by: "EMAIL" }).lean();
+		return await OtpModel.findOne({ ...payload, by: "EMAIL" }).lean();
 	}
 
-	static async updateOne(OTPId, setPayload, unsetPayload) {
-		return await OTPModel.updateOne(
-			{ _id: OTPId },
+	static async updateOne(OtpId, setPayload, unsetPayload) {
+		return await OtpModel.updateOne(
+			{ _id: OtpId },
 			{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } }
 		);
 	}
 
-	static async deleteOne(OTPId) {
-		return await otpModel.findOneAndDelete({ _id: OTPId });
+	static async deleteOne(OtpId) {
+		return await OtpModel.findOneAndDelete({ _id: OtpId });
 	}
 }
 
-module.exports = OTPRepository;
+module.exports = OtpRepository;
