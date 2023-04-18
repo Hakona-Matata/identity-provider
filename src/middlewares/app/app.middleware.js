@@ -7,6 +7,7 @@ const SessionRoutes = require("../../app/session/session.routes");
 const PasswordRoutes = require("./../../app/password/password.routes");
 const OtpRoutes = require("./../../app/otp/otp.routes");
 const SmsRoutes = require("./../../app/sms/sms.routes");
+const TotpRoutes = require("./../../app/totp/totp.routes");
 
 const routes_middleware = (app) => {
 	app.use("/auth", AuthRoutes);
@@ -15,11 +16,11 @@ const routes_middleware = (app) => {
 	app.use("/auth/account/password", PasswordRoutes);
 	app.use("/auth/otp", OtpRoutes);
 	app.use("/auth/sms", SmsRoutes);
+	app.use("/auth/totp", TotpRoutes);
 
 	// app.use("/auth", access_routes);
 	// app.use("/auth/account", account_routes);
 	// app.use("/auth/sms", SMS_routes);
-	// app.use("/auth/totp", TOTP_routes);
 	// app.use("/auth/backup", backup_routes);
 
 	app.use((req, res, next) => {

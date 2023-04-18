@@ -66,7 +66,7 @@ const AccountSchema = new mongoose.Schema(
 		smsEnabledAt: Date,
 
 		isTotpEnabled: { type: Boolean, default: false },
-		TotpEnabledAt: Date,
+		totpEnabledAt: Date,
 
 		isBackupEnabled: { type: Boolean, default: false },
 		BackupEnabledAt: Date,
