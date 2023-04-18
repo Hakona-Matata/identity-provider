@@ -27,9 +27,14 @@ class TotpControllers {
 		return success({ res, result });
 	}
 
-	static async disable(req, res, next) {}
+	static async disable(req, res, next) {
+		const result = await TotpServices.disable({
+			accountId: req.account._id,
+			isTotpEnabled: req.account.isTotpEnabled,
+		});
 
-	static async verify(req, res, next) {}
+		return success({ res, result });
+	}
 }
 
 module.exports = TotpControllers;

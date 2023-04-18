@@ -16,8 +16,8 @@ class TotpRepository {
 		);
 	}
 
-	static async deleteOne(totpId) {
-		return await TotpModel.deleteOne({ _id: totpId });
+	static async deleteOne(payload) {
+		return await TotpModel.deleteOne({ ...payload });
 	}
 
 	static async delete(payload) {

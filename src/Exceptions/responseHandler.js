@@ -6,15 +6,15 @@ const success = ({ status = statusCodes.OK, code = errorCodes.OK, res, result })
 };
 
 const failure = ({ res, error }) => {
-	// console.log("--------------");
-	// console.log({ error });
-	// console.log("--------------");
-	// // console.log(error.name);
+	console.log("--------------");
+	console.log({ error });
+	console.log("--------------");
+	// console.log(error.name);
 	// console.log("--------------");
 	// console.log(error.details);
-	console.log("---------------------");
+	// console.log("---------------------");
 	// console.log({ name: error.name });
-	console.log({ message: error.message });
+	// console.log({ message: error.message });
 	// console.log({ code: error.code });
 
 	switch (error.name) {
