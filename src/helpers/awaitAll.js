@@ -1,9 +1,9 @@
-module.exports = (count, asyncFn) => {
+module.exports = async ({ count, asyncFn }) => {
 	const promises = [];
 
-	for (i = 0; i < count; ++i) {
+	for (let i = 0; i < count; i++) {
 		promises.push(asyncFn());
 	}
 
-	return Promise.all(promises);
+	return await Promise.all(promises);
 };

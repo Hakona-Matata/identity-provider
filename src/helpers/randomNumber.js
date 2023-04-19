@@ -7,9 +7,7 @@ const generate_randomNumber = ({ length }) => {
 	const payload = "0".repeat(length - 1);
 
 	// Generate random number based on that length
-	return Math.floor(
-		Number(`1${payload}`) + Math.random() * Number(`9${payload}`)
-	);
+	return Math.floor(Number(`1${payload}`) + Math.random() * Number(`9${payload}`));
 };
 
 module.exports = { generate_randomNumber };

@@ -1,11 +1,46 @@
-const { totp } = require("otplib");
+const { authenticator } = require("otplib");
 
-const generate_totp = ({ secret }) => {
-	return totp.generate(secret);
-};
+const Encrypter = require("./crypto");
+const encrypter = new Encrypter(process.env.TOTP_ENCRYPTION_KEY);
 
-const verify_totp = async ({ token, secret }) => {
-	return totp.verify({ token, secret });
-};
+class TotpHelper {
+	/* 
+		=======================================
+			Public methods 
+		=======================================
+	*/
 
-module.exports = { generate_totp, verify_totp };
+	static generateTotpCode(secret) {
+		return authenticator.generate(secret);
+	}
+
+	static generateTotpSecret() {
+		const plainTextTotpSecret = authenticator.generateSecret();
+
+		const encryptedTotpSecret = TotpHelper.#encryptTotpSecret(plainTextTotpSecret);
+
+		return { plainTextTotpSecret, encryptedTotpSecret };
+	}
+
+	static verifyTotpCode(token, secret) {
+		const decryptedTotpSecret = TotpHelper.#decryptTotpSecret(secret);
+
+		return authenticator.verify({ token, secret: decryptedTotpSecret });
+	}
+
+	/* 
+		=======================================
+			Private methods 
+		=======================================
+	*/
+
+	static #encryptTotpSecret(plainTextTotpSecret) {
+		return encrypter.encrypt(plainTextTotpSecret);
+	}
+
+	static #decryptTotpSecret(encryptedTotpSecret) {
+		return encrypter.dencrypt(encryptedTotpSecret);
+	}
+}
+
+module.exports = TotpHelper;
