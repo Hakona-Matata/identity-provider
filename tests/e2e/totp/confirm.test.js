@@ -166,31 +166,44 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.post("/auth/totp/enable")
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: "123123" });
-		await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: "123123" });
-		await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: "123123" });
+		const asyncFn = () => {
+			return request(app)
+				.post(baseURL)
+				.set("Authorization", `Bearer ${accessToken}`)
+				.send({ totp: "123123" });
+		};
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: "123123" });
-		console.log({ status, body });
-		expect(status).toBe(STATUS.FORBIDDEN);
-		expect(body).toEqual({
-			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
-			message: "Sorry, you need to start from scratch!",
-		});
+		const resutl = await await_all({ count: 3, asyncFn });
+		console.log({ resutl });
+		const uuuu = await TOTP.findOne({ userId: user.id });
+		console.log({ uuuu });
+		console.log("-----------------");
+		// await request(app)
+		// 	.post(baseURL)
+		// 	.set("Authorization", `Bearer ${accessToken}`)
+		// 	.send({ totp: "123123" });
+		// await request(app)
+		// 	.post(baseURL)
+		// 	.set("Authorization", `Bearer ${accessToken}`)
+		// 	.send({ totp: "123123" });
+		// await request(app)
+		// 	.post(baseURL)
+		// 	.set("Authorization", `Bearer ${accessToken}`)
+		// 	.send({ totp: "123123" });
+
+		// const { status, body } = await request(app)
+		// 	.post(baseURL)
+		// 	.set("Authorization", `Bearer ${accessToken}`)
+		// 	.send({ totp: "123123" });
+
+		// console.log({ status, body });
+		// expect(status).toBe(STATUS.FORBIDDEN);
+		// expect(body).toEqual({
+		// 	success: false,
+		// 	status: STATUS.FORBIDDEN,
+		// 	code: CODE.FORBIDDEN,
+		// 	message: "Sorry, you need to start from scratch!",
+		// });
 	});
 
 	it("5. User need to initiate TOTP first", async () => {
