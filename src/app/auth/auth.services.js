@@ -74,6 +74,24 @@ class AuthServices {
 
 		return LOGGED_OUT_SUCCESSFULLY;
 	}
+
+	static async getEnabledSecurityLayers(account) {
+		const enabledSecurityMethods = [];
+
+		if (account.isOtpEnabled) {
+			enabledSecurityMethods.push({ isOtpEnabled: true });
+		}
+
+		if (account.isSmsEnabled) {
+			enabledSecurityMethods.push({ isSmsEnabled: true });
+		}
+
+		if (account.isTotpEnabled) {
+			enabledSecurityMethods.push({ isTotpEnabled: true });
+		}
+
+		return enabledSecurityMethods;
+	}
 }
 
 module.exports = AuthServices;

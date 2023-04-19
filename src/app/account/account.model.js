@@ -69,7 +69,7 @@ const AccountSchema = new mongoose.Schema(
 		totpEnabledAt: Date,
 
 		isBackupEnabled: { type: Boolean, default: false },
-		BackupEnabledAt: Date,
+		backupEnabledAt: Date,
 	},
 	{
 		timestamps: true,

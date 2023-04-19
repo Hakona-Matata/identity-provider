@@ -71,7 +71,7 @@ class SessionServices {
 	static async find(accountId) {
 		const foundSessions = await SessionRepository.find(accountId);
 
-		if (!foundSessions || foundSessions.length < 1) {
+		if (foundSessions.length === 0) {
 			throw new InternalServerException(SESSION_READ_FAILED);
 		}
 

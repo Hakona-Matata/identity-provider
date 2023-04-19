@@ -4,9 +4,9 @@ const Schema = mongoose.Schema;
 
 const BackupSchema = new Schema(
 	{
-		userId: {
+		accountId: {
 			type: mongoose.Schema.Types.ObjectId,
-			ref: "User",
+			ref: "Account",
 			index: true,
 			required: true,
 		},
@@ -19,7 +19,6 @@ const BackupSchema = new Schema(
 			index: true,
 			default: true,
 		},
-		isUsedAt: Date,
 	},
 	{
 		timestamps: true,

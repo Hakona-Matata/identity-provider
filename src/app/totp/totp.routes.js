@@ -1,15 +1,13 @@
 const express = require("express");
 
 const { intiateEnabling, confirmEnabling, disable } = require("./totp.controllers");
-const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
 
 const router = express.Router();
 
-// During setup
-router.route("/enable").post([isAuthenticated, isVerified, isActive], intiateEnabling);
+router.route("/enable").post(intiateEnabling);
 
-router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirmEnabling);
+router.route("/confirm").post(confirmEnabling);
 
-router.route("/disable").delete([isAuthenticated, isVerified, isActive], disable);
+router.route("/disable").delete(disable);
 
 module.exports = router;
