@@ -29,7 +29,19 @@ class BackupControllers {
 		return success({ res, result });
 	}
 
-	static async regenerate(req, res, next) {}
+	static async regenerate(req, res, next) {
+		const result = await BackupServices.regenerate(req.account._id);
+
+		return success({ res, result });
+	}
+
+	static async verify(req, res, next) {
+		const { email, code } = await validate(BackupValidators.verify, req.body);
+
+		const result = await BackupServices.verify({ email, code });
+
+		return success({ res, result });
+	}
 }
 
 module.exports = BackupControllers;

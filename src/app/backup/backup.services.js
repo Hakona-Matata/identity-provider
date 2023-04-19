@@ -7,9 +7,9 @@ const {
 		BACKUP_ALREADY_GENERATED,
 		BACKUP_NOT_GENERATED,
 		INVALID_BACKUP_CODE,
+		NEED_TO_HAVE_GENERATED_CODES,
 
 		BACKUP_CREATE_FAILED,
-		BACKUP_READ_FAILED,
 		BACKUP_UPDATE_FAILED,
 		BACKUP_DELETE_FAILED,
 	},
@@ -17,14 +17,15 @@ const {
 
 const BadRequestException = require("../../Exceptions/common/badRequest.exception");
 const InternalServerException = require("../../Exceptions/common/internalServer.exception");
+const UnauthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
 
 const AccountServices = require("../account/account.services");
+const PasswordServices = require("./../password/password.services");
 const AuthServices = require("./../auth/auth.services");
 const BackupRepository = require("./backup.repository");
 
 const RandomHelper = require("./../../helpers/random");
 const HashHelper = require("./../../helpers/hash");
-const unAuthorizedException = require("../../Exceptions/common/unAuthorized.exception");
 
 class BackupServices {
 	/* 
@@ -75,9 +76,32 @@ class BackupServices {
 		return BACKUP_DISABLED_SUCCESSFULLY;
 	}
 
-	static async regenerate() {}
+	static async regenerate(accountId) {
+		const accountHashedBackupCodesList = await BackupServices.find({ accountId });
 
-	static async verify() {}
+		if (accountHashedBackupCodesList.length === 0) {
+			throw new UnauthorizedException(NEED_TO_HAVE_GENERATED_CODES);
+		}
+
+		await BackupServices.delete({ accountId });
+
+		await AccountServices.updateOne(accountId, { isBackupEnabled: false }, { backupEnabledAt: 1 });
+
+		return await BackupServices.#generateHashSaveBackupCodesList(accountId, 10);
+	}
+
+	static async verify({ email, code }) {
+		const account = await AccountServices.findOne({ email });
+
+		// TODO handle if ocndition from account services!
+		if (!account || !account.isBackupEnabled) {
+			throw new UnauthorizedException(INVALID_BACKUP_CODE);
+		}
+
+		await BackupServices.#verifyDeleteBackupCode(account._id, code);
+
+		return await PasswordServices.forget(email);
+	}
 
 	/* 
 		=======================================

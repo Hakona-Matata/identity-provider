@@ -20,7 +20,7 @@ const routes_middleware = (app) => {
 	app.use("/auth/otp", OtpRoutes);
 	app.use("/auth/sms", SmsRoutes);
 	app.use("/auth/totp", [isAuthenticated, isVerified, isActive], TotpRoutes);
-	app.use("/auth/backup", [isAuthenticated, isVerified, isActive], BackupRoutes);
+	app.use("/auth/backup", BackupRoutes);
 
 	app.use((req, res, next) => {
 		res.status(STATUS.NOT_FOUND).json({
