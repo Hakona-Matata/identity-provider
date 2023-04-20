@@ -8,7 +8,7 @@ const OtpRoutes = require("../app/otp/otp.routes");
 const SmsRoutes = require("../app/sms/sms.routes");
 const TotpRoutes = require("../app/totp/totp.routes");
 const BackupRoutes = require("../app/backup/backup.routes");
-const NotFoundServices = require("./.././app/notFound/notFound.services");
+const { notFound } = require("../app/notFound/notFound.controllers");
 
 module.exports = (app) => {
 	app.use("/auth", AuthRoutes);
@@ -19,5 +19,5 @@ module.exports = (app) => {
 	app.use("/auth/sms", SmsRoutes);
 	app.use("/auth/totp", [isAuthenticated, isVerified, isActive], TotpRoutes);
 	app.use("/auth/backup", BackupRoutes);
-	app.use((req, res, next) => NotFoundServices.notFound());
+	app.use((req, res, next) => notFound(req, res, next));
 };

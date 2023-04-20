@@ -34,7 +34,10 @@ class AuthControllers {
 
 		const result = await AuthServices.logIn(accountData);
 
-		return success({ res, result });
+		req.result = result;
+
+		// success({ res, result,next });
+		next();
 	}
 
 	static async logOut(req, res, next) {
