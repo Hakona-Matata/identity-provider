@@ -4,7 +4,6 @@ module.exports = (error, req, res, next) => {
 
 	console.log("--------------------------------------------------");
 	console.log("from failure logger");
-
 	console.log("--------------------------------------------------");
 
 	next(error);
