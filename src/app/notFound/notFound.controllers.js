@@ -3,7 +3,7 @@ const NotFoundException = require("../../Exceptions/common/notFound.exception");
 class NotFoundControllers {
 	static async notFound(req, res, next) {
 		if (!req.result) {
-			return next(new NotFoundException("Sorry, this endpoint is not found!"));
+			next(new NotFoundException("Sorry, this endpoint is not found!"));
 		} else {
 			next();
 		}

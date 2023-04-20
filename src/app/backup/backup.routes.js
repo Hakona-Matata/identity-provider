@@ -1,11 +1,11 @@
 const express = require("express");
 
-const { intiateEnabling, confirmEnabling, disable, regenerate, verify } = require("./backup.controllers");
+const { initiateEnabling, confirmEnabling, disable, regenerate, verify } = require("./backup.controllers");
 const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
 
 const router = express.Router();
 
-router.route("/initiate").post([isAuthenticated, isVerified, isActive], intiateEnabling);
+router.route("/initiate").post([isAuthenticated, isVerified, isActive], initiateEnabling);
 
 router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirmEnabling);
 

@@ -14,7 +14,7 @@ const app = express();
 
 registerMiddlewares(app);
 
-process.env.NODE_ENV === "test" ? "" : connect_DB(app);
+connect_DB(app);
 
 // (1) After intializing our server istance, let's connect to MongoDB!
 
