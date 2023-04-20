@@ -1,4 +1,4 @@
-const isAuthenticated = require("./isAuthenticated.middleware");
+const isAuthenticated = require("./auth/isAuthenticated.middleware");
 const isVerified = require("./isVerified.middleware");
 const isActive = require("./isActive.middleware");
 
