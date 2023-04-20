@@ -8,7 +8,7 @@ const OtpRoutes = require("../app/otp/otp.routes");
 const SmsRoutes = require("../app/sms/sms.routes");
 const TotpRoutes = require("../app/totp/totp.routes");
 const BackupRoutes = require("../app/backup/backup.routes");
-const NotFoundServices = require("./../app/notFound/noftFound.services");
+const NotFoundServices = require("./.././app/notFound/notFound.services");
 
 module.exports = (app) => {
 	app.use("/auth", AuthRoutes);

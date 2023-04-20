@@ -9,5 +9,5 @@ module.exports = (app) => {
 
 	app.use(successLogger);
 	app.use(failureLogger);
-	app.ue(errorHandler);
+	app.use(errorHandler);
 };
