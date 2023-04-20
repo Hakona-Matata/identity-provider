@@ -1,10 +1,13 @@
-const StatusCodeConstant = require("../../constants/statusCodes");
-const ErrorCodeConstant = require("../../constants/errorCodes");
+const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../constants/index");
 
 const BaseAppException = require("../baseAppException");
 
 module.exports = class InternalServerException extends BaseAppException {
-	constructor(message = "Sorry, the process went wrong!") {
-		super(ErrorCodeConstant.INTERNAL_SERVER_ERROR, StatusCodeConstant.INTERNAL_SERVER_ERROR, message);
+	constructor(message) {
+		super(
+			httpStatusCodeStrings.INTERNAL_SERVER_ERROR,
+			httpStatusCodeNumbers.INTERNAL_SERVER_ERROR,
+			message || "Sorry, the process went wrong!"
+		);
 	}
 };

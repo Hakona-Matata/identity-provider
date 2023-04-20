@@ -1,10 +1,13 @@
-const StatusCodeConstant = require("../../constants/statusCodes");
-const ErrorCodeConstant = require("../../constants/errorCodes");
+const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../constants/index");
 
 const BaseAppException = require("../baseAppException");
 
 module.exports = class ValidationException extends BaseAppException {
 	constructor(message) {
-		super(ErrorCodeConstant.UNPROCESSABLE_ENTITY, StatusCodeConstant.UNPROCESSABLE_ENTITY, message);
+		super(
+			httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			message || "Sorry, the validation process failed!"
+		);
 	}
 };

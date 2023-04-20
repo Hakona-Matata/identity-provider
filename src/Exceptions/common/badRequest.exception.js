@@ -1,10 +1,13 @@
-const StatusCodeConstant = require("../../constants/statusCodes");
-const ErrorCodeConstant = require("../../constants/errorCodes");
+const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../constants/index");
 
 const BaseAppException = require("../baseAppException");
 
 module.exports = class BadRequestException extends BaseAppException {
 	constructor(message) {
-		super(ErrorCodeConstant.BAD_REQUEST, StatusCodeConstant.BAD_REQUEST, message);
+		super(
+			httpStatusCodeStrings.BAD_REQUEST,
+			httpStatusCodeNumbers.BAD_REQUEST,
+			message || "Sorry, you sent a bad request!"
+		);
 	}
 };
