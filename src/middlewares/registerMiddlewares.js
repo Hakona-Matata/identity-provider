@@ -4,8 +4,8 @@ const applyAppMiddlewares = require("./applyAppMiddlewares");
 const applyThirdPartyMiddlewares = require("./applyThirdPartyMiddlewares");
 
 module.exports = (app) => {
-	app.use(applyThirdPartyMiddlewares);
-	app.use(applyAppMiddlewares);
+	applyThirdPartyMiddlewares(app);
+	applyAppMiddlewares(app);
 
 	app.use(successLogger);
 	app.use(failureLogger);

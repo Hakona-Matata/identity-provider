@@ -5,7 +5,7 @@ const connect_DB = (app) => {
 		mongoose.set("strictQuery", true);
 
 		mongoose
-			.connect(`${process.env.MONGO_URI}/${process.env.NODE_ENV}`)
+			.connect(process.env.MONGO_URI)
 			.then(async (db) => {
 				console.log(
 					`server is running on ${process.env.BASE_URL}:${process.env.PORT} in "${process.env.NODE_ENV}" environment`

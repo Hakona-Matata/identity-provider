@@ -13,7 +13,7 @@ class AuthControllers {
 
 		const result = await AuthServices.signUp(accountData);
 
-		return success({
+		success({
 			res,
 			result,
 			status: STATUS.CREATED,
@@ -26,7 +26,7 @@ class AuthControllers {
 
 		const result = await AuthServices.verify(verificationToken);
 
-		return success({ res, result });
+		success({ res, result });
 	}
 
 	static async logIn(req, res, next) {
@@ -43,7 +43,7 @@ class AuthControllers {
 			accessToken: req.accessToken,
 		});
 
-		return success({ res, result });
+		success({ res, result });
 	}
 }
 

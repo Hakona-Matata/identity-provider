@@ -9,6 +9,8 @@ const HashHelper = require("./../../helpers/hash");
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
 
+const UnAuthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
+
 class AuthServices {
 	static async signUp(payload) {
 		const { _id: accountId, role } = await AccountServices.create(payload);

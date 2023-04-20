@@ -19,5 +19,5 @@ module.exports = (app) => {
 	app.use("/auth/sms", SmsRoutes);
 	app.use("/auth/totp", [isAuthenticated, isVerified, isActive], TotpRoutes);
 	app.use("/auth/backup", BackupRoutes);
-	app.use((req, res, next) => NotFoundServices.notFound(req, res, next));
+	app.use((req, res, next) => NotFoundServices.notFound());
 };
