@@ -34,7 +34,7 @@ class BackupServices {
 		=======================================
 	*/
 
-	static async intiateEnabling(account) {
+	static async initiateEnabling(account) {
 		BackupServices.#isBackupAlreadyEnabled(account.isBackupEnabled);
 
 		const enabledSecurityMethods = await AuthServices.getEnabledSecurityLayers(account);

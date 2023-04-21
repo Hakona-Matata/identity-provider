@@ -1,13 +1,9 @@
 const jwt = require("jsonwebtoken");
 
-const { IDENTITY_PROVIDER } = require("../constants/origin");
+const { IDENTITY_PROVIDER } = require("../constants/index");
 const {
-	VERIFICATION_TOKEN,
-	ACCESS_TOKEN,
-	REFRESH_TOKEN,
-	RESET_TOKEN,
-	ACTIVATION_TOKEN,
-} = require("../constants/tokens");
+	tokens: { VERIFICATION_TOKEN, ACCESS_TOKEN, REFRESH_TOKEN, RESET_TOKEN, ACTIVATION_TOKEN },
+} = require("../constants/index");
 class TokenHelper {
 	static async generateVerificationToken({ accountId, role }) {
 		return await TokenHelper.#generateToken(

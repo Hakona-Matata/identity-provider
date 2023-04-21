@@ -31,7 +31,7 @@ class TotpServices {
 		=======================================
 	*/
 
-	static async intiateEnabling({ accountId, isTotpEnabled }) {
+	static async initiateEnabling({ accountId, isTotpEnabled }) {
 		if (isTotpEnabled) {
 			throw new BadRequestException(TOTP_ALREADY_ENABLED);
 		}

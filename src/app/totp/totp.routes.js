@@ -1,10 +1,10 @@
 const express = require("express");
 
-const { intiateEnabling, confirmEnabling, disable } = require("./totp.controllers");
+const { initiateEnabling, confirmEnabling, disable } = require("./totp.controllers");
 
 const router = express.Router();
 
-router.route("/enable").post(intiateEnabling);
+router.route("/enable").post(initiateEnabling);
 
 router.route("/confirm").post(confirmEnabling);
 
