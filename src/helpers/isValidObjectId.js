@@ -1,17 +1,12 @@
 const mongoose = require("mongoose");
 
-module.exports = (value) => {
-	// (1) Is it valid hex? Not all characters? Not all digits?
-	const digitsLength = value.match(/\d/g).length;
-	if (digitsLength == 0 || digitsLength == 24) {
-		return false;
+function isValidObject(objectId) {
+	if (typeof objectId === "string") {
+		return mongoose.Types.ObjectId.isValid(objectId);
+	} else if (objectId instanceof mongoose.Types.ObjectId) {
+		return true;
 	}
+	return false;
+}
 
-	// (1) valid mongodb object ID?
-	const isValidMongodbObjectID = mongoose.Types.ObjectId.isValid(value);
-	if (!isValidMongodbObjectID) {
-		return false;
-	}
-
-	return true;
-};
+module.exports = isValidObject;
