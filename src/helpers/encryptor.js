@@ -5,6 +5,9 @@ class Encrypter {
 	static salt = "salt";
 
 	static encrypt(clearText, key) {
+		if (!key || typeof key !== "string") {
+			throw new Error("Invalid key");
+		}
 		const encryptedKey = crypto.scryptSync(key, Encrypter.salt, 24);
 		const iv = crypto.randomBytes(16);
 		const cipher = crypto.createCipheriv(Encrypter.algorithm, encryptedKey, iv);
@@ -14,8 +17,13 @@ class Encrypter {
 	}
 
 	static decrypt(encryptedText, key) {
+		if (!key) {
+			throw new Error("Key is undefined");
+		}
+
 		const encryptedKey = crypto.scryptSync(key, Encrypter.salt, 24);
-		const [encrypted, iv] = encryptedText.split("|");
+
+		const [encrypted, iv] = encryptedText && encryptedText.split("|");
 
 		if (!iv || iv.length !== 32) {
 			throw new Error("Invalid IV");

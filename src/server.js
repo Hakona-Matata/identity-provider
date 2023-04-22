@@ -1,7 +1,6 @@
 const express = require("express");
 require("dotenv").config();
 require("express-async-errors");
-
 const { MongoDatabaseUtil } = require("./utils/database/index");
 const applyAllMiddlewares = require("./middlewares/applyAllMiddlewares");
 
