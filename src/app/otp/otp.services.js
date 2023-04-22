@@ -26,8 +26,7 @@ const AccountServices = require("./../account/account.services");
 const HashHelper = require("./../../helpers/hash");
 const RandomHelper = require("./../../helpers/random");
 
-const BadRequestException = require("./../../Exceptions/common/badRequest.exception");
-const ForbiddenException = require("./../../Exceptions/common/forbidden.exception");
+const { BadRequestException, ForbiddenException, InternalServerException } = require("./../../Exceptions/index");
 
 class OtpServices {
 	/* 

@@ -24,8 +24,7 @@ const SmsRepository = require("./sms.repository");
 const OtpServices = require("./../otp/otp.services");
 const AccountServices = require("./../account/account.services");
 
-const BadRequestException = require("./../../Exceptions/common/badRequest.exception");
-const InternalServerException = require("../../Exceptions/common/internalServer.exception");
+const { BadRequestException, InternalServerException } = require("./../../Exceptions/index");
 
 class SmsServices {
 	/* 

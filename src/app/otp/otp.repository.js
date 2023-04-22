@@ -1,4 +1,4 @@
-const InternalServerException = require("./../../Exceptions/common/internalServer.exception");
+const { InternalServerException } = require("./../../Exceptions/index");
 
 const OtpModel = require("./otp.model");
 class OtpRepository {

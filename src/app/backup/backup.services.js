@@ -15,9 +15,7 @@ const {
 	},
 } = require("./backup.constants");
 
-const BadRequestException = require("../../Exceptions/common/badRequest.exception");
-const InternalServerException = require("../../Exceptions/common/internalServer.exception");
-const UnauthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
+const { BadRequestException, UnAuthorizedException, InternalServerException } = require("./../../Exceptions/index");
 
 const AccountServices = require("../account/account.services");
 const PasswordServices = require("./../password/password.services");
@@ -80,7 +78,7 @@ class BackupServices {
 		const accountHashedBackupCodesList = await BackupServices.find({ accountId });
 
 		if (accountHashedBackupCodesList.length === 0) {
-			throw new UnauthorizedException(NEED_TO_HAVE_GENERATED_CODES);
+			throw new UnAuthorizedException(NEED_TO_HAVE_GENERATED_CODES);
 		}
 
 		await BackupServices.delete({ accountId });
@@ -95,7 +93,7 @@ class BackupServices {
 
 		// TODO handle if ocndition from account services!
 		if (!account || !account.isBackupEnabled) {
-			throw new UnauthorizedException(INVALID_BACKUP_CODE);
+			throw new UnAuthorizedException(INVALID_BACKUP_CODE);
 		}
 
 		await BackupServices.#verifyDeleteBackupCode(account._id, code);
@@ -167,7 +165,7 @@ class BackupServices {
 			.shift();
 
 		if (!matchedBackupCode) {
-			throw new UnauthorizedException(INVALID_BACKUP_CODE);
+			throw new UnAuthorizedException(INVALID_BACKUP_CODE);
 		}
 
 		return matchedBackupCode;

@@ -5,7 +5,7 @@ const {
 	FAILIURE_MESSAGES: { INCORRECT_PASSWORD, ALREADY_HAVE_VALID_RESET_LINK, ALREADY_RESET_ACCOUNT },
 } = require("./password.constants");
 
-const ForbiddenException = require("./../../Exceptions/common/forbidden.exception");
+const { ForbiddenException } = require("./../../Exceptions/index");
 
 const AccountServices = require("../account/account.services");
 const SessionServices = require("../session/session.services");

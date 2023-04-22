@@ -15,9 +15,7 @@ const {
 	},
 } = require("./totp.constants");
 
-const BadRequestException = require("./../../Exceptions/common/badRequest.exception");
-const InternalServerException = require("./../../Exceptions/common/internalServer.exception");
-const UnAuthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
+const { BadRequestException, InternalServerException, UnAuthorizedException } = require("./../../Exceptions/index");
 
 const AccountServices = require("./../account/account.services");
 const TotpRepository = require("./totp.repositories");
