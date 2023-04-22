@@ -1,6 +1,7 @@
 const { phone } = require("phone");
 
-/*
+class PhoneHelper {
+	/*
     It returns:
         isValid: true,
         phone: '+201212121212',
@@ -9,26 +10,32 @@ const { phone } = require("phone");
             iso2: 'EG',
             code: '+20'
         }
-*/
+	*/
 
-const validate_phone = (givenPhone) => {
-	const { isValid, phoneNumber, countryCode: code, countryIso2: iso2 } = phone(givenPhone);
-	const name = get_countryName(iso2);
+	static validatePhone(givenPhone = null) {
+		const { isValid, phoneNumber, countryCode: code, countryIso2: iso2 } = phone(givenPhone);
 
-	return {
-		isValid,
-		phone: phoneNumber,
-		country: {
-			name,
-			code,
-			iso2,
-		},
-	};
-};
+		if (!isValid) {
+			return { isValid: false };
+		}
 
-const get_countryName = (regionCode) => {
-	const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
-	return regionNames.of(regionCode);
-};
+		const name = PhoneHelper.#getCountryName(iso2);
 
-module.exports = { validate_phone };
+		return {
+			isValid: true,
+			phone: phoneNumber,
+			country: {
+				name,
+				code,
+				iso2,
+			},
+		};
+	}
+
+	static #getCountryName(regionCode) {
+		const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+		return regionNames.of(regionCode);
+	}
+}
+
+module.exports = PhoneHelper;
