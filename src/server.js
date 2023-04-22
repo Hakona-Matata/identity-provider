@@ -1,19 +1,30 @@
-require("dotenv").config();
-
 const express = require("express");
-
-// This package is for not using try-catch block in every handler/controller!
+require("dotenv").config();
 require("express-async-errors");
-
-const connect_DB = require("./utils/db.connection.js");
-
-const applyAllMiddlewares = require("./middlewares/applyAllMiddlewares.js");
-//==================================================
+const { MongoDatabaseUtil } = require("./utils/database/index");
+const applyAllMiddlewares = require("./middlewares/applyAllMiddlewares");
 
 const app = express();
 
-connect_DB(app);
+const startServer = async () => {
+	await MongoDatabaseUtil.connect();
 
-applyAllMiddlewares(app);
+	applyAllMiddlewares(app);
 
-module.exports = app;
+	const port = process.env.PORT || 3000;
+
+	app.listen(port, () => {
+		console.log(`Server is running on ${process.env.BASE_URL}:${port} in "${process.env.NODE_ENV}" environment`);
+	});
+};
+
+const gracefulShutdown = async () => {
+	await MongoDatabaseUtil.disconnect();
+	await MongoDatabaseUtil.closeConnection();
+	process.exit(0);
+};
+
+process.on("SIGINT", gracefulShutdown);
+process.on("SIGTERM", gracefulShutdown);
+
+startServer();

@@ -40,12 +40,5 @@ I'd think the things you should be interested in for a "production ready" applic
 
 - Did practice on normalization and denormalization
 
-
 - `Health check` API
 - `Alerting` API (that includes Push notification or so)
-
-
-- For non protected routes, always check for:
-- isVerified
-- isActive
-- isDeleted

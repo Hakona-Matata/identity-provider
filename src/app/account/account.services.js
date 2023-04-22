@@ -20,9 +20,7 @@ const {
 	},
 } = require("./account.constants");
 
-const BadRequestException = require("./../../Exceptions/common/badRequest.exception");
-const UnAuthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
-const InternalServerException = require("../../Exceptions/common/internalServer.exception");
+const { BadRequestException, UnAuthorizedException, InternalServerException } = require("./../../Exceptions/index");
 
 const SessionServices = require("./../session/session.services");
 const AccountRepository = require("./account.repositories");

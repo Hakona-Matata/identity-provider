@@ -9,7 +9,7 @@ const HashHelper = require("./../../helpers/hash");
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
 
-const UnAuthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
+const { UnAuthorizedException } = require("./../../Exceptions/index");
 
 class AuthServices {
 	static async signUp(payload) {

@@ -1,7 +1,6 @@
+require("dotenv").config();
+const Encrypter = require("./encryptor");
 const { authenticator } = require("otplib");
-
-const Encrypter = require("./crypto");
-const encrypter = new Encrypter(process.env.TOTP_ENCRYPTION_KEY);
 
 class TotpHelper {
 	/* 
@@ -35,11 +34,11 @@ class TotpHelper {
 	*/
 
 	static #encryptTotpSecret(plainTextTotpSecret) {
-		return encrypter.encrypt(plainTextTotpSecret);
+		return Encrypter.encrypt(plainTextTotpSecret, process.env.TOTP_ENCRYPTION_KEY);
 	}
 
 	static #decryptTotpSecret(encryptedTotpSecret) {
-		return encrypter.dencrypt(encryptedTotpSecret);
+		return Encrypter.decrypt(encryptedTotpSecret, process.env.TOTP_ENCRYPTION_KEY);
 	}
 }
 
