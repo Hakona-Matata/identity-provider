@@ -1,8 +1,8 @@
 const bcrypt = require("bcrypt");
 
 class HashHelper {
-	static async generate(plainText) {
-		return await bcrypt.hash(`${plainText}`, 12);
+	static async generate(plainText, saltRounds = 12) {
+		return await bcrypt.hash(`${plainText}`, saltRounds);
 	}
 
 	static async verify(plainText, hash) {
