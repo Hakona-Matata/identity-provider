@@ -1,53 +1,41 @@
-const Encrypter = require("./../crypto");
+const Encrypter = require("./../encryptor");
 
 describe("Encrypter", () => {
-	const encryptionKey = "my_secret_key";
-	const clearText = "Hello, world!";
-	let encrypter;
+	const key = "this is my encyption key";
+	const clearText = "this is a clear text";
 
-	beforeEach(() => {
-		encrypter = new Encrypter(encryptionKey);
+	describe("encrypt", () => {
+		it("should encrypt the text", () => {
+			const encryptedText = Encrypter.encrypt(clearText, key);
+			expect(encryptedText).not.toBe(clearText);
+		});
+
+		it("should return a string with the format encryptedText|iv", () => {
+			const encryptedText = Encrypter.encrypt(clearText, key);
+			expect(encryptedText).toMatch(/^[0-9a-f]+\|[0-9a-f]+$/);
+		});
 	});
 
-	describe("encrypt()", () => {
-		test("should return a string with two parts separated by '|'", () => {
-			const encryptedText = encrypter.encrypt(clearText);
-
-			expect(typeof encryptedText).toBe("string");
-			expect(encryptedText.split("|").length).toBe(2);
-		});
-
-		test("should return a different result for each encryption", () => {
-			const encryptedText1 = encrypter.encrypt(clearText);
-			const encryptedText2 = encrypter.encrypt(clearText);
-
-			expect(encryptedText1).not.toBe(encryptedText2);
-		});
-
-		test("should be able to decrypt the encrypted text", () => {
-			const encryptedText = encrypter.encrypt(clearText);
-			const decryptedText = encrypter.decrypt(encryptedText);
-
+	describe("decrypt", () => {
+		test("should decrypt a valid encrypted text", () => {
+			const encryptedText = Encrypter.encrypt(clearText, key);
+			const decryptedText = Encrypter.decrypt(encryptedText, key);
 			expect(decryptedText).toBe(clearText);
-		});
-	});
-
-	describe("dencrypt()", () => {
-		test("should throw an error if the IV is missing", () => {
-			expect(() => encrypter.decrypt("encrypted_text")).toThrow("IV not found");
 		});
 
 		test("should throw an error if the encrypted text is invalid", () => {
-			const invalidEncryptedText = "invalid_text|iv";
-
-			expect(() => encrypter.decrypt(invalidEncryptedText)).toThrow();
+			const invalidEncryptedText = "invalid-encrypted-text";
+			expect(() => {
+				Encrypter.decrypt(invalidEncryptedText, key);
+			}).toThrow("Invalid IV");
 		});
 
-		test("should be able to decrypt the encrypted text", () => {
-			const encryptedText = encrypter.encrypt(clearText);
-			const decryptedText = encrypter.decrypt(encryptedText);
-
-			expect(decryptedText).toBe(clearText);
+		test("should throw an error if the encrypted text is corrupted", () => {
+			expect(() => {
+				const encryptedText = Encrypter.encrypt("this is a secret", key);
+				const corruptedText = encryptedText.replace(/[0-9a-f]/, "x");
+				Encrypter.decrypt(corruptedText, key);
+			}).toThrow("Bad decrypt");
 		});
 	});
 });

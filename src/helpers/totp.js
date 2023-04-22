@@ -1,9 +1,12 @@
+const Encrypter = require("./encryptor");
 const { authenticator } = require("otplib");
 
-const Encrypter = require("./crypto");
-const encrypter = new Encrypter(process.env.TOTP_ENCRYPTION_KEY);
-
 class TotpHelper {
+
+
+	constructor() {
+		this.#encrypter = new Encrypter(process.env.TOTP_ENCRYPTION_KEY);
+	}
 	/* 
 		=======================================
 			Public methods 
@@ -35,11 +38,11 @@ class TotpHelper {
 	*/
 
 	static #encryptTotpSecret(plainTextTotpSecret) {
-		return encrypter.encrypt(plainTextTotpSecret);
+		// return this.#encryptTotpSecret.encrypt()  encrypter.encrypt(plainTextTotpSecret);
 	}
 
 	static #decryptTotpSecret(encryptedTotpSecret) {
-		return encrypter.dencrypt(encryptedTotpSecret);
+		return encrypter.decrypt(encryptedTotpSecret);
 	}
 }
 

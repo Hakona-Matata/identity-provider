@@ -1,27 +1,34 @@
 const crypto = require("crypto");
 
 class Encrypter {
-	constructor(encryptionKey) {
-		this.algorithm = "aes-192-cbc";
-		this.key = crypto.scryptSync(encryptionKey, "salt", 24);
-	}
+	static algorithm = "aes-192-cbc";
+	static salt = "salt";
 
-	encrypt(clearText) {
+	static encrypt(clearText, key) {
+		const encryptedKey = crypto.scryptSync(key, Encrypter.salt, 24);
 		const iv = crypto.randomBytes(16);
-		const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
+		const cipher = crypto.createCipheriv(Encrypter.algorithm, encryptedKey, iv);
 		const encrypted = cipher.update(clearText, "utf8", "hex");
 
 		return [encrypted + cipher.final("hex"), Buffer.from(iv).toString("hex")].join("|");
 	}
 
-	decrypt(encryptedText) {
+	static decrypt(encryptedText, key) {
+		const encryptedKey = crypto.scryptSync(key, Encrypter.salt, 24);
 		const [encrypted, iv] = encryptedText.split("|");
-		if (!iv) {
-			throw new Error("IV not found");
-		}
-		const decipher = crypto.createDecipheriv(this.algorithm, this.key, Buffer.from(iv, "hex"));
 
-		return decipher.update(encrypted, "hex", "utf8") + decipher.final("utf8");
+		if (!iv || iv.length !== 32) {
+			throw new Error("Invalid IV");
+		}
+
+		const decipher = crypto.createDecipheriv(Encrypter.algorithm, encryptedKey, Buffer.from(iv, "hex"));
+
+		try {
+			const decrypted = decipher.update(encrypted, "hex", "utf8") + decipher.final("utf8");
+			return decrypted;
+		} catch (error) {
+			throw new Error("Bad decrypt");
+		}
 	}
 }
 
