@@ -1,22 +1,29 @@
 const mongoose = require("mongoose");
 
-const connect_DB = (app) => {
-	if (process.env.NODE_ENV !== "test") {
-		app.listen(process.env.PORT, () => {
-			mongoose.set("strictQuery", true);
-
-			mongoose
-				.connect(process.env.MONGO_URI)
-				.then(async (db) => {
-					console.log(
-						`server is running on ${process.env.BASE_URL}:${process.env.PORT} in "${process.env.NODE_ENV}" environment`
-					);
-				})
-				.catch((error) => {
-					console.log(error.message);
-				});
-		});
+const connectDB = (app) => {
+	if (process.env.NODE_ENV === "test") {
+		return Promise.resolve();
 	}
+
+	return mongoose
+		.connect(process.env.MONGO_URI)
+		.then(() => {
+			// mongoose.set("strictQuery", true);
+
+			const server = app.listen(process.env.PORT, () => {
+				console.log(
+					`Server is running on ${process.env.BASE_URL}:${process.env.PORT} in "${process.env.NODE_ENV}" environment`
+				);
+			});
+
+			
+
+			return server;
+		})
+		.catch((error) => {
+			console.log(error.message);
+			process.exit(1);
+		});
 };
 
-module.exports = connect_DB;
+module.exports = connectDB;

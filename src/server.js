@@ -16,4 +16,11 @@ connect_DB(app);
 
 applyAllMiddlewares(app);
 
+process.on("SIGINT", () => {
+	server.close(() => {
+		console.log("Server is shutting down");
+		process.exit(0);
+	});
+});
+
 module.exports = app;
