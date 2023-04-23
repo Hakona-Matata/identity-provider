@@ -11,10 +11,9 @@ module.exports = {
 		TOTP_NOT_ENABLED: "Sorry, the TOTP feature is not enabled!",
 		START_FROM_SCRATCH: "Sorry, you need to start from scratch!",
 		INVALID_TOTP: "Sorry, the totp is invalid!",
-
 		TOTP_CREATE_FAILED: "Sorry, the TOTP delete process failed!",
-		TOTP_READ_FAILED: "Sorry, the TOTP is not found!",
 		TOTP_UPDATE_FAILED: "Sorry, the TOTP update process failed!",
 		TOTP_DELETE_FAILED: "Sorry, the TOTP delete process failed!",
+		TOTP_NOT_FOUND: "Sorry, the TOTP is not found!",
 	},
 };
