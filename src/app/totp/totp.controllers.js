@@ -5,10 +5,7 @@ const TotpServices = require("./totp.services");
 
 class TotpControllers {
 	static async initiateEnabling(req, res, next) {
-		req.result = await TotpServices.initiateEnabling({
-			accountId: req.account._id,
-			isTotpEnabled: req.account.ist,
-		});
+		req.result = await TotpServices.initiateEnabling(req.account._id, req.account.ist);
 
 		next();
 	}
@@ -16,20 +13,13 @@ class TotpControllers {
 	static async confirmEnabling(req, res, next) {
 		const { totp } = await validate(TotpValidatores.confirm, req.body);
 
-		req.result = await TotpServices.confirmEnabling({
-			accountId: req.account._id,
-			givenTotp: totp,
-			isTotptEnabled: req.account.isTotpEnabled,
-		});
+		req.result = await TotpServices.confirmEnabling(req.account._id, totp, req.account.isTotpEnabled);
 
 		next();
 	}
 
 	static async disable(req, res, next) {
-		req.result = await TotpServices.disable({
-			accountId: req.account._id,
-			isTotpEnabled: req.account.isTotpEnabled,
-		});
+		req.result = await TotpServices.disable(req.account._id, req.account.isTotpEnabled);
 
 		next();
 	}

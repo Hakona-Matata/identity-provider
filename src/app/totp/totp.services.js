@@ -1,3 +1,7 @@
+const AccountServices = require("./../account/account.services");
+const TotpRepository = require("./totp.repositories");
+const TotpHelper = require("./../../helpers/totp");
+
 const {
 	SUCCESS_MESSAGES: { TOTP_ENABLED_SUCCESSFULLY, TOTP_DISABLED_SUCCESSFULLY, TOTP_VERIFIED_SUCCESSFULLY },
 	FAILURE_MESSAGES: {
@@ -9,18 +13,18 @@ const {
 		INVALID_TOTP,
 
 		TOTP_CREATE_FAILED,
-		TOTP_READ_FAILED,
 		TOTP_UPDATE_FAILED,
 		TOTP_DELETE_FAILED,
+		TOTP_NOT_FOUND,
 	},
 } = require("./totp.constants");
 
-const { BadRequestException, InternalServerException, UnAuthorizedException } = require("./../../Exceptions/index");
-
-const AccountServices = require("./../account/account.services");
-const TotpRepository = require("./totp.repositories");
-
-const TotpHelper = require("./../../helpers/totp");
+const {
+	BadRequestException,
+	InternalServerException,
+	UnAuthorizedException,
+	NotFoundException,
+} = require("./../../Exceptions/index");
 
 class TotpServices {
 	/* 
@@ -29,21 +33,21 @@ class TotpServices {
 		=======================================
 	*/
 
-	static async initiateEnabling({ accountId, isTotpEnabled }) {
+	static async initiateEnabling(accountId, isTotpEnabled) {
 		if (isTotpEnabled) {
 			throw new BadRequestException(TOTP_ALREADY_ENABLED);
 		}
 
-		await TotpServices.delete(accountId);
+		await TotpServices.deleteOne({ accountId });
 
 		const { plainTextTotpSecret, encryptedTotpSecret } = await TotpServices.#generateEncryptedTotpSecret();
 
-		await TotpServices.create({ accountId, secret: encryptedTotpSecret });
+		await TotpServices.createOne({ accountId, secret: encryptedTotpSecret });
 
 		return { secret: plainTextTotpSecret };
 	}
 
-	static async confirmEnabling({ accountId, givenTotp, isTotptEnabled }) {
+	static async confirmEnabling(accountId, givenTotp, isTotptEnabled) {
 		if (isTotptEnabled) {
 			throw new BadRequestException(TOTP_ALREADY_ENABLED);
 		}
@@ -67,27 +71,27 @@ class TotpServices {
 			givenTotp,
 		});
 
-		await TotpServices.updateOne(totpId, { isTemp: false }, { count: 1 });
+		await TotpServices.updateOne({ _id: totpId }, { isTemp: false }, { count: 1 });
 
-		await AccountServices.updateOne(accountId, { isTotpEnabled: true, totpEnabledAt: new Date() });
+		await AccountServices.updateOne({ _id: accountId }, { isTotpEnabled: true, totpEnabledAt: new Date() });
 
 		return TOTP_ENABLED_SUCCESSFULLY;
 	}
 
-	static async disable({ accountId, isTotpEnabled }) {
+	static async disable(accountId, isTotpEnabled) {
 		if (!isTotpEnabled) {
 			throw new BadRequestException(TOTP_ALREADY_DISABLED);
 		}
 
 		await TotpServices.deleteOne({ accountId });
 
-		await AccountServices.updateOne(accountId, { isTotpEnabled: false }, { totpEnabledAt: 1 });
+		await AccountServices.updateOne({ _id: accountId }, { isTotpEnabled: false }, { totpEnabledAt: 1 });
 
 		return TOTP_DISABLED_SUCCESSFULLY;
 	}
 
-	static async verify({ accountId, givenTotp }) {
-		const { isTotpEnabled } = await AccountServices.findById(accountId);
+	static async verify(accountId, givenTotp) {
+		const { isTotpEnabled } = await AccountServices.findOne({ _id: accountId });
 
 		if (!isTotpEnabled) {
 			throw new BadRequestException(TOTP_NOT_ENABLED);
@@ -116,7 +120,7 @@ class TotpServices {
 		const isTotpValid = TotpHelper.verifyTotpCode(givenTotp, secret);
 
 		if (!isTotpValid) {
-			await TotpServices.updateOne(totpId, { count: count + 1 });
+			await TotpServices.updateOne({ _id: totpId }, { count: count + 1 });
 
 			throw new UnAuthorizedException(INVALID_TOTP);
 		}
@@ -128,8 +132,8 @@ class TotpServices {
 		=======================================
 	*/
 
-	static async create(payload) {
-		const isTotpCreated = await TotpRepository.create(payload);
+	static async createOne(payload) {
+		const isTotpCreated = await TotpRepository.insertOne(payload);
 
 		if (!isTotpCreated) {
 			throw new InternalServerException(TOTP_CREATE_FAILED);
@@ -139,17 +143,11 @@ class TotpServices {
 	}
 
 	static async findOne(payload) {
-		const isTotpFound = await TotpRepository.findOne(payload);
-
-		if (!isTotpFound) {
-			throw new InternalServerException(TOTP_READ_FAILED);
-		}
-
-		return isTotpFound;
+		return await TotpRepository.findOne(payload);
 	}
 
-	static async updateOne(totpId, setPayload, unsetPayload) {
-		const isTotpUpdated = await TotpRepository.updateOne(totpId, setPayload, unsetPayload);
+	static async updateOne(filter, setPayload, unsetPayload) {
+		const isTotpUpdated = await TotpRepository.updateOne(fitler, setPayload, unsetPayload);
 
 		if (!isTotpUpdated) {
 			throw new InternalServerException(TOTP_UPDATE_FAILED);
@@ -158,16 +156,24 @@ class TotpServices {
 		return isTotpUpdated;
 	}
 
-	static async deleteOne(payload) {
-		const { deletedCount } = await TotpRepository.deleteOne(payload);
+	static async deleteOne(filter) {
+		const isTotpDeleted = await TotpRepository.deleteOne(filter);
 
-		if (deletedCount === 0) {
+		if (!isTotpDeleted) {
+			throw new NotFoundException(TOTP_NOT_FOUND);
+		} else if (isTotpDeleted.deletedCount === 0) {
 			throw new InternalServerException(TOTP_DELETE_FAILED);
 		}
 	}
 
-	static async delete(accountId) {
-		return await TotpRepository.delete({ accountId });
+	static async deleteMany(filter) {
+		const areTotpDeleted = await TotpRepository.deleteMany(filter);
+
+		if (!areTotpDeleted) {
+			throw new NotFoundException(TOTP_NOT_FOUND);
+		} else if (areTotpDeleted.deletedCount === 0) {
+			throw new InternalServerException(TOTP_DELETE_FAILED);
+		}
 	}
 }
 

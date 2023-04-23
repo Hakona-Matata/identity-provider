@@ -1,3 +1,8 @@
+const HashHelper = require("../../helpers/hash");
+const SmsRepository = require("./sms.repository");
+const OtpServices = require("./../otp/otp.services");
+const AccountServices = require("./../account/account.services");
+
 const {
 	SUCCESS_MESSAGES: {
 		SMS_SENT_SUCCESSFULLY,
@@ -11,18 +16,12 @@ const {
 		EXPIRED_SMS,
 		INVALID_OTP,
 		ALREADY_DISABLED_SMS,
+		SMS_NOT_FOUND,
 		SMS_CREATE_FAILED,
-		SMS_READ_FAILED,
 		SMS_UPDATE_FAILED,
-		SMS_DELETE_FAILED,
+		SMS_DELETION_FAILED,
 	},
 } = require("./sms.constants");
-
-const HashHelper = require("../../helpers/hash");
-
-const SmsRepository = require("./sms.repository");
-const OtpServices = require("./../otp/otp.services");
-const AccountServices = require("./../account/account.services");
 
 const { BadRequestException, InternalServerException } = require("./../../Exceptions/index");
 
@@ -39,30 +38,33 @@ class SmsServices {
 
 		await SmsServices.#generateSaveSendOtp(accountId);
 
-		await AccountServices.updateOne(accountId, { phone, country });
+		await AccountServices.updateOne({ _id: accountId }, { phone, country });
 
 		return SMS_SENT_SUCCESSFULLY;
 	}
 
-	static async confirm({ accountId, givenOtp }) {
+	static async confirm(accountId, givenOtp) {
 		await SmsServices.#verifyDeleteOtp(accountId, givenOtp);
 
-		await AccountServices.updateOne(accountId, {
-			isPhoneVerified: true,
-			phoneVerifiedAt: new Date(),
-			isSmsEnabled: true,
-			SMSEnabledAt: new Date(),
-		});
+		await AccountServices.updateOne(
+			{ _id: accountId },
+			{
+				isPhoneVerified: true,
+				phoneVerifiedAt: new Date(),
+				isSmsEnabled: true,
+				SMSEnabledAt: new Date(),
+			}
+		);
 
 		return SMS_ENABLED_SUCCESSFULLY;
 	}
 
-	static async disable({ accountId, isSmsEnabled }) {
+	static async disable(accountId, isSmsEnabled) {
 		if (!isSmsEnabled) {
 			throw new BadRequestException(ALREADY_DISABLED_SMS);
 		}
 
-		await AccountServices.updateOne(accountId, { isSmsEnabled: false }, { smsEnabledAt: 1 });
+		await AccountServices.updateOne({ _id: accountId }, { isSmsEnabled: false }, { smsEnabledAt: 1 });
 
 		return SMS_DISABLED_SUCCESSFULLY;
 	}
@@ -84,19 +86,19 @@ class SmsServices {
 	*/
 
 	static async #generateSaveSendOtp(accountId) {
-		const isSmsFound = await SmsServices.findOneById(accountId);
+		const isSmsFound = await SmsServices.findOne({ accountId });
 
 		if (isSmsFound) {
 			throw new BadRequestException(ALREADY_HAVE_VALID_SMS);
 		}
 
-		const hashedOtp = await OtpServices.generateSendOtp();
+		const hashedOtp = await OtpServices.generatSendOtp();
 
 		await SmsServices.create({ accountId, hashedOtp });
 	}
 
 	static async #verifyDeleteOtp(accountId, givenOtp) {
-		const isSmsFound = await SmsServices.findOneById(accountId);
+		const isSmsFound = await SmsServices.findOne({ accountId });
 
 		if (!isSmsFound) {
 			throw new BadRequestException(EXPIRED_SMS);
@@ -108,7 +110,7 @@ class SmsServices {
 			throw new ForbiddenException(INVALID_OTP);
 		}
 
-		await SmsServices.deleteOne(isSmsFound._id);
+		await SmsServices.deleteOne({ _id: isSmsFound._id });
 	}
 
 	/* 
@@ -117,8 +119,8 @@ class SmsServices {
 		=======================================
 	*/
 
-	static async create(payload) {
-		const isSmsCreated = await SmsRepository.create(payload);
+	static async createOne(payload) {
+		const isSmsCreated = await SmsRepository.insertOne(payload);
 
 		if (!isSmsCreated) {
 			throw new InternalServerException(SMS_CREATE_FAILED);
@@ -127,18 +129,18 @@ class SmsServices {
 		return isSmsCreated;
 	}
 
-	static async findOneById(smsId) {
-		const isSmsFound = await SmsRepository.findOne({ _id: smsId });
+	static async findOne(filter) {
+		return await SmsRepository.findOne(filter);
 
-		if (!isSmsFound) {
-			throw new InternalServerException(SMS_READ_FAILED);
-		}
+		// if (!isSmsFound) {
+		// 	throw new InternalServerException(SMS_READ_FAILED);
+		// }
 
-		return isSmsFound;
+		// return isSmsFound;
 	}
 
-	static async updateOne(smsId, setPayload, unsetPayload) {
-		const isSmsUpdated = await SmsRepository.updateOne(smsId, setPayload, unsetPayload);
+	static async updateOne(filter, setPayload, unsetPayload) {
+		const isSmsUpdated = await SmsRepository.updateOne(filter, setPayload, unsetPayload);
 
 		if (!isSmsUpdated) {
 			throw new InternalServerException(SMS_UPDATE_FAILED);
@@ -147,11 +149,13 @@ class SmsServices {
 		return isSmsUpdated;
 	}
 
-	static async deleteOne(smsId) {
-		const { deletedCount } = await SmsRepository.deleteOne(smsId);
+	static async deleteOne(filter) {
+		const isSmsDeleted = await SmsRepository.deleteOne(filter);
 
-		if (deletedCount === 0) {
-			throw new InternalServerException(SMS_DELETE_FAILED);
+		if (!isSmsDeleted) {
+			throw new NotFoundException(SMS_NOT_FOUND);
+		} else if (isSmsDeleted.deletedCount === 0) {
+			throw new InternalServerException(SMS_DELETION_FAILED);
 		}
 	}
 }

@@ -1,3 +1,9 @@
+const HashHelper = require("./../../helpers/hash");
+const RandomHelper = require("./../../helpers/random");
+
+const AccountServices = require("./../account/account.services");
+const OtpRepository = require("./otp.repository");
+
 const {
 	SUCCESS_MESSAGES: {
 		OTP_SENT_SUCCESSFULLY,
@@ -12,21 +18,18 @@ const {
 		INVALID_OTP,
 		OTP_ALREADY_DISABLED,
 		REACHED_MAXIMUM_WRONG_TRIES,
-
-		OTP_CREATE_FAILED,
-		OTP_READ_FAILED,
-		OTP_UPDATE_FAILED,
-		OTP_DELETE_FAILED,
+		OTP_CREATION_FAILED,
+		OTP_DELETION_FAILED,
+		OTP_NOT_FOUND,
 	},
 } = require("./otp.constants");
 
-const OtpRepository = require("./otp.repository");
-const AccountServices = require("./../account/account.services");
-
-const HashHelper = require("./../../helpers/hash");
-const RandomHelper = require("./../../helpers/random");
-
-const { BadRequestException, ForbiddenException, InternalServerException } = require("./../../Exceptions/index");
+const {
+	BadRequestException,
+	ForbiddenException,
+	InternalServerException,
+	NotFoundException,
+} = require("./../../Exceptions/index");
 
 class OtpServices {
 	/* 
@@ -34,7 +37,7 @@ class OtpServices {
 			Public methods 
 		=======================================
 	*/
-	static async enable({ accountId, isOtpEnabled }) {
+	static async enable(accountId, isOtpEnabled) {
 		if (isOtpEnabled) {
 			throw new BadRequestException(OTP_ALREADY_ENABLED);
 		}
@@ -42,20 +45,20 @@ class OtpServices {
 		return await OtpServices.#generateSaveSendOtp(accountId);
 	}
 
-	static async confirm({ accountId, givenOtp }) {
+	static async confirm(accountId, givenOtp) {
 		await OtpServices.#verifyDeleteOtp(accountId, givenOtp);
 
-		await AccountServices.updateOne(accountId, { isOtpEnabled: true, otpEnabledAt: new Date() });
+		await AccountServices.updateOne({ _id: accountId }, { isOtpEnabled: true, otpEnabledAt: new Date() });
 
 		return OTP_CONFIRMED_SUCCESSFULLY;
 	}
 
-	static async disable({ accountId, isOtpEnabled }) {
+	static async disable(accountId, isOtpEnabled) {
 		if (!isOtpEnabled) {
 			throw new BadRequestException(OTP_ALREADY_DISABLED);
 		}
 
-		await AccountServices.updateOne(accountId, { isOtpEnabled: false }, { OtpEnabledAt: 1 });
+		await AccountServices.updateOne({ _id: accountId }, { isOtpEnabled: false }, { OtpEnabledAt: 1 });
 
 		return OTP_DISABLED_SUCCESSFULLY;
 	}
@@ -64,7 +67,7 @@ class OtpServices {
 		return await OtpServices.#generateSaveSendOtp(accountId);
 	}
 
-	static async verify({ accountId, givenOtp }) {
+	static async verify(accountId, givenOtp) {
 		await OtpServices.#verifyDeleteOtp(accountId, givenOtp);
 
 		return OTP_VERIFIED_SUCCESSFULLY;
@@ -88,7 +91,7 @@ class OtpServices {
 	*/
 
 	static async #generateSaveSendOtp(accountId) {
-		const isOtpFound = await OtpServices.findOne(accountId);
+		const isOtpFound = await OtpServices.findOne({ accountId });
 
 		if (isOtpFound) {
 			throw new BadRequestException(ALREADY_HAVE_VALID_OTP);
@@ -96,20 +99,20 @@ class OtpServices {
 
 		const hashedOtp = await OtpServices.generatSendOtp(accountId);
 
-		await OtpRepository.create({ accountId, hashedOtp });
+		await OtpServices.createOne({ accountId, hashedOtp });
 
 		return OTP_SENT_SUCCESSFULLY;
 	}
 
 	static async #verifyDeleteOtp(accountId, givenOtp) {
-		const foundOtp = await OtpServices.findOne(accountId);
+		const foundOtp = await OtpServices.findOne({ accountId });
 
 		if (!foundOtp) {
 			throw new ForbiddenException(EXPIRED_OTP);
 		}
 
 		if (foundOtp.count >= 3) {
-			await OtpServices.deleteOneById(foundOtp._id);
+			await OtpServices.deleteOne({ _id: foundOtp._id });
 
 			throw new ForbiddenException(REACHED_MAXIMUM_WRONG_TRIES);
 		}
@@ -117,12 +120,12 @@ class OtpServices {
 		const isOtpValid = await HashHelper.verify(givenOtp, foundOtp.hashedOtp);
 
 		if (!isOtpValid) {
-			await OtpServices.updateOne(foundOtp._id, { count: foundOtp.count + 1 });
+			await OtpServices.updateOne({ _id: foundOtp._id }, { count: foundOtp.count + 1 });
 
 			throw new ForbiddenException(INVALID_OTP);
 		}
 
-		await OtpServices.deleteOneById(foundOtp._id);
+		await OtpServices.deleteOne({ _id: foundOtp._id });
 	}
 
 	/* 
@@ -131,41 +134,31 @@ class OtpServices {
 		=======================================
 	*/
 
-	static async create(payload) {
-		const isOtpCreated = await OtpRepository.create(payload);
+	static async createOne(payload) {
+		const isOtpCreated = await OtpRepository.insertOne(payload);
 
 		if (!isOtpCreated) {
-			throw new InternalServerException(OTP_CREATE_FAILED);
+			throw new InternalServerException(OTP_CREATION_FAILED);
 		}
 
 		return isOtpCreated;
 	}
 
 	static async findOne(payload) {
-		const isOtpFound = await OtpRepository.findOne(payload);
-
-		if (!isOtpFound) {
-			throw new InternalServerException(OTP_READ_FAILED);
-		}
-
-		return isOtpFound;
+		return await OtpRepository.findOne(payload);
 	}
 
-	static async updateOne(otpId, setPayload, unsetPayload) {
-		const isOtpUpdated = await OtpRepository.updateOne(otpId, setPayload, unsetPayload);
-
-		if (!isOtpUpdated) {
-			throw new InternalServerException(OTP_UPDATE_FAILED);
-		}
-
-		return isOtpUpdated;
+	static async updateOne(filter, setPayload, unsetPayload) {
+		return await OtpRepository.updateOne(filter, setPayload, unsetPayload);
 	}
 
-	static async deleteOneById(otpId) {
-		const { deletedCount } = await OtpRepository.deleteOneById(otpId);
+	static async deleteOne(filter) {
+		const isOtpDeleted = await OtpRepository.deleteOne(filter);
 
-		if (deletedCount === 0) {
-			throw new InternalServerException(OTP_DELETE_FAILED);
+		if (!isOtpDeleted) {
+			throw new NotFoundException(OTP_NOT_FOUND);
+		} else if (isOtpDeleted.deletedCount === 0) {
+			throw new InternalServerException(OTP_DELETION_FAILED);
 		}
 	}
 }
