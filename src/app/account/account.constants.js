@@ -12,12 +12,8 @@ module.exports = {
 		ACCOUNT_ALREADY_ACTIVE: "Sorry, your account is already active!",
 		ALREADY_HAVE_VALID_ACTIVATION_LINK: "Sorry, you still have a valid activation link in your mailbox!",
 		ALREADY_CANCELED_ACCOUNT_DELETION: "Sorry, you already canceled account deletion!",
-		ACCOUNT_NOT_FOUND: "Sorry, Account is not found!",
 		ACCOUNT_CREATION_FAILED: "Sorry, we couldn't create your account!",
-
-		ACCOUNT_CREATE_FAILED: "Sorry, the account create process failed!",
-		ACCOUNT_READ_FAILED: "Sorry, the accoutn find process failed!",
-		ACCOUNT_UPDATE_FAILED: "Sorry, the account update process failed!",
-		ACCOUNT_DELETE_FAILED: "sorry, the account delete process failed!",
+		ACCOUNT_DELETION_FAILED: "sorry, the account deletion process failed!",
+		ACCOUNT_NOT_FOUND: "Sorry, the account is not found!",
 	},
 };
