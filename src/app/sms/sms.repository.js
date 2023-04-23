@@ -1,24 +1,27 @@
 const SmsModel = require("./../otp/otp.model");
 
-class SmsRepository {
-	static async create(payload) {
-		return await SmsModel.create({ ...payload, by: "SMS" });
+const { BaseRepository } = require("./../../repository/index");
+
+class SmsRepository extends BaseRepository {
+	constructor() {
+		super(SmsModel);
 	}
 
-	static async findOne(payload) {
-		return await SmsModel.findOne({ ...payload, by: "SMS" });
+	async insertOne(payload) {
+		return await super.insertOne({ ...payload, by: "SMS" });
 	}
 
-	static async updateOne(smsId, setPayload, unsetPayload) {
-		return await SmsModel.updateOne(
-			{ _id: smsId },
-			{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } }
-		);
+	async findOne(payload) {
+		return await super.findOne({ ...payload, by: "SMS" });
 	}
 
-	static async deleteOne(smsId) {
-		return await SmsModel.deleteOne({ _id: smsId, by: "SMS" });
+	async updateOne(filter, setPayload, unsetPayload) {
+		return await super.updateOne({ ...filter, by: "SMS" }, setPayload, unsetPayload);
+	}
+
+	async deleteOne(filter) {
+		return await super.deleteOne({ ...filter, by: "SMS" });
 	}
 }
 
-module.exports = SmsRepository;
+module.exports = new SmsRepository();

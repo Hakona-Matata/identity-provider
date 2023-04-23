@@ -1,31 +1,27 @@
-const { InternalServerException } = require("./../../Exceptions/index");
-
 const OtpModel = require("./otp.model");
-class OtpRepository {
-	static async create(payload) {
-		const isOtpCreated = await OtpModel.create({ ...payload, by: "EMAIL" });
 
-		if (!isOtpCreated) {
-			throw new InternalServerException();
-		}
+const { BaseRepository } = require("./../../repository/index");
 
-		return isOtpCreated;
+class OtpRepository extends BaseRepository {
+	constructor() {
+		super(OtpModel);
 	}
 
-	static async findOne(payload) {
-		return await OtpModel.findOne({ ...payload, by: "EMAIL" }).lean();
+	async insertOne(payload) {
+		return await super.insertOne({ ...payload, by: "EMAIL" });
 	}
 
-	static async updateOne(OtpId, setPayload, unsetPayload) {
-		return await OtpModel.updateOne(
-			{ _id: OtpId },
-			{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } }
-		);
+	async findOne(payload) {
+		return await super.findOne({ ...payload, by: "EMAIL" });
 	}
 
-	static async deleteOneById(OtpId) {
-		return await OtpModel.findOneAndDelete({ _id: OtpId });
+	async updateOne(filter, setPayload, unsetPayload) {
+		return await super.updateOne({ ...filter, by: "EMAIL" }, setPayload, unsetPayload);
+	}
+
+	async deleteOne(filter) {
+		return await super.deleteOne({ ...filter, by: "EMAIL" });
 	}
 }
 
-module.exports = OtpRepository;
+module.exports = new OtpRepository();

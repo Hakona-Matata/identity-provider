@@ -1,3 +1,8 @@
+const HashHelper = require("../../helpers/hash");
+const SmsRepository = require("./sms.repository");
+const OtpServices = require("./../otp/otp.services");
+const AccountServices = require("./../account/account.services");
+
 const {
 	SUCCESS_MESSAGES: {
 		SMS_SENT_SUCCESSFULLY,
@@ -17,12 +22,6 @@ const {
 		SMS_DELETE_FAILED,
 	},
 } = require("./sms.constants");
-
-const HashHelper = require("../../helpers/hash");
-
-const SmsRepository = require("./sms.repository");
-const OtpServices = require("./../otp/otp.services");
-const AccountServices = require("./../account/account.services");
 
 const { BadRequestException, InternalServerException } = require("./../../Exceptions/index");
 
@@ -117,7 +116,7 @@ class SmsServices {
 		=======================================
 	*/
 
-	static async create(payload) {
+	static async insertOne(payload) {
 		const isSmsCreated = await SmsRepository.create(payload);
 
 		if (!isSmsCreated) {

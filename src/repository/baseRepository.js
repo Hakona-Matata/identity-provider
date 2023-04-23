@@ -26,25 +26,33 @@ class BaseRepository {
 	}
 
 	// Update Operations
-	async updateById(documentId, setPayload, unsetPayload) {
+	async updateById(documentId, setPayload, unsetPayload = null) {
 		return await this.model
-			.findByIdAndUpdate(
+			.updateById(
 				documentId,
-				{ $set: { ...setPayload, updatedAt: new Date() }, $unset: unsetPayload },
+				{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } },
 				{ new: true }
 			)
 			.lean();
 	}
 
-	async updateOne(filter, setPayload, unsetPayload) {
+	async updateOne(filter, setPayload, unsetPayload = null) {
 		return await this.model
-			.updateOne(filter, { $set: { ...setPayload, updatedAt: new Date() }, $unset: unsetPayload }, { new: true })
+			.updateOne(
+				{ ...filter },
+				{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } },
+				{ new: true }
+			)
 			.lean();
 	}
 
-	async updateMany(filter, setPayload, unsetPayload) {
+	async updateMany(filter, setPayload, unsetPayload = null) {
 		return await this.model
-			.updateMany(filter, { $set: { ...setPayload, updatedAt: new Date() }, $unset: unsetPayload }, { new: true })
+			.updateMany(
+				{ ...filter },
+				{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } },
+				{ new: true }
+			)
 			.lean();
 	}
 
