@@ -1,14 +1,15 @@
 const TokenHelper = require("./../../helpers/token");
 const HashHelper = require("./../../helpers/hash");
+
+const AccountServices = require("../account/account.services");
+const SessionServices = require("../session/session.services");
+
 const {
 	SUCCESS_MESSAGES: { PASSWORD_CHANGED_SUCCESSFULLY, CHECK_MAIL_BOX, ACCOUNT_RESET_SUCCESSFULLY },
 	FAILIURE_MESSAGES: { INCORRECT_PASSWORD, ALREADY_HAVE_VALID_RESET_LINK, ALREADY_RESET_ACCOUNT },
 } = require("./password.constants");
 
 const { ForbiddenException } = require("./../../Exceptions/index");
-
-const AccountServices = require("../account/account.services");
-const SessionServices = require("../session/session.services");
 
 class PasswordServices {
 	static async change({ oldPassword, newPassword, accountId, accountPassword }) {
@@ -20,9 +21,9 @@ class PasswordServices {
 
 		const hashedPassword = await HashHelper.generate(newPassword);
 
-		await AccountServices.updateOne(accountId, { password: hashedPassword, passwordChangedAt: new Date() });
+		await AccountServices.updateOne({ _id: accountId }, { password: hashedPassword, passwordChangedAt: new Date() });
 
-		await SessionServices.delete(accountId);
+		await SessionServices.deleteMany({ accountId });
 
 		return PASSWORD_CHANGED_SUCCESSFULLY;
 	}
@@ -45,7 +46,7 @@ class PasswordServices {
 		// TODO: Send Email
 		console.log({ resetLink });
 
-		await AccountServices.updateOne(account._id, { resetToken, resetAt: new Date() }, { resetToken: 1 });
+		await AccountServices.updateOne({ _id: account._id }, { resetToken, resetAt: new Date() }, { resetToken: 1 });
 
 		return CHECK_MAIL_BOX;
 	}
@@ -61,9 +62,13 @@ class PasswordServices {
 
 		const hashedPassword = await HashHelper.generate(givenAccountPassword);
 
-		await AccountServices.updateOne(accountId, { password: hashedPassword, resetAt: new Date() }, { resetToken: 1 });
+		await AccountServices.updateOne(
+			{ _id: accountId },
+			{ password: hashedPassword, resetAt: new Date() },
+			{ resetToken: 1 }
+		);
 
-		await SessionServices.delete(accountId);
+		await SessionServices.deleteMany({ accountId });
 
 		return ACCOUNT_RESET_SUCCESSFULLY;
 	}
