@@ -1,6 +1,7 @@
 const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../constants/index");
 
 module.exports = (error, req, res, next) => {
+	console.log({ error });
 	// console.log({ name: error.name, code: error.code, message: error.message });
 	switch (error.name) {
 		case "JsonWebTokenError":
@@ -57,6 +58,14 @@ module.exports = (error, req, res, next) => {
 			}
 
 			break;
+
+		case "CastError":
+			return res.status(httpStatusCodeNumbers.BAD_REQUEST).json({
+				success: false,
+				status: httpStatusCodeNumbers.BAD_REQUEST,
+				code: httpStatusCodeStrings.BAD_REQUEST,
+				message: `Sorry, the ${error.path} is not a valid ID`,
+			});
 
 		case "Error":
 			return res.status(error.statusCode).json({

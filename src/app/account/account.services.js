@@ -1,3 +1,8 @@
+const SessionServices = require("./../session/session.services");
+const AccountRepository = require("./account.repositories");
+const TokenHelper = require("./../../helpers/token");
+const HashHelper = require("./../../helpers/hash");
+
 const {
 	SUCCESS_MESSAGES: {
 		DEACTIVATED_SUCCESSFULLY,
@@ -12,20 +17,18 @@ const {
 		ACCOUNT_ALREADY_ACTIVE,
 		ALREADY_HAVE_VALID_ACTIVATION_LINK,
 		ALREADY_CANCELED_ACCOUNT_DELETION,
-
-		ACCOUNT_CREATE_FAILED,
-		ACCOUNT_READ_FAILED,
-		ACCOUNT_UPDATE_FAILED,
-		ACCOUNT_DELETE_FAILED,
+		ACCOUNT_CREATION_FAILED,
+		ACCOUNT_DELETION_FAILED,
+		ACCOUNT_NOT_FOUND,
 	},
 } = require("./account.constants");
 
-const { BadRequestException, UnAuthorizedException, InternalServerException } = require("./../../Exceptions/index");
-
-const SessionServices = require("./../session/session.services");
-const AccountRepository = require("./account.repositories");
-
-const TokenHelper = require("./../../helpers/token");
+const {
+	BadRequestException,
+	UnAuthorizedException,
+	InternalServerException,
+	NotFoundException,
+} = require("./../../Exceptions/index");
 
 class AccountServices {
 	/* 
@@ -34,9 +37,9 @@ class AccountServices {
 		=======================================
 	*/
 	static async deactivate(accountId) {
-		await AccountServices.updateOne(accountId, { isActive: false, activeStatusChangedAt: new Date() });
+		await AccountServices.updateOne({ _id: accountId }, { isActive: false, activeStatusChangedAt: new Date() });
 
-		await SessionServices.delete(accountId);
+		await SessionServices.deleteMany({ accountId });
 
 		return DEACTIVATED_SUCCESSFULLY;
 	}
@@ -64,7 +67,7 @@ class AccountServices {
 		// TODO: Send email
 		console.log({ activationLink });
 
-		await AccountServices.updateOne(account._id, { activationToken });
+		await AccountServices.updateOne({ _id: account._id }, { activationToken });
 
 		return CHECK_MAIL_BOX;
 	}
@@ -76,10 +79,10 @@ class AccountServices {
 
 		await AccountServices.#isAccountAlreadyActive(account.isActive);
 
-		await AccountServices.isVerified(account.isVerified);
+		await AccountServices.isAccountVerified(account.isVerified);
 
 		await AccountServices.updateOne(
-			accountId,
+			{ _id: accountId },
 			{ isActive: true, activeStatusChangedAt: new Date() },
 			{ activationToken: 1 }
 		);
@@ -88,7 +91,7 @@ class AccountServices {
 	}
 
 	static async terminate(accountId) {
-		await AccountServices.updateOne(accountId, { isDeleted: true, isDeletedAt: new Date() });
+		await AccountServices.updateOne({ _id: accountId }, { isDeleted: true, isDeletedAt: new Date() });
 
 		return ACCOUNT_DELETED_SUCCESSFULLY;
 	}
@@ -100,7 +103,7 @@ class AccountServices {
 			throw new BadRequestException(ALREADY_CANCELED_ACCOUNT_DELETION);
 		}
 
-		await AccountServices.updateOne(accountId, { isDeleted: false }, { isDeletedAt: 1 });
+		await AccountServices.updateOne({ _id: accountId }, { isDeleted: false }, { isDeletedAt: 1 });
 
 		return CANCELED_ACCOUNT_DELETION;
 	}
@@ -149,51 +152,49 @@ class AccountServices {
 		=======================================
 	*/
 
-	static async create(payload) {
-		const isAccountCreated = await AccountRepository.create(payload);
+	static async createOne(payload) {
+		const password = await HashHelper.generate(payload.password);
+
+		const isAccountCreated = await AccountRepository.insertOne({ ...payload, password });
 
 		if (!isAccountCreated) {
-			throw new InternalServerException(ACCOUNT_CREATE_FAILED);
+			throw new InternalServerException(ACCOUNT_CREATION_FAILED);
 		}
 
 		return isAccountCreated;
 	}
 
 	static async findById(accountId) {
-		const isAccountFound = await AccountRepository.findOne({ _id: accountId });
+		const isAccountFound = await AccountRepository.findById(accountId);
 
 		if (!isAccountFound) {
-			throw new InternalServerException(ACCOUNT_READ_FAILED);
+			throw new NotFoundException(ACCOUNT_NOT_FOUND);
 		}
 
 		return isAccountFound;
 	}
 
 	static async findOne(payload) {
-		const isAccountFound = await AccountRepository.findOne(payload);
-
-		if (!isAccountFound) {
-			throw new InternalServerException(ACCOUNT_READ_FAILED);
-		}
-
-		return isAccountFound;
+		return await AccountRepository.findOne(payload);
 	}
 
-	static async updateOne(acountId, setPayload, unsetPayload = null) {
-		const isAccountUpdated = await AccountRepository.updateOne(acountId, setPayload, unsetPayload);
+	static async updateOne(filter, setPayload, unsetPayload) {
+		const isAccountUpdated = await AccountRepository.updateOne(filter, setPayload, unsetPayload);
 
 		if (!isAccountUpdated) {
-			throw new InternalServerException(ACCOUNT_UPDATE_FAILED);
+			throw new NotFoundException(ACCOUNT_NOT_FOUND);
 		}
 
 		return isAccountUpdated;
 	}
 
 	static async deleteOne(accountId) {
-		const { deletedCount } = await AccountRepository.deleteOne(accountId);
+		const isAccountDeleted = await AccountRepository.deleteOne(accountId);
 
-		if (deletedCount === 0) {
-			throw new InternalServerException(ACCOUNT_DELETE_FAILED);
+		if (!isAccountDeleted) {
+			throw new NotFoundException(ACCOUNT_NOT_FOUND);
+		} else if (isAccountDeleted.deletedCount === 0) {
+			throw new InternalServerException(ACCOUNT_DELETION_FAILED);
 		}
 	}
 }

@@ -1,12 +1,8 @@
 const mongoose = require("mongoose");
 
-function isValidObject(objectId) {
-	if (typeof objectId === "string") {
-		return mongoose.Types.ObjectId.isValid(objectId);
-	} else if (objectId instanceof mongoose.Types.ObjectId) {
-		return true;
-	}
-	return false;
-}
+const isValidObjectId = (objectId) => {
+	const regex = /^[0-9a-fA-F]{24}$/;
+	return (typeof objectId === "string" && regex.test(objectId)) || objectId instanceof mongoose.Types.ObjectId;
+};
 
-module.exports = isValidObject;
+module.exports = isValidObjectId;

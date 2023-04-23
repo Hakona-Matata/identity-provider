@@ -1,19 +1,19 @@
-const {
-	SUCCESS_MESSAGES: { SIGN_UP_SUCCESSFULLY, ACCOUNT_VERIFIED_SUCCESSFULLY, LOGGED_OUT_SUCCESSFULLY },
-	FAILIURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
-} = require("./auth.constants");
-
 const TokenHelper = require("./../../helpers/token");
 const HashHelper = require("./../../helpers/hash");
 
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
 
+const {
+	SUCCESS_MESSAGES: { SIGN_UP_SUCCESSFULLY, ACCOUNT_VERIFIED_SUCCESSFULLY, LOGGED_OUT_SUCCESSFULLY },
+	FAILIURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
+} = require("./auth.constants");
+
 const { UnAuthorizedException } = require("./../../Exceptions/index");
 
 class AuthServices {
 	static async signUp(payload) {
-		const { _id: accountId, role } = await AccountServices.create(payload);
+		const { _id: accountId, role } = await AccountServices.createOne(payload);
 
 		const verificationToken = await TokenHelper.generateVerificationToken({
 			accountId,
@@ -25,7 +25,7 @@ class AuthServices {
 		// TODO: Send email
 		console.log({ verificationLink });
 
-		await AccountServices.updateOne(accountId, { verificationToken });
+		await AccountServices.updateOne({ _id: accountId }, { verificationToken });
 
 		return SIGN_UP_SUCCESSFULLY;
 	}
@@ -40,7 +40,7 @@ class AuthServices {
 		}
 
 		await AccountServices.updateOne(
-			accountId,
+			{ _id: accountId },
 			{ isVerified: true, isVerifiedAt: new Date() },
 			{ verificationToken: 1 }
 		);
@@ -65,7 +65,7 @@ class AuthServices {
 
 		// TODO: what is 2fa are enalbed? refactor!
 
-		return await SessionServices.create({
+		return await SessionServices.createOne({
 			accountId: foundAccount._id,
 			role: foundAccount.role,
 		});

@@ -1,34 +1,31 @@
+const isValidObjectId = require("./../isValidObjectId");
 const mongoose = require("mongoose");
-const isValidObjectId = require("./../isValidObjectId.js");
 
 describe("isValidObjectId", () => {
-	test("returns false for empty string", () => {
-		expect(isValidObjectId("")).toBe(false);
+	it("returns true for a valid ObjectId string", () => {
+		const objectId = mongoose.Types.ObjectId().toHexString();
+		expect(isValidObjectId(objectId)).toBe(true);
 	});
 
-	test("returns false for invalid object id as string", () => {
-		expect(isValidObjectId("1234")).toBe(false);
+	it("returns false for an invalid string", () => {
+		const invalidObjectId = "invalid";
+		expect(isValidObjectId(invalidObjectId)).toBe(false);
 	});
 
-	test("returns false for object id with wrong length as string", () => {
-		expect(isValidObjectId("1234567890123456789012345")).toBe(false);
+	it("returns true for a valid ObjectId object", () => {
+		const objectId = mongoose.Types.ObjectId();
+		expect(isValidObjectId(objectId)).toBe(true);
 	});
 
-	test("returns false for null value", () => {
+	it("returns false for null or undefined input", () => {
 		expect(isValidObjectId(null)).toBe(false);
-	});
-
-	test("returns false for undefined value", () => {
 		expect(isValidObjectId(undefined)).toBe(false);
 	});
 
-	test("returns false for non-string value", () => {
+	it("returns false for other types of input", () => {
 		expect(isValidObjectId(123)).toBe(false);
-	});
-
-	test("returns true for valid object id as a mongoose.Types.ObjectId", () => {
-		const objectId = mongoose.Types.ObjectId();
-		
-        expect(isValidObjectId(objectId)).toBe(true);
+		expect(isValidObjectId({})).toBe(false);
+		expect(isValidObjectId([])).toBe(false);
+		expect(isValidObjectId(true)).toBe(false);
 	});
 });
