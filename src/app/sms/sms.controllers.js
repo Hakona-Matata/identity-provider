@@ -22,19 +22,13 @@ class SmsControllers {
 	static async confirm(req, res, next) {
 		const { otp } = await validate(SmsValidators.confirm, req.body);
 
-		req.result = await SmsServices.confirm({
-			accountId: req.accountId,
-			givenOtp: otp,
-		});
+		req.result = await SmsServices.confirm(req.accountId, otp);
 
 		next();
 	}
 
 	static async disable(req, res, next) {
-		req.result = await SmsServices.disable({
-			accountId: req.accountId,
-			isSmsEnabled: req.account.isSmsEnabled,
-		});
+		req.result = await SmsServices.disable(req.accountId, req.account.isSmsEnabled);
 
 		next();
 	}

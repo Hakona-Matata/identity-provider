@@ -11,10 +11,11 @@ module.exports = {
 		EXPIRED_SMS: "Sorry, the given otp is expired!",
 		INVALID_OTP: "Sorry, the given otp is invalid!",
 		ALREADY_DISABLED_SMS: "Sorry, you already disabled OTP over SMS feature!",
+		SMS_NOT_FOUND: "Sorry, the sms document is not found!",
 
 		SMS_CREATE_FAILED: "Sorry, the creation of otp over sms failed!",
 		SMS_READ_FAILED: "Sorry, the finding of otp over sms failed!",
 		SMS_UPDATE_FAILED: "Sorry, the otp over sms update failed!",
-		SMS_DELETE_FAILED: "Sorry, the deletion of otp over sms failed!",
+		SMS_DELETION_FAILED: "Sorry, the deletion of otp over sms failed!",
 	},
 };
