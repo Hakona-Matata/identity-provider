@@ -4,8 +4,8 @@ const SessionValidators = require("./session.validators");
 const SessionServices = require("./session.services");
 
 class SessionControllers {
-	static async find(req, res, next) {
-		req.result = await SessionServices.find(req.accountId);
+	static async findAll(req, res, next) {
+		req.result = await SessionServices.findMany({ accountId: req.accountId });
 
 		next();
 	}

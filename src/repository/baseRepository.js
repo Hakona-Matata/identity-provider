@@ -28,16 +28,24 @@ class BaseRepository {
 	// Update Operations
 	async updateById(documentId, setPayload, unsetPayload) {
 		return await this.model
-			.findByIdAndUpdate(documentId, { $set: setPayload, $unset: unsetPayload }, { new: true })
+			.findByIdAndUpdate(
+				documentId,
+				{ $set: { ...setPayload, updatedAt: new Date() }, $unset: unsetPayload },
+				{ new: true }
+			)
 			.lean();
 	}
 
 	async updateOne(filter, setPayload, unsetPayload) {
-		return await this.model.updateOne(filter, { $set: setPayload, $unset: unsetPayload }, { new: true }).lean();
+		return await this.model
+			.updateOne(filter, { $set: { ...setPayload, updatedAt: new Date() }, $unset: unsetPayload }, { new: true })
+			.lean();
 	}
 
 	async updateMany(filter, setPayload, unsetPayload) {
-		return await this.model.updateMany(filter, { $set: setPayload, $unset: unsetPayload }, { new: true }).lean();
+		return await this.model
+			.updateMany(filter, { $set: { ...setPayload, updatedAt: new Date() }, $unset: unsetPayload }, { new: true })
+			.lean();
 	}
 
 	// Delete Operations

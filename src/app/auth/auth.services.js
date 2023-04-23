@@ -65,7 +65,7 @@ class AuthServices {
 
 		// TODO: what is 2fa are enalbed? refactor!
 
-		return await SessionServices.create({
+		return await SessionServices.createOne({
 			accountId: foundAccount._id,
 			role: foundAccount.role,
 		});

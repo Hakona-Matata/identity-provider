@@ -14,11 +14,11 @@ class MongoDatabaseUtil {
 		await mongoose.connection.dropCollection(collectionName);
 	}
 
-	static async disconnect() {
+	static async disonnect() {
 		await mongoose.disconnect();
 	}
 
-	static async closeconnection() {
+	static async closeConnection() {
 		await mongoose.connection.close();
 	}
 }

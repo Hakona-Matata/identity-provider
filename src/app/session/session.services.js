@@ -7,10 +7,11 @@ const {
 	SUCCESS_MESSAGES: { SESSION_CANCELED_SUCCESSFULLY },
 	FAILIURE_MESSAGES: {
 		SESSION_NOT_FOUND,
-		SESSION_EXPIRED,
-		SESSION_CREATE_FAILED,
-		SESSION_READ_FAILED,
-		SESSION_DELETE_FAILED,
+		SESSIONS_NOT_FOUND,
+		SESSION_CREATION_FAILED,
+		SESSION_DELETION_FAILED,
+		SESSIONS_DELETION_FAILED,
+		SESSION_REVOKED,
 	},
 } = require("./session.constants");
 
@@ -22,11 +23,7 @@ class SessionServices {
 	*/
 
 	static async cancel({ accountId, sessionId }) {
-		const isSessionDeleted = await SessionServices.deleteOne({ sessionId, accountId });
-
-		if (!isSessionDeleted) {
-			throw new NotFoundException(SESSION_NOT_FOUND);
-		}
+		await SessionServices.deleteOne({ _id: sessionId, accountId });
 
 		return SESSION_CANCELED_SUCCESSFULLY;
 	}
@@ -47,6 +44,8 @@ class SessionServices {
 	static async validate(accessToken) {
 		const decodedAccessToken = await TokenHelper.verifyAccessToken(accessToken);
 
+		await SessionServices.findOne({ accountId: decodedAccessToken.accountId, accessToken });
+
 		return { isValid: true, ...decodedAccessToken };
 	}
 
@@ -59,23 +58,49 @@ class SessionServices {
 	static async createOne(payload) {
 		const sessionTokens = await TokenHelper.generateAccessRefreshTokens(payload);
 
-		return await SessionRepository.insertOne({ ...payload, ...sessionTokens });
+		const isSessionCreated = await SessionRepository.insertOne({ ...payload, ...sessionTokens });
+
+		if (!isSessionCreated) {
+			throw new InternalServerException(SESSION_CREATION_FAILED);
+		}
+
+		return { accessToken: isSessionCreated.accessToken, refreshToken: isSessionCreated.refreshToken };
 	}
 
 	static async findOne(filter) {
-		return await SessionRepository.findOne(filter);
+		const isSessionFound = await SessionRepository.findOne(filter);
+
+		if (!isSessionFound) {
+			throw new NotFoundException(SESSION_REVOKED);
+		}
+
+		return isSessionFound;
 	}
 
-	static async findMany(accountId) {
-		return await SessionRepository.findMany({ accountId });
+	static async findMany(filter) {
+		return await SessionRepository.findMany(filter);
 	}
 
 	static async deleteOne(filter) {
-		return await SessionRepository.deleteOne(filter);
+		const isSessionDeleted = await SessionRepository.deleteOne(filter);
+
+		if (!isSessionDeleted) {
+			throw new NotFoundException(SESSION_NOT_FOUND);
+		} else if (isSessionDeleted.deletedCount === 0) {
+			throw new InternalServerException(SESSION_DELETION_FAILED);
+		}
 	}
 
-	static async deleteMany(accountId) {
-		return await SessionRepository.delete({ accountId });
+	static async deleteMany(filter) {
+		const areSessionsDeleted = await SessionRepository.deleteMany(filter);
+
+		console.log({ areSessionsDeleted });
+
+		if (!areSessionsDeleted) {
+			throw new NotFoundException(SESSIONS_NOT_FOUND);
+		} else if (areSessionsDeleted.deletedCount === 0) {
+			throw new InternalServerException(SESSIONS_DELETION_FAILED);
+		}
 	}
 }
 
