@@ -5,8 +5,8 @@ const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
 const { connect, disconnect } = require("../../db.config");
-const app = require("../../../src/server");
-const { generate_hash } = require("../../../src/helpers/hash");
+const app = require("../../../server");
+const { generate_hash } = require("../../../helpers/hash");
 
 const User = require("../../../src/app/Models/User.model");
 const Session = require("../../../src/app/Models/Session.model");
