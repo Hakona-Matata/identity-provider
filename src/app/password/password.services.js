@@ -9,7 +9,7 @@ const {
 	FAILIURE_MESSAGES: { INCORRECT_PASSWORD, ALREADY_HAVE_VALID_RESET_LINK, ALREADY_RESET_ACCOUNT },
 } = require("./password.constants");
 
-const { ForbiddenException } = require("./../../Exceptions/index");
+const { ForbiddenException } = require("./../../exceptions/index");
 
 class PasswordServices {
 	static async change({ oldPassword, newPassword, accountId, accountPassword }) {

@@ -6,25 +6,39 @@ const applyAllMiddlewares = require("./middlewares/applyAllMiddlewares");
 
 const app = express();
 
-const startServer = async () => {
+let server;
+
+const startServer = async (givenPort) => {
 	await MongoDatabaseUtil.connect();
-
 	applyAllMiddlewares(app);
+	const port = givenPort || process.env.PORT || 3000;
 
-	const port = process.env.PORT || 3000;
-
-	app.listen(port, () => {
-		console.log(`Server is running on ${process.env.BASE_URL}:${port} in "${process.env.NODE_ENV}" environment`);
+	server = app.listen(port, () => {
+		if (process.env.NODE_ENV !== "test") {
+			console.log(`Server is running on ${process.env.BASE_URL}:${port} in "${process.env.NODE_ENV}" environment`);
+		}
 	});
+
+	process.on("SIGINT", gracefulShutdown);
+	process.on("SIGTERM", gracefulShutdown);
+
+	return server;
+};
+
+const closeServer = async () => {
+	if (process.env.NODE_ENV === "test") {
+		await MongoDatabaseUtil.dropDataBase();
+	}
+
+	await MongoDatabaseUtil.disconnect();
+	await MongoDatabaseUtil.closeConnection();
+
+	server.close();
 };
 
 const gracefulShutdown = async () => {
-	await MongoDatabaseUtil.disconnect();
-	await MongoDatabaseUtil.closeConnection();
-	process.exit(0);
+	await closeServer();
+	process.exit(1);
 };
 
-process.on("SIGINT", gracefulShutdown);
-process.on("SIGTERM", gracefulShutdown);
-
-startServer();
+module.exports = { app, startServer, closeServer };

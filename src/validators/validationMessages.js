@@ -30,7 +30,6 @@ module.exports = {
 	"string.uriRelativeOnly": `"{#label}" field with value "{#value}" is not a valid relative URI`,
 	"string.uriCustomOnly": `"{#label}" field with value "{#value}" is not a valid URI with a custom scheme of {#scheme}`,
 	"string.alternative": `"{#label}" field with value "{#value}" is not a valid alternative`,
-
 	"number.base": `Invalid type, expected a number for "{#label}"`,
 	"number.empty": `"{#label}" field is required`,
 	"number.min": `"{#label}" field should be greater than or equal to {#limit}`,

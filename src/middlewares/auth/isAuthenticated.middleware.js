@@ -1,8 +1,7 @@
 const SessionServices = require("../../app/session/session.services");
 const TokenHelper = require("../../helpers/token");
 
-const NotFoundException = require("../../Exceptions/common/notFound.exception");
-const UnAuthorizedException = require("./../../Exceptions/common/unAuthorized.exception");
+const { NotFoundException, UnAuthorizedException } = require("../../exceptions/index");
 
 module.exports = async (req, res, next) => {
 	const accessToken = req?.headers["authorization"]?.split(" ")[1];

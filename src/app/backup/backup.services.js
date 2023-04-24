@@ -23,7 +23,7 @@ const {
 	},
 } = require("./backup.constants");
 
-const { BadRequestException, UnAuthorizedException, InternalServerException } = require("./../../Exceptions/index");
+const { BadRequestException, UnAuthorizedException, InternalServerException } = require("./../../exceptions/index");
 
 class BackupServices {
 	/* 

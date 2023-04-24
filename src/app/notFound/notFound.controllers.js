@@ -1,4 +1,4 @@
-const NotFoundException = require("../../Exceptions/common/notFound.exception");
+const NotFoundException = require("../../exceptions/common/notFound.exception");
 
 class NotFoundControllers {
 	static async notFound(req, res, next) {

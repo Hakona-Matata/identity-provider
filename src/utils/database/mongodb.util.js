@@ -2,8 +2,10 @@ const mongoose = require("mongoose");
 
 class MongoDatabaseUtil {
 	static async connect() {
+		const MONGO_URI = process.env.NODE_ENV === "test" ? process.env.MONGO_URI + "_test" : process.env.MONGO_URI;
+
 		mongoose.set("strictQuery", false);
-		await mongoose.connect(process.env.MONGO_URI);
+		await mongoose.connect(MONGO_URI);
 	}
 
 	static async dropDataBase() {
@@ -14,7 +16,7 @@ class MongoDatabaseUtil {
 		await mongoose.connection.dropCollection(collectionName);
 	}
 
-	static async disonnect() {
+	static async disconnect() {
 		await mongoose.disconnect();
 	}
 

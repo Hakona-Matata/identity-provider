@@ -13,7 +13,7 @@ const {
 	FAILIURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
 } = require("./auth.constants");
 
-const { UnAuthorizedException } = require("./../../Exceptions/index");
+const { UnAuthorizedException } = require("./../../exceptions/index");
 
 class AuthServices {
 	static async signUp(payload) {

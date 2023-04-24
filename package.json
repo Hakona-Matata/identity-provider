@@ -7,8 +7,8 @@
 		"prod": "NODE_ENV=production node src/server.js",
 		"dev": "NODE_ENV=development nodemon src/server.js",
 		"test": "NODE_ENV=test jest --verbose --maxWorkers=50% --detectOpenHandles",
-		"test-clear-cache": "NODE_ENV=test jest --clearCache",
-		"test-watch": "NODE_ENV=test jest --watch --detectOpenHandles --maxWorkers=50%",
+		"test-clear-cache": " NODE_ENV=test jest --clearCache",
+		"test-watch": " NODE_ENV=test jest --watch --detectOpenHandles --maxWorkers=50%",
 		"test-coverage": "NODE_ENV=test jest --coverage --maxWorkers=50%"
 	},
 	"repository": {
