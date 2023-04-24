@@ -1,42 +1,31 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
-
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
-
-const { connect, disconnect } = require("../../db.config");
-const app = require("../../../src/server");
+const { app } = require("../../../server");
+const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../../constants/index");
 
 const baseURL = "/auth/sign-up";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 const fakeUser = {
 	email: faker.internet.email(),
 	userName: faker.random.alpha(10),
+	role: "CANDIDATE",
 	password: "teTE!@12",
 	confirmPassword: "teTE!@12",
 };
 
-describe(`"POST" ${baseURL} - create new user"`, () => {
-	it(`1. It should create a new user successfully`, async () => {
+describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
+	it.only(`Should create a new user successfully`, async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
 				...fakeUser,
 			});
 
-		expect(status).toBe(STATUS.CREATED);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.CREATED,
-			code: CODE.CREATED,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "Please, check your mailbox to verify your email address!",
 		});
 	});
@@ -123,10 +112,7 @@ describe(`"POST" ${baseURL} - create new user"`, () => {
 			success: false,
 			status: STATUS.UNPROCESSABLE_ENTITY,
 			code: CODE.UNPROCESSABLE_ENTITY,
-			message: [
-				'"userName" field is required!',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: ['"userName" field is required!', `"confirmPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -144,10 +130,7 @@ describe(`"POST" ${baseURL} - create new user"`, () => {
 			success: false,
 			status: STATUS.UNPROCESSABLE_ENTITY,
 			code: CODE.UNPROCESSABLE_ENTITY,
-			message: [
-				'"email" field is required!',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: ['"email" field is required!', `"confirmPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -165,10 +148,7 @@ describe(`"POST" ${baseURL} - create new user"`, () => {
 			success: false,
 			status: STATUS.UNPROCESSABLE_ENTITY,
 			code: CODE.UNPROCESSABLE_ENTITY,
-			message: [
-				'"password" field is required!',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: ['"password" field is required!', `"confirmPassword" field doesn't match "password" field`],
 		});
 	});
 
