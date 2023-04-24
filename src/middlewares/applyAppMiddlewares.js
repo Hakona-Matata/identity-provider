@@ -1,5 +1,3 @@
-const { isAuthenticated, isVerified, isActive } = require("./index");
-
 const AuthRoutes = require("../app/auth/auth.routes");
 const AccountRoutes = require("../app/account/account.routes");
 const SessionRoutes = require("../app/session/session.routes");
@@ -17,7 +15,7 @@ module.exports = (app) => {
 	app.use("/auth/account/password", PasswordRoutes);
 	app.use("/auth/otp", OtpRoutes);
 	app.use("/auth/sms", SmsRoutes);
-	app.use("/auth/totp", [isAuthenticated, isVerified, isActive], TotpRoutes);
+	app.use("/auth/totp", TotpRoutes);
 	app.use("/auth/backup", BackupRoutes);
 	app.use((req, res, next) => notFound(req, res, next));
 };

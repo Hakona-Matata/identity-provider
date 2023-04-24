@@ -23,6 +23,14 @@ class TotpControllers {
 
 		next();
 	}
+
+	static async verify(req, res, next) {
+		const { accountId, otp } = await validate(TotpValidatores.verify, req.body);
+
+		req.result = await TotpServices.verify(accountId, otp);
+
+		next();
+	}
 }
 
 module.exports = TotpControllers;
