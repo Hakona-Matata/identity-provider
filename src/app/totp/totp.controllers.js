@@ -25,9 +25,9 @@ class TotpControllers {
 	}
 
 	static async verify(req, res, next) {
-		const { accountId, otp } = await validate(TotpValidatores.verify, req.body);
+		const { accountId, totp } = await validate(TotpValidatores.verify, req.body);
 
-		req.result = await TotpServices.verify(accountId, otp);
+		req.result = await TotpServices.verify(accountId, totp);
 
 		next();
 	}
