@@ -28,7 +28,7 @@ const {
 	UnAuthorizedException,
 	InternalServerException,
 	NotFoundException,
-} = require("./../../Exceptions/index");
+} = require("./../../exceptions/index");
 
 class AccountServices {
 	/* 

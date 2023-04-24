@@ -30,7 +30,7 @@ const {
 	ForbiddenException,
 	InternalServerException,
 	NotFoundException,
-} = require("./../../Exceptions/index");
+} = require("./../../exceptions/index");
 
 class OtpServices {
 	/* 

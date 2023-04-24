@@ -24,7 +24,7 @@ const {
 	InternalServerException,
 	UnAuthorizedException,
 	NotFoundException,
-} = require("./../../Exceptions/index");
+} = require("./../../exceptions/index");
 
 class TotpServices {
 	/* 

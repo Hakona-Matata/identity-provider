@@ -9,7 +9,6 @@ const {
 		SMS_SENT_SUCCESSFULLY,
 		SMS_ENABLED_SUCCESSFULLY,
 		SMS_DISABLED_SUCCESSFULLY,
-		SMS_VERIFIED_SUCCESSFULLY,
 	},
 	FAILURE_MESSAGES: {
 		SMS_ALREADY_ENABLED,
@@ -24,7 +23,7 @@ const {
 	},
 } = require("./sms.constants");
 
-const { BadRequestException, InternalServerException } = require("./../../Exceptions/index");
+const { BadRequestException, InternalServerException } = require("./../../exceptions/index");
 
 class SmsServices {
 	/* 
