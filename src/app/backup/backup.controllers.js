@@ -13,10 +13,7 @@ class BackupControllers {
 	static async confirmEnabling(req, res, next) {
 		const { code } = await validate(BackupValidators.confirm, req.body);
 
-		req.result = await BackupServices.confirmEnabling({
-			account: req.account,
-			code,
-		});
+		req.result = await BackupServices.confirmEnabling(req.account, code);
 
 		next();
 	}

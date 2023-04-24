@@ -2,6 +2,7 @@ const HashHelper = require("./../../helpers/hash");
 const RandomHelper = require("./../../helpers/random");
 
 const AccountServices = require("./../account/account.services");
+const SessionServices = require("./../session/session.services");
 const OtpRepository = require("./otp.repository");
 
 const {
@@ -46,6 +47,12 @@ class OtpServices {
 	}
 
 	static async confirm(accountId, givenOtp) {
+		const account = await AccountServices.findById(accountId);
+
+		if (account.isOtpEnabled) {
+			throw new BadRequestException(OTP_ALREADY_ENABLED);
+		}
+
 		await OtpServices.#verifyDeleteOtp(accountId, givenOtp);
 
 		await AccountServices.updateOne({ _id: accountId }, { isOtpEnabled: true, otpEnabledAt: new Date() });
@@ -70,7 +77,9 @@ class OtpServices {
 	static async verify(accountId, givenOtp) {
 		await OtpServices.#verifyDeleteOtp(accountId, givenOtp);
 
-		return OTP_VERIFIED_SUCCESSFULLY;
+		const account = await AccountServices.findById(accountId);
+
+		return await SessionServices.createOne({ accountId: account._id, role: account.role });
 	}
 
 	static async generatSendOtp() {

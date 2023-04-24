@@ -1,15 +1,15 @@
 const Joi = require("joi");
-const { otp, id } = require("./../../validators/index");
+const { code, id } = require("./../../validators/index");
 
 module.exports = {
 	confirm: Joi.object({
-		otp,
+		otp: code,
 	}),
 	send: Joi.object({
 		accountId: id,
 	}),
 	verify: Joi.object({
 		accountId: id,
-		otp,
+		otp: code,
 	}),
 };

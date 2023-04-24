@@ -4,6 +4,10 @@ const HashHelper = require("./../../helpers/hash");
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
 
+const OtpServices = require("./../otp/otp.services");
+const SmsServices = require("./../sms/sms.services");
+const TotpServices = require("./../totp/totp.services");
+
 const {
 	SUCCESS_MESSAGES: { SIGN_UP_SUCCESSFULLY, ACCOUNT_VERIFIED_SUCCESSFULLY, LOGGED_OUT_SUCCESSFULLY },
 	FAILIURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
@@ -63,12 +67,7 @@ class AuthServices {
 			throw new UnAuthorizedException(WRONG_EMAIL_OR_PASSWORD);
 		}
 
-		// TODO: what is 2fa are enalbed? refactor!
-
-		return await SessionServices.createOne({
-			accountId: foundAccount._id,
-			role: foundAccount.role,
-		});
+		return await AuthServices.#giveAccess(foundAccount);
 	}
 
 	static async logOut({ accountId, accessToken }) {
@@ -93,6 +92,46 @@ class AuthServices {
 		}
 
 		return enabledSecurityMethods;
+	}
+
+	static async #giveAccess(account) {
+		const enabledSecurityMethods = await AuthServices.getEnabledSecurityLayers(account);
+
+		switch (enabledSecurityMethods.length) {
+			case 0:
+				return await SessionServices.createOne({
+					accountId: foundAccount._id,
+					role: foundAccount.role,
+				});
+
+			case 1:
+				return await AuthServices.#giveAccessOneSecurityLayerEnabled(account, enabledSecurityMethods);
+
+			default:
+				// the front end should redirect him to a page with all the enabled security layers
+				// and once the user choose his desired way, the frontend sends a requet to it's verify endpoint!
+				return {
+					message: "Please choose one of these security methods!",
+					accountId: account._id,
+					methods: enabledSecurityMethods,
+				};
+		}
+	}
+
+	static async #giveAccessOneSecurityLayerEnabled(account, enabledSecurityMethods) {
+		const enabledMethodName = Object.keys(enabledSecurityMethods[0])[0];
+
+		switch (enabledMethodName) {
+			case "isOtpEnabled":
+				return OtpServices.send(account._id);
+
+			case "isSmsEnabled":
+				return SmsServices.send(account._id);
+
+			// this case is if the isTotpEnabled: true
+			default:
+				return { accountId: account._id };
+		}
 	}
 }
 

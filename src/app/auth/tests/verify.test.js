@@ -5,11 +5,11 @@ const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
 const { connect, disconnect } = require("../../db.config");
-const app = require("../../../src/server");
+const app = require("../../../server");
 const User = require("./../../../src/app/Models/User.model");
 
-const { generate_token } = require("./../../../src/helpers/token");
-const { generate_hash } = require("./../../../src/helpers/hash");
+const { generate_token } = require("../../../helpers/token");
+const { generate_hash } = require("../../../helpers/hash");
 
 const baseURL = "/auth/verify-email";
 

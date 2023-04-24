@@ -38,8 +38,6 @@ class TotpServices {
 			throw new BadRequestException(TOTP_ALREADY_ENABLED);
 		}
 
-		await TotpServices.deleteOne({ accountId });
-
 		const { plainTextTotpSecret, encryptedTotpSecret } = await TotpServices.#generateEncryptedTotpSecret();
 
 		await TotpServices.createOne({ accountId, secret: encryptedTotpSecret });
@@ -97,9 +95,13 @@ class TotpServices {
 			throw new BadRequestException(TOTP_NOT_ENABLED);
 		}
 
-		const { _id: totpId, secret, count } = await TotpServices.findOne({ accountId });
+		const totp = await TotpServices.findOne({ accountId });
 
-		await TotpServices.#verifyTotpCode({ totpId, secret, count, givenTotp });
+		if (!totp) {
+			throw new UnAuthorizedException(INVALID_TOTP);
+		}
+
+		await TotpServices.#verifyTotpCode({ totpId: totp._id, secret: totp.secret, count: totp.count, givenTotp });
 
 		return TOTP_VERIFIED_SUCCESSFULLY;
 	}
@@ -147,7 +149,7 @@ class TotpServices {
 	}
 
 	static async updateOne(filter, setPayload, unsetPayload) {
-		const isTotpUpdated = await TotpRepository.updateOne(fitler, setPayload, unsetPayload);
+		const isTotpUpdated = await TotpRepository.updateOne(filter, setPayload, unsetPayload);
 
 		if (!isTotpUpdated) {
 			throw new InternalServerException(TOTP_UPDATE_FAILED);

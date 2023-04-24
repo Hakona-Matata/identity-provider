@@ -1,8 +1,12 @@
 const Joi = require("joi");
-const { totp } = require("./../../validators/index");
+const { totp, id, code } = require("./../../validators/index");
 
 module.exports = {
 	confirm: Joi.object({
-		totp,
+		totp: code,
+	}),
+	verify: Joi.object({
+		accountId: id,
+		totp: code,
 	}),
 };

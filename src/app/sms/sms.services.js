@@ -2,6 +2,7 @@ const HashHelper = require("../../helpers/hash");
 const SmsRepository = require("./sms.repository");
 const OtpServices = require("./../otp/otp.services");
 const AccountServices = require("./../account/account.services");
+const SessionServices = require("./../session/session.services");
 
 const {
 	SUCCESS_MESSAGES: {
@@ -70,13 +71,17 @@ class SmsServices {
 	}
 
 	static async send(accountId) {
-		return await SmsServices.#generateSaveSendOtp(accountId);
+		await SmsServices.#generateSaveSendOtp(accountId);
+
+		return SMS_SENT_SUCCESSFULLY;
 	}
 
 	static async verify({ accountId, givenOtp }) {
 		await SmsServices.#verifyDeleteOtp(accountId, givenOtp);
 
-		return SMS_VERIFIED_SUCCESSFULLY;
+		const account = await AccountServices.findById(accountId);
+
+		return await SessionServices.createOne({ accountId: account._id, role: account.role });
 	}
 
 	/* 
@@ -94,7 +99,7 @@ class SmsServices {
 
 		const hashedOtp = await OtpServices.generatSendOtp();
 
-		await SmsServices.create({ accountId, hashedOtp });
+		return await SmsServices.createOne({ accountId, hashedOtp });
 	}
 
 	static async #verifyDeleteOtp(accountId, givenOtp) {
