@@ -1,3 +1,11 @@
+const AccountServices = require("../account/account.services");
+const PasswordServices = require("./../password/password.services");
+const AuthServices = require("./../auth/auth.services");
+const BackupRepository = require("./backup.repository");
+
+const RandomHelper = require("./../../helpers/random");
+const HashHelper = require("./../../helpers/hash");
+
 const {
 	SUCCESS_MESSAGES: { BACKUP_ENABLED_SUCCESSFULLY, BACKUP_DISABLED_SUCCESSFULLY },
 	FAILURE_MESSAGES: {
@@ -17,14 +25,6 @@ const {
 
 const { BadRequestException, UnAuthorizedException, InternalServerException } = require("./../../Exceptions/index");
 
-const AccountServices = require("../account/account.services");
-const PasswordServices = require("./../password/password.services");
-const AuthServices = require("./../auth/auth.services");
-const BackupRepository = require("./backup.repository");
-
-const RandomHelper = require("./../../helpers/random");
-const HashHelper = require("./../../helpers/hash");
-
 class BackupServices {
 	/* 
 		=======================================
@@ -41,7 +41,7 @@ class BackupServices {
 			throw new BadRequestException(BACKUP_CANNOT_ENABLED);
 		}
 
-		const foundBackupCodes = await BackupServices.find({ accountId: account._id });
+		const foundBackupCodes = await BackupServices.findMany({ accountId: account._id });
 
 		if (foundBackupCodes.length >= 1) {
 			throw new BadRequestException(BACKUP_ALREADY_GENERATED);
@@ -50,14 +50,14 @@ class BackupServices {
 		return await BackupServices.#generateHashSaveBackupCodesList(account._id, 10);
 	}
 
-	static async confirmEnabling({ account, code }) {
+	static async confirmEnabling(account, code) {
 		BackupServices.#isBackupAlreadyEnabled(account.isBackupEnabled);
 
 		await BackupServices.#verifyDeleteBackupCode(account._id, code);
 
-		await BackupServices.update({ accountId: account._id }, { isTemp: false });
+		await BackupServices.updateMany({ accountId: account._id }, { isTemp: false });
 
-		await AccountServices.updateOne(account._id, { isBackupEnabled: true, backupEnabledAt: new Date() });
+		await AccountServices.updateOne({ _id: account._id }, { isBackupEnabled: true, backupEnabledAt: new Date() });
 
 		return BACKUP_ENABLED_SUCCESSFULLY;
 	}
@@ -67,23 +67,23 @@ class BackupServices {
 			throw new BadRequestException(BAKCUP_ALREADY_DISABLED);
 		}
 
-		await BackupServices.delete({ account: account._id });
+		await BackupServices.deleteMany({ account: account._id });
 
-		await AccountServices.updateOne(account._id, { isBackupEnabled: false }, { backupEnabledAt: 1 });
+		await AccountServices.updateOne({ _id: account._id }, { isBackupEnabled: false }, { backupEnabledAt: 1 });
 
 		return BACKUP_DISABLED_SUCCESSFULLY;
 	}
 
 	static async regenerate(accountId) {
-		const accountHashedBackupCodesList = await BackupServices.find({ accountId });
+		const accountHashedBackupCodesList = await BackupServices.findMany({ accountId });
 
 		if (accountHashedBackupCodesList.length === 0) {
 			throw new UnAuthorizedException(NEED_TO_HAVE_GENERATED_CODES);
 		}
 
-		await BackupServices.delete({ accountId });
+		await BackupServices.deleteMany({ accountId });
 
-		await AccountServices.updateOne(accountId, { isBackupEnabled: false }, { backupEnabledAt: 1 });
+		await AccountServices.updateOne({_id: accountId}, { isBackupEnabled: false }, { backupEnabledAt: 1 });
 
 		return await BackupServices.#generateHashSaveBackupCodesList(accountId, 10);
 	}
@@ -153,7 +153,7 @@ class BackupServices {
 	}
 
 	static async #verifyBackupCode(accountId, givenBackupCode) {
-		const accountHashedBackupCodesList = await BackupServices.find({ accountId });
+		const accountHashedBackupCodesList = await BackupServices.findMany({ accountId });
 
 		if (accountHashedBackupCodesList.length === 0) {
 			throw new BadRequestException(BACKUP_NOT_GENERATED);
@@ -183,8 +183,8 @@ class BackupServices {
 		=======================================
 	*/
 
-	static async createMany(backupCodesList) {
-		const areBackupCodesCreated = await BackupRepository.createMany(backupCodesList);
+	static async createMany(payload) {
+		const areBackupCodesCreated = await BackupRepository.insertMany(payload);
 
 		if (!areBackupCodesCreated) {
 			throw new InternalServerException(BACKUP_CREATE_FAILED);
@@ -193,38 +193,32 @@ class BackupServices {
 		return areBackupCodesCreated;
 	}
 
-	static async findOne(payload) {
-		const isBackupCodeFound = await BackupRepository.findOne(payload);
-
-		if (!isBackupCodeFound) {
-			throw new InternalServerException(INVALID_BACKUP_CODE);
-		}
-
-		return isBackupCodeFound;
+	static async findOne(filter) {
+		return await BackupRepository.findOne(filter);
 	}
 
-	static async find(payload) {
-		return await BackupRepository.find(payload);
+	static async findMany(filter) {
+		return await BackupRepository.findMany(filter);
 	}
 
-	static async update(filter, setPayload, unsetPayload) {
-		const { modifiedCount } = await BackupRepository.update(filter, setPayload, unsetPayload);
+	static async updateMany(filter, setPayload, unsetPayload) {
+		const { modifiedCount } = await BackupRepository.updateMany(filter, setPayload, unsetPayload);
 
 		if (modifiedCount === 0) {
 			throw new InternalServerException(BACKUP_UPDATE_FAILED);
 		}
 	}
 
-	static async deleteOne(payload) {
-		const { deletedCount } = await BackupRepository.deleteOne(payload);
+	static async deleteOne(filter) {
+		const { deletedCount } = await BackupRepository.deleteOne(filter);
 
 		if (deletedCount === 0) {
 			throw new InternalServerException(BACKUP_DELETE_FAILED);
 		}
 	}
 
-	static async delete(payload) {
-		const { deletedCount } = await BackupRepository.delete(payload);
+	static async deleteMany(filter) {
+		const { deletedCount } = await BackupRepository.deleteMany(filter);
 
 		if (deletedCount === 0) {
 			throw new InternalServerException(BACKUP_DELETE_FAILED);
