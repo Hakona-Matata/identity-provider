@@ -4,12 +4,10 @@ const OtpServices = require("./../otp/otp.services");
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
 
+const { ForbiddenException, NotFoundException } = require("./../../exceptions/index");
+
 const {
-	SUCCESS_MESSAGES: {
-		SMS_SENT_SUCCESSFULLY,
-		SMS_ENABLED_SUCCESSFULLY,
-		SMS_DISABLED_SUCCESSFULLY,
-	},
+	SUCCESS_MESSAGES: { SMS_SENT_SUCCESSFULLY, SMS_ENABLED_SUCCESSFULLY, SMS_DISABLED_SUCCESSFULLY },
 	FAILURE_MESSAGES: {
 		SMS_ALREADY_ENABLED,
 		ALREADY_HAVE_VALID_SMS,

@@ -1,25 +1,15 @@
 const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
+const httpStatusCodeStrings = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../server");
 const { generate_hash } = require("../../../helpers/hash");
 
 const User = require("./../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/password/change";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"PUT" ${baseURL} - Change Password`, () => {
 	it("1. Change user password successfully", async () => {
@@ -35,18 +25,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "tesTES@!#1212",
-				confirmNewPassword: "tesTES@!#1212",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "tesTES@!#1212",
+			confirmNewPassword: "tesTES@!#1212",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
@@ -70,18 +55,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#34",
-				newPassword: "tesTES@!#1212",
-				confirmNewPassword: "tesTES@!#1212",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#34",
+			newPassword: "tesTES@!#1212",
+			confirmNewPassword: "tesTES@!#1212",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
@@ -107,18 +87,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#234",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#234",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -142,13 +117,9 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -176,9 +147,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
@@ -207,9 +176,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
@@ -221,10 +188,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				'"newPassword" field is required!',
-				`"confirmNewPassword" field doesn't match "password" field`,
-			],
+			message: ['"newPassword" field is required!', `"confirmNewPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -241,9 +205,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
@@ -274,18 +236,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: 1234234,
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: 1234234,
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -309,18 +266,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "12",
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "12",
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -347,9 +299,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
@@ -385,18 +335,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "",
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "",
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -420,18 +365,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tttttttttt",
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tttttttttt",
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -458,18 +398,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: 1234234,
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: 1234234,
+			confirmNewPassword: "tesTES@!#12",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -496,18 +431,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -535,9 +465,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
@@ -574,28 +502,20 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"newPassword" field can't be empty!`,
-				`"confirmNewPassword" field doesn't match "password" field`,
-			],
+			message: [`"newPassword" field can't be empty!`, `"confirmNewPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -612,18 +532,13 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "testtest",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "testtest",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -652,28 +567,20 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "tesTES@!#34",
-				confirmNewPassword: 112341234,
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "tesTES@!#34",
+			confirmNewPassword: 112341234,
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"confirmNewPassword" field doesn't match "password" field`,
-				'"confirmNewPassword" must be a string',
-			],
+			message: [`"confirmNewPassword" field doesn't match "password" field`, '"confirmNewPassword" must be a string'],
 		});
 	});
 });

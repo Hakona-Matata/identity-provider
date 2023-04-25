@@ -1,24 +1,17 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
+
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
 
 const User = require("../../../src/app/Models/User.model");
 const Session = require("./../../../src/app/Models/Session.model");
-const Backup = require("./../../../src/app/Models/Backup.model");
 
 const baseURL = "/auth/backup/disable";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"DELETE" ${baseURL} - Disable Backup codes`, () => {
 	it("1. Disable Backup codes successfully", async () => {

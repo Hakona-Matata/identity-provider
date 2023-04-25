@@ -1,10 +1,8 @@
-const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
@@ -14,14 +12,6 @@ const User = require("../../../src/app/Models/User.model");
 const Session = require("../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/sessions/renew";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Renew User Session`, () => {
 	it("1. Renew user session successfully", async () => {
@@ -37,13 +27,9 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			body: {
 				data: { refreshToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ refreshToken });
+		const { status, body } = await request(app).post(baseURL).send({ refreshToken });
 
 		expect(status).toBe(httpStatusCodeNumbers.CREATED);
 		expect(body.success).toBe(true);
@@ -68,18 +54,14 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			body: {
 				data: { refreshToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		await Session.findOneAndDelete({
 			userId: user.id.toString(),
 			refreshToken,
 		});
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ refreshToken });
+		const { status, body } = await request(app).post(baseURL).send({ refreshToken });
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
@@ -109,9 +91,7 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ refreshToken: expiredRefreshToken });
+		const { status, body } = await request(app).post(baseURL).send({ refreshToken: expiredRefreshToken });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
@@ -137,9 +117,7 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
 		});
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ refreshToken: invalidRefreshToken });
+		const { status, body } = await request(app).post(baseURL).send({ refreshToken: invalidRefreshToken });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
@@ -165,9 +143,7 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 	});
 
 	it("6. Refresh token can't be empty", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ refreshToken: "" });
+		const { status, body } = await request(app).post(baseURL).send({ refreshToken: "" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -193,9 +169,7 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 	});
 
 	it("8. Refresh token is too short to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ refreshToken: "1" });
+		const { status, body } = await request(app).post(baseURL).send({ refreshToken: "1" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({

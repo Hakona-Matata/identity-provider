@@ -65,10 +65,4 @@ module.exports = {
 			return isValid ? { phone, country } : helper.message(validationMessages.custom);
 		})
 		.messages({ ...validationMessages }),
-	code: Joi.string()
-		.trim()
-		.length(6)
-		.required()
-		.regex(/^\d+$/)
-		.messages({ ...validationMessages, "string.pattern.base": "{{#label}} should contain only numbers" }),
 };

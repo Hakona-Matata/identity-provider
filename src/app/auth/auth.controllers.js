@@ -20,9 +20,9 @@ class AuthControllers {
 	}
 
 	static async logIn(req, res, next) {
-		const accountData = await validateInput(AuthValidators.login, req.body);
+		const { email, password } = await validateInput(AuthValidators.login, req.body);
 
-		req.result = await AuthServices.logIn(accountData);
+		req.result = await AuthServices.logIn({ email, password });
 
 		next();
 	}

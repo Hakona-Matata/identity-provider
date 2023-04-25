@@ -1,10 +1,9 @@
-const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../server");
 const User = require("./../../../src/app/Models/User.model");
 
@@ -13,13 +12,7 @@ const { generate_token } = require("../../../helpers/token");
 
 const baseURL = "/auth/account/activate";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 	it("1. Initiate user account activation successfully", async () => {

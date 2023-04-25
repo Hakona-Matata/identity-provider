@@ -1,3 +1,5 @@
+const { describe, it, expect } = require("jest");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 const { app } = require("../../../app");

@@ -1,10 +1,8 @@
-const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
@@ -12,14 +10,6 @@ const { generate_hash } = require("../../../src/helpers/hash");
 const User = require("../../../src/app/Models/User.model");
 
 const baseURL = "/auth/totp/enable";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 	it("1. Initiate enabling TOTP successfully", async () => {
@@ -35,13 +25,9 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body.success).toBe(true);
@@ -63,18 +49,11 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isTOTPEnabled: true } }
-		);
+		await User.findOneAndUpdate({ _id: user.id }, { $set: { isTOTPEnabled: true } });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
@@ -98,17 +77,11 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body.success).toBe(true);

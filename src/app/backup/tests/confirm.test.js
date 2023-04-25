@@ -1,7 +1,6 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../server");
 
 const { generate_hash } = require("../../../helpers/hash");
@@ -11,14 +10,6 @@ const Session = require("./../../../src/app/Models/Session.model");
 const Backup = require("./../../../src/app/Models/Backup.model");
 
 const baseURL = "/auth/backup/confirm";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 	it("1. Confirm enabling Backup codes succesfully", async () => {
@@ -36,22 +27,15 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Enable at least one 2FA method
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isOTPEnabled: true } }
-		);
+		await User.findOneAndUpdate({ _id: user.id }, { $set: { isOTPEnabled: true } });
 
 		// (4) Generate backup codes
 		const {
 			body: { data: codes },
-		} = await request(app)
-			.post("/auth/backup/generate")
-			.set("Authorization", `Bearer ${accessToken}`);
+		} = await request(app).post("/auth/backup/generate").set("Authorization", `Bearer ${accessToken}`);
 
 		// (5) Conirm Backup codes
 		const { status, body } = await request(app)
@@ -84,15 +68,10 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Enable backup codes
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isBackupEnabled: true } }
-		);
+		await User.findOneAndUpdate({ _id: user.id }, { $set: { isBackupEnabled: true } });
 
 		// (4) Conirm Backup codes
 		const { status, body } = await request(app)
@@ -125,9 +104,7 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Delete all backup codes
 		await Backup.deleteMany({ userId: user.id });
@@ -162,22 +139,13 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Enable at least one 2FA method
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isOTPEnabled: true } }
-		);
+		await User.findOneAndUpdate({ _id: user.id }, { $set: { isOTPEnabled: true } });
 
 		// (4) Generate backup codes
-		const {
-			body: { data: codes },
-		} = await request(app)
-			.post("/auth/backup/generate")
-			.set("Authorization", `Bearer ${accessToken}`);
+		await request(app).post("/auth/backup/generate").set("Authorization", `Bearer ${accessToken}`);
 
 		// (5) Conirm Backup codes
 		const { status, body } = await request(app)
@@ -217,14 +185,10 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm backup code
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		// (4) Clean DB
 		await User.findOneAndDelete({ _id: user.id });
@@ -250,9 +214,7 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm backup code
 		const { status, body } = await request(app)
@@ -284,9 +246,7 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm backup code
 		const { status, body } = await request(app)
@@ -318,9 +278,7 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm backup code
 		const { status, body } = await request(app)
@@ -352,9 +310,7 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm backup code
 		const { status, body } = await request(app)
@@ -386,15 +342,11 @@ describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm backup code
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: 123423424221234512345 });
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
+		// .send({ code: 123423424221234512345 });
 
 		// (4) Clean DB
 		await User.findOneAndDelete({ _id: user.id });

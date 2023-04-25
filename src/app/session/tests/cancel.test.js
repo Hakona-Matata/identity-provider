@@ -1,10 +1,8 @@
-const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../server");
 const { generate_hash } = require("../../../helpers/hash");
 
@@ -12,14 +10,6 @@ const User = require("../../../src/app/Models/User.model");
 const Session = require("../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/sessions/";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 	it("1. User can cancel/ revoke any available session he wants", async () => {
@@ -35,9 +25,7 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		const currentSession = await Session.findOne({
 			accessToken,
@@ -78,17 +66,13 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			body: {
 				data: { accessToken: accessToken1 },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user1.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user1.email, password: "tesTES@!#1232" });
 
 		const {
 			body: {
 				data: { accessToken: accessToken2 },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user2.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user2.email, password: "tesTES@!#1232" });
 
 		const user2CurrentSession = await Session.findOne({
 			userId: user2.id,
@@ -124,13 +108,9 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("authorization", `Bearer ${accessToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -154,9 +134,7 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -185,9 +163,7 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -216,9 +192,7 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -247,9 +221,7 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -278,9 +250,7 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		const { status, body } = await request(app)
 			.post(baseURL)

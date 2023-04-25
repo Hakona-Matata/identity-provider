@@ -1,5 +1,6 @@
-const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
+const { describe, it, expect } = require("jest");
+
+const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../../constants/index");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -34,13 +35,9 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
@@ -64,9 +61,7 @@ describe(`"POST" ${baseURL} - Log user out`, () => {
 	});
 
 	it("3. Malformed accessToken", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("authorization", "Bearer test");
+		const { status, body } = await request(app).post(baseURL).set("authorization", "Bearer test");
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({

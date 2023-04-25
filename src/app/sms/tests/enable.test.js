@@ -1,7 +1,7 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
+
 const app = require("../../../src/server");
 const { generate_hash } = require("../../../src/helpers/hash");
 
@@ -11,13 +11,7 @@ const OTP = require("./../../../src/app/Models/OTP.model");
 
 const baseURL = "/auth/sms/enable";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Initiate enabling SMS as a security Layer`, () => {
 	it("1. Enable SMS successsfully", async () => {

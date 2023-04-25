@@ -1,10 +1,7 @@
-const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
-
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 const User = require("../../../src/app/Models/User.model");
 
@@ -12,14 +9,6 @@ const { generate_hash } = require("../../../src/helpers/hash");
 const { generate_token } = require("../../../src/helpers/token");
 
 const baseURL = "/auth/account/activate";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"GET" ${baseURL} - Confirm activate User Account`, () => {
 	it("1. Activate user account successfully", async () => {
@@ -37,16 +26,11 @@ describe(`"GET" ${baseURL} - Confirm activate User Account`, () => {
 			expiresIn: process.env.ACTIVATION_TOKEN_EXPIRES_IN,
 		});
 
-		await User.findOneAndUpdate(
-			{ _id: user._id },
-			{ $set: { activationToken } }
-		);
+		await User.findOneAndUpdate({ _id: user._id }, { $set: { activationToken } });
 
 		await request(app).put(baseURL).send({ email: user.email });
 
-		const { status, body } = await request(app).get(
-			`${baseURL}/${activationToken}`
-		);
+		const { status, body } = await request(app).get(`${baseURL}/${activationToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
@@ -72,17 +56,12 @@ describe(`"GET" ${baseURL} - Confirm activate User Account`, () => {
 			expiresIn: process.env.ACTIVATION_TOKEN_EXPIRES_IN,
 		});
 
-		await User.findOneAndUpdate(
-			{ _id: user._id },
-			{ $set: { activationToken } }
-		);
+		await User.findOneAndUpdate({ _id: user._id }, { $set: { activationToken } });
 
 		await request(app).put(baseURL).send({ email: user.email });
 
 		await request(app).get(`${baseURL}/${activationToken}`);
-		const { status, body } = await request(app).get(
-			`${baseURL}/${activationToken}`
-		);
+		const { status, body } = await request(app).get(`${baseURL}/${activationToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
@@ -108,16 +87,11 @@ describe(`"GET" ${baseURL} - Confirm activate User Account`, () => {
 			expiresIn: process.env.ACTIVATION_TOKEN_EXPIRES_IN,
 		});
 
-		await User.findOneAndUpdate(
-			{ _id: user._id },
-			{ $set: { activationToken } }
-		);
+		await User.findOneAndUpdate({ _id: user._id }, { $set: { activationToken } });
 
 		await request(app).put(baseURL).send({ email: user.email });
 
-		const { status, body } = await request(app).get(
-			`${baseURL}/${activationToken}`
-		);
+		const { status, body } = await request(app).get(`${baseURL}/${activationToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
@@ -144,24 +118,17 @@ describe(`"GET" ${baseURL} - Confirm activate User Account`, () => {
 			expiresIn: process.env.ACTIVATION_TOKEN_EXPIRES_IN,
 		});
 
-		await User.findOneAndUpdate(
-			{ _id: user._id },
-			{ $set: { activationToken } }
-		);
+		await User.findOneAndUpdate({ _id: user._id }, { $set: { activationToken } });
 
 		await request(app).put(baseURL).send({ email: user.email });
 
-		const { status, body } = await request(app).get(
-			`${baseURL}/${activationToken}`
-		);
+		const { status } = await request(app).get(`${baseURL}/${activationToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 	});
 
 	it("5. Verification token is invalid", async () => {
-		const { status, body } = await request(app).get(
-			`${baseURL}/${"te".repeat(100)}`
-		);
+		const { status, body } = await request(app).get(`${baseURL}/${"te".repeat(100)}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
@@ -188,18 +155,13 @@ describe(`"GET" ${baseURL} - Confirm activate User Account`, () => {
 			expiresIn: 1,
 		});
 
-		await User.findOneAndUpdate(
-			{ _id: user._id },
-			{ $set: { activationToken } }
-		);
+		await User.findOneAndUpdate({ _id: user._id }, { $set: { activationToken } });
 
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 
 		await request(app).put(baseURL).send({ email: user.email });
 
-		const { status, body } = await request(app).get(
-			`${baseURL}/${activationToken}`
-		);
+		const { status, body } = await request(app).get(`${baseURL}/${activationToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
@@ -247,9 +209,7 @@ describe(`"GET" ${baseURL} - Confirm activate User Account`, () => {
 	});
 
 	it("10. Provided verificationToken is too long to be true", async () => {
-		const { status, body } = await request(app).get(
-			`${baseURL}/${"t".repeat(500)}`
-		);
+		const { status, body } = await request(app).get(`${baseURL}/${"t".repeat(500)}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({

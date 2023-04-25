@@ -1,7 +1,6 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
@@ -10,14 +9,6 @@ const User = require("../../../src/app/Models/User.model");
 const Session = require("./../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/totp/disable";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"DELETE" ${baseURL} - Disable TOTP as security layer`, () => {
 	it("1. Disable TOTP successfully", async () => {
@@ -35,20 +26,13 @@ describe(`"DELETE" ${baseURL} - Disable TOTP as security layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Enable TOTP
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isTOTPEnabled: true } }
-		);
+		await User.findOneAndUpdate({ _id: user.id }, { $set: { isTOTPEnabled: true } });
 
 		// (4) Disable TOTP
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		// (5) Clean DB
 		await User.findOneAndDelete({ _id: user.id });
@@ -74,24 +58,15 @@ describe(`"DELETE" ${baseURL} - Disable TOTP as security layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Enable TOTP
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isTOTPEnabled: true } }
-		);
+		await User.findOneAndUpdate({ _id: user.id }, { $set: { isTOTPEnabled: true } });
 
 		// (4) Disable TOTP
-		await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		// (5) Clean DB
 		await User.findOneAndDelete({ _id: user.id });

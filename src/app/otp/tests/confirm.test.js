@@ -1,7 +1,7 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
+
 const app = require("../../../server");
 
 const { generate_hash } = require("../../../helpers/hash");
@@ -15,13 +15,7 @@ const OTP = require("./../../../src/app/Models/OTP.model");
 
 const baseURL = "/auth/otp/confirm";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Confirm enabling OTP as a security Layer`, () => {
 	it("1. Confirm enabling OTP successfully", async () => {

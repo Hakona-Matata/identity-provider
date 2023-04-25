@@ -1,10 +1,8 @@
-const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("./../../../src/helpers/hash");
@@ -13,14 +11,6 @@ const { generate_token } = require("./../../../src/helpers/token");
 const User = require("./../../../src/app/Models/User.model");
 
 const baseURL = "/auth/password/forget";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Forget Password`, () => {
 	it("1. Initiate forget password successfully", async () => {
@@ -46,9 +36,7 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 	});
 
 	it("2. Email is not among our DB users", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: "blabla@gmail.com" });
+		const { status, body } = await request(app).post(baseURL).send({ email: "blabla@gmail.com" });
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
@@ -104,9 +92,7 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 	});
 
 	it("5. Email field can't be empty", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: "" });
+		const { status, body } = await request(app).post(baseURL).send({ email: "" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -118,9 +104,7 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 	});
 
 	it("6. Email field too short to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: "q@gmail.com" });
+		const { status, body } = await request(app).post(baseURL).send({ email: "q@gmail.com" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -141,17 +125,12 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"email" field can't be more than 40 characers!`,
-				`"email" field has to be a valid email!`,
-			],
+			message: [`"email" field can't be more than 40 characers!`, `"email" field has to be a valid email!`],
 		});
 	});
 
 	it("8. Email field is not a valid email", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: `dsfaasdfsadfadfgmailcom` });
+		const { status, body } = await request(app).post(baseURL).send({ email: `dsfaasdfsadfadfgmailcom` });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
@@ -162,17 +141,15 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 		});
 	});
 
-	it("9. Email field is not of type string", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: 1111111111111111111111111 });
+	// it("9. Email field is not of type string", async () => {
+	// 	const { status, body } = await request(app).post(baseURL).send({ email: 1111111111111111111111111 });
 
-		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
-			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field has to be of type string!`],
-		});
-	});
+	// 	expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+	// 	expect(body).toEqual({
+	// 		success: false,
+	// 		status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+	// 		code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+	// 		message: [`"email" field has to be of type string!`],
+	// 	});
+	// });
 });

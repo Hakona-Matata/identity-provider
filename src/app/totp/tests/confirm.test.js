@@ -1,10 +1,8 @@
-const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
-const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../server");
 
 const { generate_hash } = require("../../../helpers/hash");
@@ -17,13 +15,6 @@ const await_all = require("../../../helpers/awaitAll");
 
 const baseURL = "/auth/totp/confirm";
 
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 	it("1. Confirm enabling TOTP successfullly", async () => {

@@ -1,8 +1,10 @@
+const { describe, it, expect } = require("jest");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 const { app } = require("../../../app");
 const AccountServices = require("./../../account/account.services");
-const { TokenHelper, HashHelper } = require("../../../helpers/index");
+const { TokenHelper } = require("../../../helpers/index");
 const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../../constants/index");
 const {
 	SUCCESS_MESSAGES: { ACCOUNT_VERIFIED_SUCCESSFULLY },

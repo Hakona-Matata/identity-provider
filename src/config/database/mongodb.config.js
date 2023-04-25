@@ -5,7 +5,9 @@ class MongoDatabaseConfig {
 		const MONGO_URI = process.env.NODE_ENV === "test" ? process.env.MONGO_URI + "_test" : process.env.MONGO_URI;
 
 		mongoose.set("strictQuery", false);
-		return mongoose.connect(MONGO_URI);
+		return mongoose.connect(MONGO_URI, {
+			connectTimeoutMS: 30000,
+		});
 	}
 
 	static async dropDataBase() {
