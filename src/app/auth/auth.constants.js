@@ -4,7 +4,7 @@ module.exports = {
 		ACCOUNT_VERIFIED_SUCCESSFULLY: "Your account is verified successfully!",
 		LOGGED_OUT_SUCCESSFULLY: "Logged out successfully!",
 	},
-	FAILIURE_MESSAGES: {
+	FAILURE_MESSAGES: {
 		ACCOUNT_ALREADY_VERIFIED: "Sorry, your account is already verified!",
 		WRONG_EMAIL_OR_PASSWORD: "Sorry, email or password are incorrect!",
 	},

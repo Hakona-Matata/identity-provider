@@ -96,7 +96,7 @@ class SmsServices {
 			throw new BadRequestException(ALREADY_HAVE_VALID_SMS);
 		}
 
-		const hashedOtp = await OtpServices.generatSendOtp();
+		const hashedOtp = await OtpServices.generateSendOtp();
 
 		return await SmsServices.createOne({ accountId, hashedOtp });
 	}

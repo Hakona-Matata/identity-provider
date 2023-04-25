@@ -36,7 +36,7 @@ module.exports = {
 		.trim()
 		.required()
 		.valid(Joi.ref("password"))
-		.messages({ ...validationMessages }),
+		.messages({ ...validationMessages, "any.only": `"confirmPassword" field must match "password" field!` }),
 	role: Joi.string()
 		.trim()
 		.valid(...Object.keys(roles))

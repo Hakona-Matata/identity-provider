@@ -10,7 +10,7 @@ const TotpServices = require("./../totp/totp.services");
 
 const {
 	SUCCESS_MESSAGES: { SIGN_UP_SUCCESSFULLY, ACCOUNT_VERIFIED_SUCCESSFULLY, LOGGED_OUT_SUCCESSFULLY },
-	FAILIURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
+	FAILURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
 } = require("./auth.constants");
 
 const { UnAuthorizedException } = require("./../../exceptions/index");

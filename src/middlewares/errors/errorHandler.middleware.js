@@ -1,8 +1,10 @@
 const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../constants/index");
 
 module.exports = (error, req, res, next) => {
+	console.log("*******************************************************8");
 	console.log({ error });
-	// console.log({ name: error.name, code: error.code, message: error.message });
+	console.log({ name: error.name, code: error.code, message: error.message });
+	console.log("*******************************************************8");
 	switch (error.name) {
 		case "JsonWebTokenError":
 			return res.status(httpStatusCodeNumbers.UNAUTHORIZED).json({
@@ -27,7 +29,6 @@ module.exports = (error, req, res, next) => {
 				code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 				message: error.message.split(": ")[2] || error.details.map((error) => error.message),
 			});
-			break;
 
 		case "MongoServerError":
 			console.log({ name: error.name, code: error.code, message: error.message });
