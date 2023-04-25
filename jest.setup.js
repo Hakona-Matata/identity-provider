@@ -1,9 +1,9 @@
-const { startServer, closeServer } = require("./src/server");
+const { startServer, closeServer } = require("./src/app");
 
-beforeAll(async () => {
-	await startServer(4000);
+beforeAll(() => {
+	startServer();
 });
 
-afterAll(async () => {
-	await closeServer();
+afterAll(() => {
+	closeServer();
 });

@@ -1,4 +1,4 @@
-const validate = require("./../../helpers/validate");
+const validate = require("../../helpers/validateInput");
 
 const AccountValidators = require("./account.validators");
 const AccountServices = require("./account.services");

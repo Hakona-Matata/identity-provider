@@ -1,4 +1,4 @@
-const validate = require("./../../helpers/validate");
+const validate = require("../../helpers/validateInput");
 
 const TotpValidatores = require("./totp.validators");
 const TotpServices = require("./totp.services");

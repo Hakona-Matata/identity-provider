@@ -1,4 +1,4 @@
-const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../constants/index");
+const {httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../constants/index");
 
 const BaseAppException = require("../baseAppException");
 

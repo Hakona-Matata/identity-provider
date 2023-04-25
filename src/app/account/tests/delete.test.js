@@ -1,5 +1,5 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -44,11 +44,11 @@ describe(`"DELETE" ${baseURL} - Delete User Account`, () => {
 			.delete(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "Your account Will be deleted permenantly in 30 days, unless you cancelled the deletion later!",
 		});
 	});
@@ -75,17 +75,17 @@ describe(`"DELETE" ${baseURL} - Delete User Account`, () => {
 			.delete(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 	});
 
 	it("3. Account deletion route is private", async () => {
 		const { status, body } = await request(app).delete(baseURL);
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, the access token is required!",
 		});
 	});

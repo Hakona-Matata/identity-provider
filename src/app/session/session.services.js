@@ -1,7 +1,7 @@
 const InternalServerException = require("../../exceptions/common/internalServer.exception");
 const NotFoundException = require("./../../exceptions/common/notFound.exception");
 const SessionRepository = require("./session.repositories");
-const TokenHelper = require("./../../helpers/token");
+const TokenHelper = require("../../helpers/tokenHelper");
 
 const {
 	SUCCESS_MESSAGES: { SESSION_CANCELED_SUCCESSFULLY },

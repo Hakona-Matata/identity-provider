@@ -1,5 +1,5 @@
-const TokenHelper = require("./../../helpers/token");
-const HashHelper = require("./../../helpers/hash");
+const TokenHelper = require("../../helpers/tokenHelper");
+const HashHelper = require("../../helpers/hashHelper");
 
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
@@ -13,7 +13,7 @@ const {
 	FAILURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
 } = require("./auth.constants");
 
-const { UnAuthorizedException } = require("./../../exceptions/index");
+const { UnAuthorizedException, BadRequestException } = require("./../../exceptions/index");
 
 class AuthServices {
 	static async signUp(payload) {
@@ -35,11 +35,13 @@ class AuthServices {
 	}
 
 	static async verify(verificationToken) {
-		const { accountId } = await TokenHelper.verifyVerificationToken(verificationToken);
+		const { accountId, ...rest } = await TokenHelper.verifyVerificationToken(verificationToken);
 
 		const foundAccount = await AccountServices.findById(accountId);
 
-		if (foundAccount && foundAccount.isVerified) {
+		const isAccountAlreadyVerified = foundAccount && foundAccount.isVerified && !foundAccount.verificationToken;
+
+		if (!foundAccount || isAccountAlreadyVerified) {
 			throw new BadRequestException(ACCOUNT_ALREADY_VERIFIED);
 		}
 
@@ -109,7 +111,7 @@ class AuthServices {
 
 			default:
 				// the front end should redirect him to a page with all the enabled security layers
-				// and once the user choose his desired way, the frontend sends a requet to it's verify endpoint!
+				// and once the user choose his desired way, the frontend sends a request to it's verify endpoint!
 				return {
 					message: "Please choose one of these security methods!",
 					accountId: account._id,

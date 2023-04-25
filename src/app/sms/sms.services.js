@@ -1,4 +1,4 @@
-const HashHelper = require("../../helpers/hash");
+const HashHelper = require("../../helpers/hashHelper");
 const SmsRepository = require("./sms.repository");
 const OtpServices = require("./../otp/otp.services");
 const AccountServices = require("./../account/account.services");

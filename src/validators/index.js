@@ -2,7 +2,7 @@ const Joi = require("joi");
 const validationMessages = require("./validationMessages");
 const { roles } = require("./../constants/index");
 const isValidObjectId = require("./../helpers/isValidObjectId");
-const { validatePhone } = require("./../helpers/phone");
+const { validatePhone } = require("../helpers/phoneValidator");
 
 module.exports = {
 	email: Joi.string()
@@ -14,7 +14,7 @@ module.exports = {
 		.messages({ ...validationMessages }),
 	token: Joi.string()
 		.trim()
-		.min(3)
+		.min(64)
 		.max(300)
 		.required()
 		.messages({ ...validationMessages }),

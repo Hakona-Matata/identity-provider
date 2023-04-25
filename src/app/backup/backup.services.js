@@ -3,8 +3,8 @@ const PasswordServices = require("./../password/password.services");
 const AuthServices = require("./../auth/auth.services");
 const BackupRepository = require("./backup.repository");
 
-const RandomHelper = require("./../../helpers/random");
-const HashHelper = require("./../../helpers/hash");
+const RandomHelper = require("../../helpers/randomGenerator");
+const HashHelper = require("../../helpers/hashHelper");
 
 const {
 	SUCCESS_MESSAGES: { BACKUP_ENABLED_SUCCESSFULLY, BACKUP_DISABLED_SUCCESSFULLY },
@@ -14,8 +14,8 @@ const {
 		BACKUP_CANNOT_ENABLED,
 		BACKUP_ALREADY_GENERATED,
 		BACKUP_NOT_GENERATED,
-		INVALID_BACKUP_CODE,
-		NEED_TO_HAVE_GENERATED_CODES,
+		INVALID_BACKUP_httpStatusCodeNumbers,
+		NEED_TO_HAVE_GENERATED_httpStatusCodeNumbersS,
 
 		BACKUP_CREATE_FAILED,
 		BACKUP_UPDATE_FAILED,
@@ -78,7 +78,7 @@ class BackupServices {
 		const accountHashedBackupCodesList = await BackupServices.findMany({ accountId });
 
 		if (accountHashedBackupCodesList.length === 0) {
-			throw new UnAuthorizedException(NEED_TO_HAVE_GENERATED_CODES);
+			throw new UnAuthorizedException(NEED_TO_HAVE_GENERATED_httpStatusCodeNumbersS);
 		}
 
 		await BackupServices.deleteMany({ accountId });
@@ -93,7 +93,7 @@ class BackupServices {
 
 		// TODO handle if ocndition from account services!
 		if (!account || !account.isBackupEnabled) {
-			throw new UnAuthorizedException(INVALID_BACKUP_CODE);
+			throw new UnAuthorizedException(INVALID_BACKUP_httpStatusCodeNumbers);
 		}
 
 		await BackupServices.#verifyDeleteBackupCode(account._id, code);
@@ -165,7 +165,7 @@ class BackupServices {
 			.shift();
 
 		if (!matchedBackupCode) {
-			throw new UnAuthorizedException(INVALID_BACKUP_CODE);
+			throw new UnAuthorizedException(INVALID_BACKUP_httpStatusCodeNumbers);
 		}
 
 		return matchedBackupCode;

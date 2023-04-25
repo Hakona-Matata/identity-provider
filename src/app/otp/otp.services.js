@@ -1,5 +1,5 @@
-const HashHelper = require("./../../helpers/hash");
-const RandomHelper = require("./../../helpers/random");
+const HashHelper = require("../../helpers/hashHelper");
+const RandomHelper = require("../../helpers/randomGenerator");
 
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");

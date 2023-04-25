@@ -1,5 +1,5 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -45,10 +45,10 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			.post(baseURL)
 			.send({ refreshToken });
 
-		expect(status).toBe(STATUS.CREATED);
+		expect(status).toBe(httpStatusCodeNumbers.CREATED);
 		expect(body.success).toBe(true);
-		expect(body.status).toBe(STATUS.CREATED);
-		expect(body.code).toBe(CODE.CREATED);
+		expect(body.status).toBe(httpStatusCodeNumbers.CREATED);
+		expect(body.code).toBe(httpStatusCodeNumbers.CREATED);
 		expect(body).toHaveProperty("data.accessToken");
 		expect(body).toHaveProperty("data.refreshToken");
 		expect(typeof body.data.accessToken).toBe("string");
@@ -81,11 +81,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			.post(baseURL)
 			.send({ refreshToken });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, this refresh token is revoked/ disabled!",
 		});
 	});
@@ -113,11 +113,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			.post(baseURL)
 			.send({ refreshToken: expiredRefreshToken });
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, the token is expired!",
 		});
 	});
@@ -141,11 +141,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			.post(baseURL)
 			.send({ refreshToken: invalidRefreshToken });
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, the token is invalid!",
 		});
 	});
@@ -155,11 +155,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 	it("5. Refresh token is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"refreshToken" field is required!`],
 		});
 	});
@@ -169,11 +169,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			.post(baseURL)
 			.send({ refreshToken: "" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"refreshToken" field can't be empty!`],
 		});
 	});
@@ -183,11 +183,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			.post(baseURL)
 			.send({ refreshToken: +"1".repeat(210) });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"refreshToken" field has to be of type string!`],
 		});
 	});
@@ -197,11 +197,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			.post(baseURL)
 			.send({ refreshToken: "1" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"refreshToken" field can't be true!`],
 		});
 	});
@@ -211,11 +211,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			.post(baseURL)
 			.send({ refreshToken: "1".repeat(210) });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"refreshToken" field can't be true!`],
 		});
 	});

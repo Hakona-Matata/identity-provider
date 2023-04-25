@@ -1,11 +1,10 @@
-const validate = require("../../helpers/validate");
-
+const { validateInput } = require("../../helpers/index");
 const AuthValidators = require("./auth.validators");
 const AuthServices = require("./auth.services");
 
 class AuthControllers {
 	static async signUp(req, res, next) {
-		const accountData = await validate(AuthValidators.signUp, req.body);
+		const accountData = await validateInput(AuthValidators.signUp, req.body);
 
 		req.result = await AuthServices.signUp(accountData);
 
@@ -13,7 +12,7 @@ class AuthControllers {
 	}
 
 	static async verify(req, res, next) {
-		const { verificationToken } = await validate(AuthValidators.verify, req.params);
+		const { verificationToken } = await validateInput(AuthValidators.verify, req.params);
 
 		req.result = await AuthServices.verify(verificationToken);
 
@@ -21,7 +20,7 @@ class AuthControllers {
 	}
 
 	static async logIn(req, res, next) {
-		const accountData = await validate(AuthValidators.login, req.body);
+		const accountData = await validateInput(AuthValidators.login, req.body);
 
 		req.result = await AuthServices.logIn(accountData);
 

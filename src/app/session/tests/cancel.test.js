@@ -1,5 +1,5 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -49,11 +49,11 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ sessionId: currentSession.id });
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "Session is cancelled successfully!",
 		});
 	});
@@ -100,11 +100,11 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			.set("authorization", `Bearer ${accessToken1}`)
 			.send({ sessionId: user2CurrentSession.id });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, you can't cancel this session!",
 		});
 	});
@@ -132,11 +132,11 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			.post(baseURL)
 			.set("authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"sessionId" field is required!'],
 		});
 	});
@@ -163,11 +163,11 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			.set("authorization", `Bearer ${accessToken}`)
 			.send({ sessionId: "" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"sessionId" field can't be empty!`],
 		});
 	});
@@ -194,11 +194,11 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			.set("authorization", `Bearer ${accessToken}`)
 			.send({ sessionId: +"1".repeat(24) });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"sessionId" field has to be of type string!`],
 		});
 	});
@@ -225,11 +225,11 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			.set("authorization", `Bearer ${accessToken}`)
 			.send({ sessionId: "1".repeat(20) });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"sessionId" field is not a valid ID`],
 		});
 	});
@@ -256,11 +256,11 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			.set("authorization", `Bearer ${accessToken}`)
 			.send({ sessionId: "1".repeat(30) });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"sessionId" field is not a valid ID`],
 		});
 	});
@@ -287,11 +287,11 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			.set("authorization", `Bearer ${accessToken}`)
 			.send({ sessionId: "1".repeat(24) });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"sessionId" field is not a valid ID`],
 		});
 	});

@@ -1,5 +1,5 @@
-const TokenHelper = require("./../../helpers/token");
-const HashHelper = require("./../../helpers/hash");
+const TokenHelper = require("../../helpers/tokenHelper");
+const HashHelper = require("../../helpers/hashHelper");
 
 const AccountServices = require("../account/account.services");
 const SessionServices = require("../session/session.services");

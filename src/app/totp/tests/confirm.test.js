@@ -1,5 +1,5 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -58,11 +58,11 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: generatedTOTP });
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "TOTP enabled successfully!",
 		});
 	});
@@ -101,11 +101,11 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: generatedTOTP });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, the given code is invalid!",
 		});
 	});
@@ -136,11 +136,11 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123" });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, the given code is invalid!",
 		});
 	});
@@ -197,11 +197,11 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 		// 	.send({ totp: "123123" });
 
 		// console.log({ status, body });
-		// expect(status).toBe(STATUS.FORBIDDEN);
+		// expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		// expect(body).toEqual({
 		// 	success: false,
-		// 	status: STATUS.FORBIDDEN,
-		// 	code: CODE.FORBIDDEN,
+		// 	status: httpStatusCodeNumbers.FORBIDDEN,
+		// 	code: httpStatusCodeStrings.FORBIDDEN,
 		// 	message: "Sorry, you need to start from scratch!",
 		// });
 	});
@@ -230,11 +230,11 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 
 		console.log({ status, body });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, you can't confirm TOTP before setting it up!",
 		});
 	});

@@ -1,7 +1,7 @@
 const SessionServices = require("./../session/session.services");
 const AccountRepository = require("./account.repositories");
-const TokenHelper = require("./../../helpers/token");
-const HashHelper = require("./../../helpers/hash");
+const TokenHelper = require("../../helpers/tokenHelper");
+const HashHelper = require("../../helpers/hashHelper");
 
 const {
 	SUCCESS_MESSAGES: {
@@ -11,9 +11,9 @@ const {
 		ACCOUNT_DELETED_SUCCESSFULLY,
 		CANCELED_ACCOUNT_DELETION,
 	},
-	FAILIURE_MESSAGES: {
+	FAILURE_MESSAGES: {
 		ACCOUNT_NEED_TO_BE_VERIFIED,
-		ACCOUNT_NEET_TO_BE_ACTIVE,
+		ACCOUNT_NEED_TO_BE_ACTIVE,
 		ACCOUNT_ALREADY_ACTIVE,
 		ALREADY_HAVE_VALID_ACTIVATION_LINK,
 		ALREADY_CANCELED_ACCOUNT_DELETION,
@@ -121,7 +121,7 @@ class AccountServices {
 
 	static isAccountActive(isActive) {
 		if (!isActive) {
-			throw new UnAuthorizedException(ACCOUNT_NEET_TO_BE_ACTIVE);
+			throw new UnAuthorizedException(ACCOUNT_NEED_TO_BE_ACTIVE);
 		}
 	}
 
@@ -165,13 +165,7 @@ class AccountServices {
 	}
 
 	static async findById(accountId) {
-		const isAccountFound = await AccountRepository.findById(accountId);
-
-		if (!isAccountFound) {
-			throw new NotFoundException(ACCOUNT_NOT_FOUND);
-		}
-
-		return isAccountFound;
+		return await AccountRepository.findById(accountId);
 	}
 
 	static async findOne(payload) {

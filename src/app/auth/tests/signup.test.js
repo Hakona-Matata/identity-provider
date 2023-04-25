@@ -1,11 +1,10 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
-const { app } = require("../../../server");
+const { app } = require("../../../app");
 const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../../constants/index");
 
 const {
-	SUCCESS_MESSAGES: { SIGN_UP_SUCCESSFULLY, ACCOUNT_VERIFIED_SUCCESSFULLY, LOGGED_OUT_SUCCESSFULLY },
-	FAILURE_MESSAGES: { ACCOUNT_ALREADY_VERIFIED, WRONG_EMAIL_OR_PASSWORD },
+	SUCCESS_MESSAGES: { SIGN_UP_SUCCESSFULLY },
 } = require("./../auth.constants");
 
 const baseURL = "/auth/sign-up";
@@ -97,8 +96,6 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 	it("Should return an error with status 422 when no user inputs are provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		console.log({ body });
-
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
@@ -185,7 +182,7 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 				userName: faker.random.alpha(10),
 				password: "teTE!@13",
 			});
-		console.log({ body });
+
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,

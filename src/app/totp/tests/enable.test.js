@@ -1,5 +1,5 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -43,10 +43,10 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body.success).toBe(true);
-		expect(body.status).toBe(STATUS.OK);
-		expect(body.code).toBe(CODE.OK);
+		expect(body.status).toBe(httpStatusCodeNumbers.OK);
+		expect(body.code).toBe(httpStatusCodeNumbers.OK);
 		expect(body.data).toHaveProperty("secret");
 	});
 
@@ -76,11 +76,11 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, you already enabled TOTP!",
 		});
 	});
@@ -110,21 +110,21 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body.success).toBe(true);
-		expect(body.status).toBe(STATUS.OK);
-		expect(body.code).toBe(CODE.OK);
+		expect(body.status).toBe(httpStatusCodeNumbers.OK);
+		expect(body.code).toBe(httpStatusCodeNumbers.OK);
 		expect(body.data).toHaveProperty("secret");
 	});
 
 	it("4. Initiate TOTP route is private", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, the access token is required!",
 		});
 	});

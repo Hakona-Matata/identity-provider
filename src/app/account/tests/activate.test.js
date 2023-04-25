@@ -1,5 +1,5 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -38,8 +38,8 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 		expect(status).toBe(200);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data:
 				"Please, check your mailbox to confirm your account activation\n" +
 				"You only have 1h",
@@ -51,11 +51,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: "blasfasdf@gma.com" });
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data:
 				"Please, check your mailbox to confirm your account activation\n" +
 				"You only have 1h",
@@ -75,11 +75,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: user.email });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, your email address isn't verified yet!",
 		});
 	});
@@ -98,7 +98,7 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: user.email });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 	});
 
 	it("5. User account is already active", async () => {
@@ -114,13 +114,13 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: user.email });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, your account is already active!",
 		});
 	});
@@ -149,11 +149,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: user.email });
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, you still have a valid link in your mailbox!",
 		});
 	});
@@ -184,11 +184,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: user.email });
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, your token is expired!",
 		});
 	});
@@ -201,8 +201,8 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 		expect(status).toBe(200);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data:
 				"Please, check your mailbox to confirm your account activation\n" +
 				"You only have 1h",
@@ -212,11 +212,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 	it("9. email field is provided", async () => {
 		const { status, body } = await request(app).put(baseURL);
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field is required!`],
 		});
 	});
@@ -226,11 +226,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: 1234324 });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"email" field has to be of type string!'],
 		});
 	});
@@ -240,11 +240,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: "testsetsesttesttest" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field has to be a valid email!`],
 		});
 	});
@@ -254,11 +254,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: "test" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"email" field can't be less than 15 characters!`,
 				`"email" field has to be a valid email!`,
@@ -271,11 +271,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: "test".repeat(50) });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"email" field can't be more than 40 characers!`,
 				`"email" field has to be a valid email!`,
@@ -288,11 +288,11 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			.put(baseURL)
 			.send({ email: "" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field can't be empty!`],
 		});
 	});

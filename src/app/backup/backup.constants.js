@@ -10,8 +10,8 @@ module.exports = {
 		BACKUP_NOT_GENERATED: "Sorry, you have to generate the backup codes first!",
 		BACKUP_NOT_ENABLED:"Sorry, the backup",
 		BACKUP_ALREADY_GENERATED: "Sorry, you already generated backup codes!",
-		INVALID_BACKUP_CODE: "Sorry, the given backup code is invalid!",
-		NEED_TO_HAVE_GENERATED_CODES: "Sorry, you only regenerate backup codes if you already generated once!",
+		INVALID_BACKUP_httpStatusCodeNumbers: "Sorry, the given backup code is invalid!",
+		NEED_TO_HAVE_GENERATED_httpStatusCodeNumbersS: "Sorry, you only regenerate backup codes if you already generated once!",
 
 		BACKUP_CREATE_FAILED: "Sorry, the backup codes feature read process failed!",
 		BACKUP_UPDATE_FAILED: "Sorry, the bakcup codes feature update process failed!",

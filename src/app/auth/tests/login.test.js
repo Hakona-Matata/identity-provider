@@ -1,5 +1,5 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -43,11 +43,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ password: "teST12!@" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"email" field is required!'],
 		});
 	});
@@ -57,11 +57,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: "test123@gmail.com" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"password" field is required!'],
 		});
 	});
@@ -71,11 +71,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: "testtesttesttest", password: "tesTT12!@" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"email" field has to be a valid email!'],
 		});
 	});
@@ -85,11 +85,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: "t@test.com", password: "tesTT12!@" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field can't be less than 15 characters!`],
 		});
 	});
@@ -99,11 +99,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: `${"t".repeat(50)}@test.com`, password: "tesTT12!@" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field can't be more than 40 characers!`],
 		});
 	});
@@ -113,11 +113,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: 111111111111, password: "tesTT12!@" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"email" field has to be of type string!'],
 		});
 	});
@@ -127,11 +127,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			.post(baseURL)
 			.send({ email: "", password: "tesTT12!@" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field can't be empty!`],
 		});
 	});
@@ -142,11 +142,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "",
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"password" field can't be empty!`],
 		});
 	});
@@ -160,8 +160,8 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 		expect(status).toBe(422);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"password" field can't be less than 8 characters!`,
 				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -177,11 +177,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 				password: `${"test".repeat(50)}`,
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"password" field can't be more than 16 characers!`,
 				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -195,11 +195,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: 23532455,
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"password" field has to be of type string!'],
 		});
 	});
@@ -210,11 +210,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "tesTES@!#1232",
 		});
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, email or password are incorrect!",
 		});
 	});
@@ -231,11 +231,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "tesTES@!#1233",
 		});
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, your email address isn't verified yet!",
 		});
 	});
@@ -253,11 +253,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "tesTES@!#1232",
 		});
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, your email address isn't verified yet!",
 		});
 	});
@@ -276,11 +276,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "tesTES@!#1232",
 		});
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, your account is deactivated!",
 		});
 	});
@@ -300,11 +300,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: user.password,
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"password" field can't be more than 16 characers!`,
 				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -327,11 +327,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "tesTES@!#1232",
 		});
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "Please, check your mailbox for the OTP code",
 		});
 	});
@@ -352,11 +352,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "tesTES@!#1232",
 		});
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: {
 				message: "Please, choose one of these security methods!",
 				userId: user.id,
@@ -382,11 +382,11 @@ describe(`"POST" ${baseURL} - Log user In`, () => {
 			password: "tesTES@!#1232",
 		});
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: {
 				message: "Please, choose one of these security methods!",
 				userId: user.id,

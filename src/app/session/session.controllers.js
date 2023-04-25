@@ -1,4 +1,4 @@
-const validate = require("../../helpers/validate");
+const validate = require("../../helpers/validateInput");
 
 const SessionValidators = require("./session.validators");
 const SessionServices = require("./session.services");

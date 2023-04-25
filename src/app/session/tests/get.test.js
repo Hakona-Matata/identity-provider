@@ -1,5 +1,5 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -47,11 +47,11 @@ describe(`"GET" ${baseURL} - Get All user sessions (valid, expired)`, () => {
 
 		const currentSession = await Session.findOne({ accessToken });
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: { count: 1, sessions: [{ _id: currentSession.id, isValid: true }] },
 		});
 	});
@@ -101,11 +101,11 @@ describe(`"GET" ${baseURL} - Get All user sessions (valid, expired)`, () => {
 			.get(baseURL)
 			.set("authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: {
 				count: 2,
 				sessions: [
@@ -162,11 +162,11 @@ describe(`"GET" ${baseURL} - Get All user sessions (valid, expired)`, () => {
 			.get(baseURL)
 			.set("authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: {
 				count: 2,
 				sessions: [

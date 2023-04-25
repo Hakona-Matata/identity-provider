@@ -1,4 +1,4 @@
-const validate = require("./../../helpers/validate");
+const validate = require("../../helpers/validateInput");
 
 const PasswordValidators = require("./password.validators");
 const PasswordServices = require("./password.services");

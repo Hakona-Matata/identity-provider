@@ -1,6 +1,6 @@
 const AccountServices = require("./../account/account.services");
 const TotpRepository = require("./totp.repositories");
-const TotpHelper = require("./../../helpers/totp");
+const TotpHelper = require("../../helpers/totpHelper");
 
 const {
 	SUCCESS_MESSAGES: { TOTP_ENABLED_SUCCESSFULLY, TOTP_DISABLED_SUCCESSFULLY, TOTP_VERIFIED_SUCCESSFULLY },
