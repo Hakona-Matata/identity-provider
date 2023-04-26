@@ -1,8 +1,17 @@
 const SessionServices = require("../../app/session/session.services");
 const TokenHelper = require("../../helpers/tokenHelper");
-
 const { NotFoundException, UnAuthorizedException } = require("../../exceptions/index");
 
+/**
+ * Middleware to authenticate and authorize user sessions.
+ *
+ * @module middleware/authenticateSession
+ * @param {import('express').Request} req - The Express request object.
+ * @param {import('express').Response} res - The Express response object.
+ * @param {import('express').NextFunction} next - The next middleware function.
+ * @throws {NotFoundException} If the access token is not found.
+ * @throws {UnAuthorizedException} If the session is revoked or unauthorized.
+ */
 module.exports = async (req, res, next) => {
 	const accessToken = req?.headers["authorization"]?.split(" ")[1];
 
@@ -20,7 +29,6 @@ module.exports = async (req, res, next) => {
 
 	req.accountId = accountId;
 	req.accountRole = role;
-
 	req.accessToken = accessToken;
 	req.tokenOrigin = origin;
 
