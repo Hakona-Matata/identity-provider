@@ -2,7 +2,7 @@
  * @class
  * @classdesc Controller class for handling TOTP related operations
  */
-const validate = require("../../helpers/validateInput");
+const validateInput = require("../../helpers/validateInput");
 
 const TotpValidators = require("./totp.validators");
 const TotpServices = require("./totp.services");
@@ -34,7 +34,7 @@ class TotpControllers {
 	 * @returns {void}
 	 */
 	static async confirmEnabling(req, res, next) {
-		const { totp } = await validate(TotpValidators.confirm, req.body);
+		const { totp } = await validateInput(TotpValidators.confirm, req.body);
 		req.result = await TotpServices.confirmEnabling(req.account._id, totp, req.account.isTotpEnabled);
 		next();
 	}
@@ -65,7 +65,7 @@ class TotpControllers {
 	 * @returns {void}
 	 */
 	static async verify(req, res, next) {
-		const { accountId, totp } = await validate(TotpValidators.verify, req.body);
+		const { accountId, totp } = await validateInput(TotpValidators.verify, req.body);
 		req.result = await TotpServices.verify(accountId, totp);
 		next();
 	}
