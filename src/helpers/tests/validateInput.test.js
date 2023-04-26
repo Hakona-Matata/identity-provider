@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const validate = require("./../validate");
+const validateInput = require("./../validateInput");
 
 describe("validate", () => {
 	describe("when given a valid object", () => {
@@ -16,7 +16,7 @@ describe("validate", () => {
 		};
 
 		it("does not throw an error", async () => {
-			await expect(validate(schema, validObject)).resolves.not.toThrow();
+			await expect(validateInput(schema, validObject)).resolves.not.toThrow();
 		});
 	});
 
@@ -34,7 +34,7 @@ describe("validate", () => {
 				email: "invalid-email", // should be a valid email
 			};
 
-			await expect(validate(schema, invalidObject)).rejects.toThrowError(Joi.ValidationError);
+			await expect(validateInput(schema, invalidObject)).rejects.toThrowError(Joi.ValidationError);
 		});
 
 		it("throws an error with all validation errors", async () => {
@@ -46,7 +46,7 @@ describe("validate", () => {
 
 			const expectedError = new Joi.ValidationError(`"name" is not allowed to be empty. "email" must be a valid email`);
 
-			await expect(validate(schema, invalidObject)).rejects.toEqual(expectedError);
+			await expect(validateInput(schema, invalidObject)).rejects.toEqual(expectedError);
 		});
 	});
 });

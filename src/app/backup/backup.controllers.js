@@ -1,7 +1,7 @@
 /**
  * Controller class for managing backup codes.
  */
-const validate = require("../../helpers/validateInput");
+const validateInput = require("../../helpers/validateInput");
 const BackupValidators = require("./backup.validators");
 const BackupServices = require("./backup.services");
 
@@ -34,7 +34,7 @@ class BackupControllers {
 	 * @returns {void}
 	 */
 	static async confirmEnabling(req, res, next) {
-		const { code } = await validate(BackupValidators.confirm, req.body);
+		const { code } = await validateInput(BackupValidators.confirm, req.body);
 		req.result = await BackupServices.confirmEnabling(req.account, code);
 		next();
 	}
@@ -83,7 +83,7 @@ class BackupControllers {
 	 */
 
 	static async verify(req, res, next) {
-		const { email, code } = await validate(BackupValidators.verify, req.body);
+		const { email, code } = await validateInput(BackupValidators.verify, req.body);
 
 		req.result = await BackupServices.verify({ email, code });
 

@@ -1,7 +1,7 @@
 /**
  * SmsControllers class which contains functions to handle sms-related HTTP requests
  */
-const validate = require("../../helpers/validateInput");
+const validateInput = require("../../helpers/validateInput");
 const SmsValidators = require("./sms.validators");
 const SmsServices = require("./sms.services");
 
@@ -17,7 +17,7 @@ class SmsControllers {
 	static async enable(req, res, next) {
 		const {
 			phone: { phone, country },
-		} = await validate(SmsValidators.enable, req.body);
+		} = await validateInput(SmsValidators.enable, req.body);
 
 		req.result = await SmsServices.enable({
 			accountId: req.accountId,
@@ -38,7 +38,7 @@ class SmsControllers {
 	 * @returns {void}
 	 */
 	static async confirm(req, res, next) {
-		const { otp } = await validate(SmsValidators.confirm, req.body);
+		const { otp } = await validateInput(SmsValidators.confirm, req.body);
 
 		req.result = await SmsServices.confirm(req.accountId, otp);
 
@@ -68,7 +68,7 @@ class SmsControllers {
 	 * @returns {void}
 	 */
 	static async verify(req, res, next) {
-		const { accountId, otp } = await validate(SmsValidators.verify, req.body);
+		const { accountId, otp } = await validateInput(SmsValidators.verify, req.body);
 
 		req.result = await SmsServices.verify({
 			accountId,

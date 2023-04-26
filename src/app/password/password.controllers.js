@@ -2,7 +2,7 @@
  * PasswordControllers is a class that handles password-related API requests.
  * @class
  */
-const validate = require("../../helpers/validateInput");
+const validateInput = require("../../helpers/validateInput");
 const PasswordValidators = require("./password.validators");
 const PasswordServices = require("./password.services");
 
@@ -19,7 +19,7 @@ class PasswordControllers {
 	 * @returns {Promise<void>} Nothing.
 	 */
 	static async change(req, res, next) {
-		const passwordData = await validate(PasswordValidators.change, req.body);
+		const passwordData = await validateInput(PasswordValidators.change, req.body);
 
 		req.result = await PasswordServices.change({
 			accountId: req.accountId,
@@ -42,7 +42,7 @@ class PasswordControllers {
 	 * @returns {Promise<void>} Nothing.
 	 */
 	static async forget(req, res, next) {
-		const { email } = await validate(PasswordValidators.forget, req.body);
+		const { email } = await validateInput(PasswordValidators.forget, req.body);
 
 		req.result = await PasswordServices.forget(email);
 
@@ -61,7 +61,7 @@ class PasswordControllers {
 	 * @returns {Promise<void>} Nothing.
 	 */
 	static async reset(req, res, next) {
-		const resetAccountData = await validate(PasswordValidators.reset, req.body);
+		const resetAccountData = await validateInput(PasswordValidators.reset, req.body);
 
 		req.result = await PasswordServices.reset(resetAccountData);
 

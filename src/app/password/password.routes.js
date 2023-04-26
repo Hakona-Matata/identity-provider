@@ -1,5 +1,6 @@
 /**
  * Express router instance for password related endpoints.
+ *
  * @module routers/password
  */
 

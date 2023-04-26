@@ -3,7 +3,7 @@
  * 
  * @class
  */
-const validate = require("../../helpers/validateInput");
+const validateInput = require("../../helpers/validateInput");
 
 const OtpValidators = require("./otp.validators");
 const OtpServices = require("./otp.services");
@@ -32,7 +32,7 @@ class OtpControllers {
 	 * @throws {Error} - Throws an error if the OTP confirmation process fails.
 	 */
 	static async confirm(req, res, next) {
-		const { otp } = await validate(OtpValidators.confirm, req.body);
+		const { otp } = await validateInput(OtpValidators.confirm, req.body);
 
 		req.result = await OtpServices.confirm(req.account._id, otp);
 
@@ -62,7 +62,7 @@ class OtpControllers {
 	 * @throws {Error} - Throws an error if the OTP verification process fails.
 	 */
 	static async verify(req, res, next) {
-		const { accountId, otp } = await validate(OtpValidators.verify, req.body);
+		const { accountId, otp } = await validateInput(OtpValidators.verify, req.body);
 
 		req.result = await OtpServices.verify(accountId, otp);
 
