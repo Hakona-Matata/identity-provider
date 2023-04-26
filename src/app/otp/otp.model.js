@@ -2,6 +2,20 @@ const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
+/**
+ * @typedef {Object} Otp
+ * @property {string} _id - The unique ID of the OTP
+ * @property {ObjectId} accountId - The account ID that the OTP belongs to
+ * @property {string} hashedOtp - The hashed OTP
+ * @property {string} sendingMethod - The sending method of the OTP (EMAIL or SMS)
+ * @property {Date} createdAt - The creation date of the OTP
+ * @property {number} failedAttemptCount - The number of failed attempts to verify the OTP
+ */
+
+/**
+ * Mongoose schema for the OTP collection
+ * @type {import('mongoose').Schema<Otp, import('mongoose').Model<Otp>>}
+ */
 const OtpSchema = new Schema(
 	{
 		accountId: {
@@ -11,8 +25,7 @@ const OtpSchema = new Schema(
 			required: true,
 		},
 		hashedOtp: String,
-		by: {
-			// The OTP sending way!
+		sendingMethod: {
 			type: String,
 			enum: ["EMAIL", "SMS"],
 			required: true,
@@ -24,7 +37,7 @@ const OtpSchema = new Schema(
 			index: true,
 			expires: "1h",
 		},
-		count: { type: Number, default: 0 }, // number of wrong tries
+		failedAttemptCount: { type: Number, default: 0 }, // Number of wrong tries
 	},
 	{
 		versionKey: false,

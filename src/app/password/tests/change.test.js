@@ -1,25 +1,15 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const httpStatusCodeNumbers = require("./../../../src/constants/statusCodes");
+const httpStatusCodeStrings = require("./../../../src/constants/errorCodes");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../server");
 const { generate_hash } = require("../../../helpers/hash");
 
 const User = require("./../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/password/change";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"PUT" ${baseURL} - Change Password`, () => {
 	it("1. Change user password successfully", async () => {
@@ -35,24 +25,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "tesTES@!#1212",
-				confirmNewPassword: "tesTES@!#1212",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "tesTES@!#1212",
+			confirmNewPassword: "tesTES@!#1212",
+		});
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "Password changed successfully!",
 		});
 	});
@@ -70,24 +55,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#34",
-				newPassword: "tesTES@!#1212",
-				confirmNewPassword: "tesTES@!#1212",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#34",
+			newPassword: "tesTES@!#1212",
+			confirmNewPassword: "tesTES@!#1212",
+		});
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, the given password is incorrect!",
 		});
 	});
@@ -107,24 +87,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#234",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#234",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"confirmNewPassword" field doesn't match "password" field`],
 		});
 	});
@@ -142,19 +117,15 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				'"oldPassword" field is required!',
 				'"newPassword" field is required!',
@@ -176,20 +147,18 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ newPassword: "tesTES@!#12", confirmNewPassword: "tesTES@!#12" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"oldPassword" field is required!'],
 		});
 	});
@@ -207,24 +176,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ oldPassword: "tesTES@!#12", confirmNewPassword: "tesTES@!#12" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: [
-				'"newPassword" field is required!',
-				`"confirmNewPassword" field doesn't match "password" field`,
-			],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: ['"newPassword" field is required!', `"confirmNewPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -241,20 +205,18 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ oldPassword: "tesTES@!#12", newPassword: "tesTES@!#12" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"confirmNewPassword" is required'],
 		});
 	});
@@ -274,24 +236,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: 1234234,
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: 1234234,
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"oldPassword" field has to be of type string!'],
 		});
 	});
@@ -309,24 +266,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "12",
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "12",
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"oldPassword" field can't be less than 8 characters!`,
 				'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -347,9 +299,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
@@ -360,11 +310,11 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"oldPassword" field can't be more than 16 characers!`,
 				'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -385,24 +335,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "",
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "",
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"oldPassword" field can't be empty!`],
 		});
 	});
@@ -420,24 +365,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tttttttttt",
-				newPassword: "tesTES@!#12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tttttttttt",
+			newPassword: "tesTES@!#12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				'"oldPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
 			],
@@ -458,24 +398,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: 1234234,
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: 1234234,
+			confirmNewPassword: "tesTES@!#12",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				'"newPassword" field has to be of type string!',
 				`"confirmNewPassword" field doesn't match "password" field`,
@@ -496,24 +431,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "12",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "12",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"newPassword" field can't be less than 8 characters!`,
 				'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -535,9 +465,7 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
 		const { status, body } = await request(app)
 			.put(baseURL)
@@ -548,11 +476,11 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 				confirmNewPassword: "tesTES@!#12",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"newPassword" field can't be more than 16 characers!`,
 				'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -574,28 +502,20 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: [
-				`"newPassword" field can't be empty!`,
-				`"confirmNewPassword" field doesn't match "password" field`,
-			],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: [`"newPassword" field can't be empty!`, `"confirmNewPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -612,24 +532,19 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "testtest",
-				confirmNewPassword: "tesTES@!#12",
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "testtest",
+			confirmNewPassword: "tesTES@!#12",
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				'"newPassword" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
 				`"confirmNewPassword" field doesn't match "password" field`,
@@ -652,28 +567,20 @@ describe(`"PUT" ${baseURL} - Change Password`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#12" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#12" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({
-				oldPassword: "tesTES@!#12",
-				newPassword: "tesTES@!#34",
-				confirmNewPassword: 112341234,
-			});
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`).send({
+			oldPassword: "tesTES@!#12",
+			newPassword: "tesTES@!#34",
+			confirmNewPassword: 112341234,
+		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: [
-				`"confirmNewPassword" field doesn't match "password" field`,
-				'"confirmNewPassword" must be a string',
-			],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: [`"confirmNewPassword" field doesn't match "password" field`, '"confirmNewPassword" must be a string'],
 		});
 	});
 });

@@ -1,27 +1,14 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
-const {
-	generate_randomNumber,
-} = require("./../../../src/helpers/randomNumber");
 
 const User = require("../../../src/app/Models/User.model");
 const Session = require("../../../src/app/Models/Session.model");
-const OTP = require("./../../../src/app/Models/OTP.model");
 
 const baseURL = "/auth/otp/disable";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"DELETE" ${baseURL} - Disable OTP`, () => {
 	it("1. Disable OTP successfully", async () => {
@@ -40,20 +27,13 @@ describe(`"DELETE" ${baseURL} - Disable OTP`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Enable OTP
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isOTPEnabled: true } }
-		);
+		await User.findOneAndUpdate({ _id: user.id }, { $set: { isOTPEnabled: true } });
 
 		// (4) Disable OTP
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		// (5) Clean DB
 		await User.findOneAndDelete({ _id: user.id });
@@ -80,14 +60,10 @@ describe(`"DELETE" ${baseURL} - Disable OTP`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Disable OTP
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		// (4) Clean DB
 		await User.findOneAndDelete({ _id: user.id });

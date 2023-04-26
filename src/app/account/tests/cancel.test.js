@@ -1,10 +1,9 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const User = require("./../../../src/app/Models/User.model");
@@ -13,13 +12,7 @@ const { generate_hash } = require("./../../../src/helpers/hash");
 
 const baseURL = "/auth/account/cancel-delete";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 	it("1. Cancel account deletion successfully", async () => {
@@ -36,11 +29,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			email: user.email,
 		});
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "You canceled the account deletion successfully!",
 		});
 	});
@@ -50,11 +43,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			email: "testtest@gmail.com",
 		});
 
-		expect(status).toBe(STATUS.BAD_REQUEST);
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.BAD_REQUEST,
-			code: CODE.BAD_REQUEST,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
 			message: "Sorry, your account may be deleted permanently! (too late)",
 		});
 	});
@@ -64,11 +57,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			email: "testtest@gmail.com",
 		});
 
-		expect(status).toBe(STATUS.BAD_REQUEST);
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.BAD_REQUEST,
-			code: CODE.BAD_REQUEST,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
 			message: "Sorry, your account may be deleted permanently! (too late)",
 		});
 	});
@@ -87,11 +80,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			email: user.email,
 		});
 
-		expect(status).toBe(STATUS.BAD_REQUEST);
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.BAD_REQUEST,
-			code: CODE.BAD_REQUEST,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
 			message: "Sorry, you already canceled account deletion!",
 		});
 	});
@@ -101,11 +94,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			email: "testtest@gmail.com",
 		});
 
-		expect(status).toBe(STATUS.BAD_REQUEST);
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.BAD_REQUEST,
-			code: CODE.BAD_REQUEST,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
 			message: "Sorry, your account may be deleted permanently! (too late)",
 		});
 	});
@@ -115,11 +108,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 	it("6. email field is not provided", async () => {
 		const { status, body } = await request(app).put(baseURL);
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: ['"email" field is required!'],
 		});
 	});
@@ -129,11 +122,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			.put(baseURL)
 			.send({ email: 11111111111 });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field has to be of type string!`],
 		});
 	});
@@ -143,11 +136,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			.put(baseURL)
 			.send({ email: "111111111234213423111" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field has to be a valid email!`],
 		});
 	});
@@ -157,11 +150,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			.put(baseURL)
 			.send({ email: "" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field can't be empty!`],
 		});
 	});
@@ -171,11 +164,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			.put(baseURL)
 			.send({ email: "k@gmail.com" });
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field can't be less than 15 characters!`],
 		});
 	});
@@ -186,11 +179,11 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 				"kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk@gmail.com",
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"email" field can't be more than 40 characers!`],
 		});
 	});

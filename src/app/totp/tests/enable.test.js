@@ -1,10 +1,8 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
@@ -12,14 +10,6 @@ const { generate_hash } = require("../../../src/helpers/hash");
 const User = require("../../../src/app/Models/User.model");
 
 const baseURL = "/auth/totp/enable";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 	it("1. Initiate enabling TOTP successfully", async () => {
@@ -35,18 +25,14 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body.success).toBe(true);
-		expect(body.status).toBe(STATUS.OK);
-		expect(body.code).toBe(CODE.OK);
+		expect(body.status).toBe(httpStatusCodeNumbers.OK);
+		expect(body.code).toBe(httpStatusCodeNumbers.OK);
 		expect(body.data).toHaveProperty("secret");
 	});
 
@@ -63,24 +49,17 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isTOTPEnabled: true } }
-		);
+		await User.findOneAndUpdate({ _id: user.id }, { $set: { isTOTPEnabled: true } });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, you already enabled TOTP!",
 		});
 	});
@@ -98,33 +77,27 @@ describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body.success).toBe(true);
-		expect(body.status).toBe(STATUS.OK);
-		expect(body.code).toBe(CODE.OK);
+		expect(body.status).toBe(httpStatusCodeNumbers.OK);
+		expect(body.code).toBe(httpStatusCodeNumbers.OK);
 		expect(body.data).toHaveProperty("secret");
 	});
 
 	it("4. Initiate TOTP route is private", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, the access token is required!",
 		});
 	});

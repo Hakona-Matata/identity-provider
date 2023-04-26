@@ -1,10 +1,9 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("./../../../src/helpers/hash");
@@ -14,13 +13,7 @@ const User = require("./../../../src/app/Models/User.model");
 
 const baseURL = "/auth/password/reset";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"PUT" ${baseURL} - Reset Password`, () => {
 	it("1. Reset password successfully", async () => {
@@ -46,11 +39,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			confirmPassword: "tesTE!@12",
 		});
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "Password reset successfully!",
 		});
 	});
@@ -76,11 +69,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			confirmPassword: "tesTE!@12",
 		});
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.FORBIDDEN,
-			code: CODE.FORBIDDEN,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
 			message: "Sorry, you already reset your password!",
 		});
 	});
@@ -93,11 +86,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			confirmPassword: "tesTE!@12",
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"resetToken" param is required!`],
 		});
 	});
@@ -109,11 +102,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			confirmPassword: "tesTE!@12",
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"resetToken" param can't be empty!`],
 		});
 	});
@@ -125,11 +118,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			confirmPassword: "tesTE!@12",
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"resetToken" param has to be of type string!`],
 		});
 	});
@@ -141,11 +134,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			confirmPassword: "tesTE!@12",
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"resetToken" param can't be true!`],
 		});
 	});
@@ -159,11 +152,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 				confirmPassword: "tesTE!@12",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"resetToken" param can't be true!`],
 		});
 	});
@@ -178,11 +171,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 				confirmPassword: "tesTE!@34",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [`"confirmPassword" field doesn't match "password" field`],
 		});
 	});
@@ -198,11 +191,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 				confirmPassword: "tesTE!@34",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"password" field can't be empty!`,
 				`"confirmPassword" field doesn't match "password" field`,
@@ -219,11 +212,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 				confirmPassword: "tesTE!@34",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				'"password" field is required!',
 				`"confirmPassword" field doesn't match "password" field`,
@@ -240,11 +233,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 				confirmPassword: "tesTE!@34",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				'"password" field has to be of type string!',
 				`"confirmPassword" field doesn't match "password" field`,
@@ -261,11 +254,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 				confirmPassword: "tesTE!@34",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"password" field can't be less than 8 characters!`,
 				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -283,11 +276,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 				confirmPassword: "tesTE!@34",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"password" field can't be more than 16 characers!`,
 				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
@@ -306,11 +299,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 				confirmPassword: 123423423423,
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: [
 				`"confirmPassword" field doesn't match "password" field`,
 				'"confirmPassword" must be a string',

@@ -3,7 +3,7 @@ const TokenHelper = require("./../token");
 const {
 	IDENTITY_PROVIDER,
 	tokens: { VERIFICATION_TOKEN, ACCESS_TOKEN, REFRESH_TOKEN, RESET_TOKEN, ACTIVATION_TOKEN },
-} = require("./../../constants/index");
+} = require("../../constants/index");
 
 describe("TokenHelper", () => {
 	const accountId = "fakeAccountId";

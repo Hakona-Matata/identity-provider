@@ -5,29 +5,29 @@ class BaseRepository {
 
 	// Create Operations
 	async insertOne(payload) {
-		return await this.model.create(payload);
+		return this.model.create(payload);
 	}
 
 	async insertMany(payload) {
-		return await this.model.insertMany(payload);
+		return this.model.insertMany(payload);
 	}
 
 	// Read Operations
 	async findById(id) {
-		return await this.model.findById(id).lean();
+		return this.model.findById(id).lean();
 	}
 
 	async findOne(filter) {
-		return await this.model.findOne(filter).lean();
+		return this.model.findOne(filter).lean();
 	}
 
 	async findMany(filter) {
-		return await this.model.find(filter).lean();
+		return this.model.find(filter).lean();
 	}
 
 	// Update Operations
 	async updateById(documentId, setPayload, unsetPayload = null) {
-		return await this.model
+		return this.model
 			.updateById(
 				documentId,
 				{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } },
@@ -37,7 +37,7 @@ class BaseRepository {
 	}
 
 	async updateOne(filter, setPayload, unsetPayload = null) {
-		return await this.model
+		return this.model
 			.updateOne(
 				{ ...filter },
 				{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } },
@@ -47,7 +47,7 @@ class BaseRepository {
 	}
 
 	async updateMany(filter, setPayload, unsetPayload = null) {
-		return await this.model
+		return this.model
 			.updateMany(
 				{ ...filter },
 				{ $set: { ...setPayload, updatedAt: new Date() }, $unset: { ...unsetPayload } },
@@ -58,15 +58,15 @@ class BaseRepository {
 
 	// Delete Operations
 	async deleteById(documentId) {
-		return await this.model.findByIdAndDelete(documentId).lean();
+		return this.model.findByIdAndDelete(documentId).lean();
 	}
 
 	async deleteOne(filter) {
-		return await this.model.findOneAndDelete(filter).lean();
+		return this.model.findOneAndDelete(filter).lean();
 	}
 
 	async deleteMany(filter) {
-		return await this.model.deleteMany(filter).lean();
+		return this.model.deleteMany(filter).lean();
 	}
 }
 

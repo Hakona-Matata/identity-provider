@@ -1,4 +1,4 @@
-const validate = require("./../../helpers/validate");
+const validate = require("../../helpers/validateInput");
 
 const SmsValidators = require("./sms.validators");
 const SmsServices = require("./sms.services");

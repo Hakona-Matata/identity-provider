@@ -1,5 +1,5 @@
 const TotpHelper = require("./../totp");
-const Encrypter = require("./../encryptor");
+const Encrypter = require("../encryptor");
 
 describe("TotpHelper", () => {
 	describe("#generateTotpCode", () => {

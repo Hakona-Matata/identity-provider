@@ -1,15 +1,13 @@
-const HashHelper = require("../../helpers/hash");
+const HashHelper = require("../../helpers/hashHelper");
 const SmsRepository = require("./sms.repository");
 const OtpServices = require("./../otp/otp.services");
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
 
+const { ForbiddenException, NotFoundException } = require("./../../exceptions/index");
+
 const {
-	SUCCESS_MESSAGES: {
-		SMS_SENT_SUCCESSFULLY,
-		SMS_ENABLED_SUCCESSFULLY,
-		SMS_DISABLED_SUCCESSFULLY,
-	},
+	SUCCESS_MESSAGES: { SMS_SENT_SUCCESSFULLY, SMS_ENABLED_SUCCESSFULLY, SMS_DISABLED_SUCCESSFULLY },
 	FAILURE_MESSAGES: {
 		SMS_ALREADY_ENABLED,
 		ALREADY_HAVE_VALID_SMS,
@@ -96,7 +94,7 @@ class SmsServices {
 			throw new BadRequestException(ALREADY_HAVE_VALID_SMS);
 		}
 
-		const hashedOtp = await OtpServices.generatSendOtp();
+		const hashedOtp = await OtpServices.generateSendOtp();
 
 		return await SmsServices.createOne({ accountId, hashedOtp });
 	}

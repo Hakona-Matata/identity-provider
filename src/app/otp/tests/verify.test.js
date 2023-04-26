@@ -1,26 +1,16 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
+
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
-const {
-	generate_randomNumber,
-} = require("./../../../src/helpers/randomNumber");
+const { generate_randomNumber } = require("./../../../src/helpers/randomNumber");
 
 const User = require("../../../src/app/Models/User.model");
 const OTP = require("./../../../src/app/Models/OTP.model");
 
 const baseURL = "/auth/otp/verify";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Verify OTP code during login process`, () => {
 	it("1. Verify OTP code successfully", async () => {

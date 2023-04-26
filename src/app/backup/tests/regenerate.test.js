@@ -1,7 +1,6 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
@@ -12,13 +11,7 @@ const Backup = require("./../../../src/app/Models/Backup.model");
 
 const baseURL = "/auth/backup/regenerate";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Regenerate New Backup codes`, () => {
 	it("1. Regenerate new backup codes successfully", async () => {

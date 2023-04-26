@@ -1,7 +1,6 @@
-const { errorHandler, successLogger, failureLogger, responseHandler } = require("./index");
-
 const applyAppMiddlewares = require("./applyAppMiddlewares");
 const applyThirdPartyMiddlewares = require("./applyThirdPartyMiddlewares");
+const { errorHandler, successLogger, failureLogger, responseHandler } = require("./index");
 
 module.exports = (app) => {
 	applyThirdPartyMiddlewares(app);

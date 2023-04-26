@@ -2,7 +2,7 @@ const Joi = require("joi");
 const validationMessages = require("./validationMessages");
 const { roles } = require("./../constants/index");
 const isValidObjectId = require("./../helpers/isValidObjectId");
-const { validatePhone } = require("./../helpers/phone");
+const { validatePhone } = require("../helpers/phoneValidator");
 
 module.exports = {
 	email: Joi.string()
@@ -14,7 +14,7 @@ module.exports = {
 		.messages({ ...validationMessages }),
 	token: Joi.string()
 		.trim()
-		.min(3)
+		.min(64)
 		.max(300)
 		.required()
 		.messages({ ...validationMessages }),
@@ -36,7 +36,7 @@ module.exports = {
 		.trim()
 		.required()
 		.valid(Joi.ref("password"))
-		.messages({ ...validationMessages }),
+		.messages({ ...validationMessages, "any.only": `"confirmPassword" field must match "password" field!` }),
 	role: Joi.string()
 		.trim()
 		.valid(...Object.keys(roles))
@@ -65,10 +65,4 @@ module.exports = {
 			return isValid ? { phone, country } : helper.message(validationMessages.custom);
 		})
 		.messages({ ...validationMessages }),
-	code: Joi.string()
-		.trim()
-		.length(6)
-		.required()
-		.regex(/^\d+$/)
-		.messages({ ...validationMessages, "string.pattern.base": "{{#label}} should contain only numbers" }),
 };

@@ -1,8 +1,10 @@
 const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../constants/index");
 
-module.exports = (error, req, res, next) => {
-	console.log({ error });
+module.exports = async (error, req, res, next) => {
+	// console.log("*******************************************************8");
+	// console.log({ error });
 	// console.log({ name: error.name, code: error.code, message: error.message });
+	// console.log("*******************************************************8");
 	switch (error.name) {
 		case "JsonWebTokenError":
 			return res.status(httpStatusCodeNumbers.UNAUTHORIZED).json({
@@ -27,10 +29,9 @@ module.exports = (error, req, res, next) => {
 				code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 				message: error.message.split(": ")[2] || error.details.map((error) => error.message),
 			});
-			break;
 
 		case "MongoServerError":
-			console.log({ name: error.name, code: error.code, message: error.message });
+			// console.log({ name: error.name, code: error.code, message: error.message });
 
 			if (error.code === 11000) {
 				return res.status(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY).json({
@@ -46,7 +47,7 @@ module.exports = (error, req, res, next) => {
 			break;
 
 		case "MongooseError":
-			console.log({ name: error.name, code: error.code, message: error.message });
+			// console.log({ name: error.name, code: error.code, message: error.message });
 
 			if (error.message.includes("timed out")) {
 				return res.status(httpStatusCodeNumbers.REQUEST_TIMEOUT).json({
@@ -70,7 +71,7 @@ module.exports = (error, req, res, next) => {
 		case "Error":
 			return res.status(error.statusCode).json({
 				success: false,
-				status: error.statuscode,
+				status: error.statusCode,
 				code: error.errorCode,
 				message: error.message,
 			});
@@ -79,6 +80,7 @@ module.exports = (error, req, res, next) => {
 			// TODO: Remove this after everything is okay!
 			console.log("Unhandled error!!!!!!!!!!!!!!!");
 			console.log("--------------------------------------------");
+			console.log({ error });
 			console.log({ name: error.name, code: error.code, message: error.message });
 			console.log("--------------------------------------------");
 

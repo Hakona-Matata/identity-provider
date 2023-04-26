@@ -1,10 +1,9 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_token } = require("../../../src/helpers/token");
@@ -15,13 +14,7 @@ const Session = require("../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/sessions/";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"GET" ${baseURL} - Get All user sessions (valid, expired)`, () => {
 	it("1. Get all user sessions successfully (Only valid token there!)", async () => {
@@ -47,11 +40,11 @@ describe(`"GET" ${baseURL} - Get All user sessions (valid, expired)`, () => {
 
 		const currentSession = await Session.findOne({ accessToken });
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: { count: 1, sessions: [{ _id: currentSession.id, isValid: true }] },
 		});
 	});
@@ -101,11 +94,11 @@ describe(`"GET" ${baseURL} - Get All user sessions (valid, expired)`, () => {
 			.get(baseURL)
 			.set("authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: {
 				count: 2,
 				sessions: [
@@ -162,11 +155,11 @@ describe(`"GET" ${baseURL} - Get All user sessions (valid, expired)`, () => {
 			.get(baseURL)
 			.set("authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: {
 				count: 2,
 				sessions: [

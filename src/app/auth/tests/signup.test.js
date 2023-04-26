@@ -1,7 +1,13 @@
+const { describe, it, expect } = require("jest");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
-const { app } = require("../../../server");
+const { app } = require("../../../app");
 const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../../constants/index");
+
+const {
+	SUCCESS_MESSAGES: { SIGN_UP_SUCCESSFULLY },
+} = require("./../auth.constants");
 
 const baseURL = "/auth/sign-up";
 
@@ -14,7 +20,7 @@ const fakeUser = {
 };
 
 describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
-	it.only(`Should create a new user successfully`, async () => {
+	it("Should return 200 status code and create a new user successfully", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
@@ -26,11 +32,15 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: "Please, check your mailbox to verify your email address!",
+			data: SIGN_UP_SUCCESSFULLY,
 		});
 	});
 
-	it(`2. Duplicate userName`, async () => {
+	it("Should return 422 status code for duplicate username", async () => {
+		await request(app)
+			.post(baseURL)
+			.send({ ...fakeUser });
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
@@ -38,16 +48,20 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 				email: faker.internet.email(),
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: "Sorry, this userName may be already taken!",
 		});
 	});
 
-	it("3. Duplicate email", async () => {
+	it("Should return 422 status code for duplicate email", async () => {
+		await request(app)
+			.post(baseURL)
+			.send({ ...fakeUser });
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
@@ -55,68 +69,71 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 				userName: faker.random.alpha(10),
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
 			message: "Sorry, this email may be already taken!",
 		});
 	});
 
-	it("4. Passwords don't match", async () => {
+	it("Should return 422 status code for mismatched passwords", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
-				email: faker.internet.email(),
-				userName: faker.random.alpha(10),
-				password: "teTE!@12",
-				confirmPassword: "teTE!@13",
+				...fakeUser,
+				confirmPassword: "teTE!@121",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: [`"confirmPassword" field doesn't match "password" field`],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"confirmPassword" field must match "password" field!`]),
 		});
 	});
 
-	it("5. No user inputs provided at all", async () => {
+	it("Should return an error with status 422 when no user inputs are provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: [
-				'"email" field is required!',
-				'"userName" field is required!',
-				'"password" field is required!',
-				'"confirmPassword" is required',
-			],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([
+				`"email" field is required!`,
+				`"userName" field is required!`,
+				`"password" field is required!`,
+				`"confirmPassword" field is required!`,
+				`"role" field is required!`,
+			]),
 		});
 	});
 
-	it("6. userName is not found", async () => {
+	it("Should return an error with status 422 when userName is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL).send({
 			email: faker.internet.email(),
 			password: "teTE!@12",
 			confirmPassword: "teTE!@13",
 		});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: ['"userName" field is required!', `"confirmPassword" field doesn't match "password" field`],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([
+				'"userName" field is required!',
+				`"confirmPassword" field must match "password" field!`,
+				`"role" field is required!`,
+			]),
 		});
 	});
 
-	it("7. email is not found", async () => {
+	it("Should return an error with status 422 when email is not provided", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
@@ -125,16 +142,19 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 				confirmPassword: "teTE!@13",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: ['"email" field is required!', `"confirmPassword" field doesn't match "password" field`],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([
+				'"email" field is required!',
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("8. password is not found", async () => {
+	it("Should return an error with status 422 when password is not provided", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
@@ -143,16 +163,20 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 				confirmPassword: "teTE!@13",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: ['"password" field is required!', `"confirmPassword" field doesn't match "password" field`],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([
+				'"password" field is required!',
+				`"confirmPassword" field must match "password" field!`,
+				'"role" field is required!',
+			]),
 		});
 	});
 
-	it("9. confirmPassword is not found", async () => {
+	it("Should return an error with status 422 when confirmPassword is not provided", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
@@ -161,12 +185,12 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 				password: "teTE!@13",
 			});
 
-		expect(status).toBe(STATUS.UNPROCESSABLE_ENTITY);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNPROCESSABLE_ENTITY,
-			code: CODE.UNPROCESSABLE_ENTITY,
-			message: ['"confirmPassword" is required'],
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"confirmPassword" field is required!', '"role" field is required!']),
 		});
 	});
 });

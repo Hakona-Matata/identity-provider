@@ -1,7 +1,6 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
@@ -12,14 +11,6 @@ const Session = require("../../../src/app/Models/Session.model");
 const TOTP = require("../../../src/app/Models/TOTP.model");
 
 const baseURL = "/auth/totp/verify";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Verify TOTP as during login`, () => {
 	it("1. Verify TOTP successfully", async () => {
@@ -37,18 +28,14 @@ describe(`"POST" ${baseURL} - Verify TOTP as during login`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Initiate TOTP
 		const {
 			body: {
 				data: { secret },
 			},
-		} = await request(app)
-			.post("/auth/totp/enable")
-			.set("Authorization", `Bearer ${accessToken}`);
+		} = await request(app).post("/auth/totp/enable").set("Authorization", `Bearer ${accessToken}`);
 
 		// (4) Generate TOTP form returned secret (This time is for confirming)
 		const firstTOTP = generate_totp({ secret });
@@ -63,9 +50,7 @@ describe(`"POST" ${baseURL} - Verify TOTP as during login`, () => {
 		const secondTOTP = generate_totp({ secret });
 
 		// (7) Verify TOTP
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ userId: user.id, totp: secondTOTP });
+		const { status, body } = await request(app).post(baseURL).send({ userId: user.id, totp: secondTOTP });
 
 		// (8) Clean DB
 		await User.findOneAndDelete({ _id: user.id });
@@ -98,9 +83,7 @@ describe(`"POST" ${baseURL} - Verify TOTP as during login`, () => {
 		});
 
 		// (2) Verify TOTP
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ userId: user.id, totp: "123123" });
+		const { status, body } = await request(app).post(baseURL).send({ userId: user.id, totp: "123123" });
 
 		// (3) Clean DB
 		await User.findOneAndDelete({ _id: user.id });
@@ -125,18 +108,14 @@ describe(`"POST" ${baseURL} - Verify TOTP as during login`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Initiate TOTP
 		const {
 			body: {
 				data: { secret },
 			},
-		} = await request(app)
-			.post("/auth/totp/enable")
-			.set("Authorization", `Bearer ${accessToken}`);
+		} = await request(app).post("/auth/totp/enable").set("Authorization", `Bearer ${accessToken}`);
 
 		// (4) Generate TOTP form returned secret (This time is for confirming)
 		const firstTOTP = generate_totp({ secret });
@@ -148,9 +127,7 @@ describe(`"POST" ${baseURL} - Verify TOTP as during login`, () => {
 			.send({ totp: firstTOTP });
 
 		// (6) Verify TOTP
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ userId: user.id, totp: "123123" });
+		const { status, body } = await request(app).post(baseURL).send({ userId: user.id, totp: "123123" });
 
 		// (7) Clean DB
 		await User.findOneAndDelete({ _id: user.id });
@@ -190,18 +167,14 @@ describe(`"POST" ${baseURL} - Verify TOTP as during login`, () => {
 	});
 
 	it("10. TOTP code can't be empty", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ totp: "", userId: "64171cbd792d92b7ed2416b3" });
+		const { status, body } = await request(app).post(baseURL).send({ totp: "", userId: "64171cbd792d92b7ed2416b3" });
 
 		expect(status).toBe(422);
 		expect(body.data[0]).toBe(`"totp" field can't be empty!`);
 	});
 
 	it("11. TOTP code is too short to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ totp: "123", userId: "64171cbd792d92b7ed2416b3" });
+		const { status, body } = await request(app).post(baseURL).send({ totp: "123", userId: "64171cbd792d92b7ed2416b3" });
 
 		expect(status).toBe(422);
 		expect(body.data[0]).toBe(`"totp" field length must be 6 digits!`);
@@ -227,18 +200,14 @@ describe(`"POST" ${baseURL} - Verify TOTP as during login`, () => {
 
 	//========================================================
 	it("14. userId field is not provided", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ totp: "123123" });
+		const { status, body } = await request(app).post(baseURL).send({ totp: "123123" });
 
 		expect(status).toBe(422);
 		expect(body.data[0]).toBe('"userId" field is required!');
 	});
 
 	it("15. usersId field can't be empty", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ userId: "", totp: "123123" });
+		const { status, body } = await request(app).post(baseURL).send({ userId: "", totp: "123123" });
 
 		expect(status).toBe(422);
 		expect(body.data[0]).toBe(`"userId" field can't be empty!`);

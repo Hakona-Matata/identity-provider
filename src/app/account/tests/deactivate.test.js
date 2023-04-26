@@ -1,25 +1,13 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
-
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 const { generate_hash } = require("./../../../src/helpers/hash");
 
 const User = require("./../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
 
 const baseURL = "/auth/account/deactivate";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 	it("1. Deactivate account successfully", async () => {
@@ -35,19 +23,15 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "Account deactivated successfully!",
 		});
 	});
@@ -65,11 +49,11 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 			.post("/auth/login")
 			.send({ email: user.email, password: "tesTES@!#1232" });
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, your account is deactivated!",
 		});
 	});
@@ -77,11 +61,11 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 	it(`3. Deactivate account route is private`, async () => {
 		const { status, body } = await request(app).put(baseURL);
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, the access token is required!",
 		});
 	});

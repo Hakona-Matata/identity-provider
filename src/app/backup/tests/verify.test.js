@@ -1,7 +1,6 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const { generate_hash } = require("../../../src/helpers/hash");
@@ -12,13 +11,7 @@ const Backup = require("./../../../src/app/Models/Backup.model");
 
 const baseURL = "/auth/backup/verify";
 
-beforeAll(async () => {
-	return await connect();
-});
 
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"POST" ${baseURL} - Verify Backup codes | Account Recovery`, () => {
 	it("1. Verify Backup code and give access successfully", async () => {
@@ -271,7 +264,7 @@ describe(`"POST" ${baseURL} - Verify Backup codes | Account Recovery`, () => {
 	it("15. Backup code is too long to be true", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ code: 12345123423421234512, email: "test1234124@gmail.com" });
+			// .send({ code: 12345123423421234512, email: "test1234124@gmail.com" });
 
 		expect(status).toBe(422);
 		expect(body.data[0]).toBe(`"code" field has to be 12 digits!`);

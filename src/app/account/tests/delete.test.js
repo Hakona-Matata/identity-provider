@@ -1,10 +1,8 @@
-const STATUS = require("./../../../src/constants/statusCodes");
-const CODE = require("./../../../src/constants/errorCodes");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const { connect, disconnect } = require("../../db.config");
 const app = require("../../../src/server");
 
 const User = require("./../../../src/app/Models/User.model");
@@ -12,14 +10,6 @@ const User = require("./../../../src/app/Models/User.model");
 const { generate_hash } = require("./../../../src/helpers/hash");
 
 const baseURL = "/auth/account/delete";
-
-beforeAll(async () => {
-	return await connect();
-});
-
-afterAll(async () => {
-	return await disconnect();
-});
 
 describe(`"DELETE" ${baseURL} - Delete User Account`, () => {
 	it("1. Delete user account successfully", async () => {
@@ -36,19 +26,15 @@ describe(`"DELETE" ${baseURL} - Delete User Account`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.OK);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
-			status: STATUS.OK,
-			code: CODE.OK,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
 			data: "Your account Will be deleted permenantly in 30 days, unless you cancelled the deletion later!",
 		});
 	});
@@ -67,25 +53,21 @@ describe(`"DELETE" ${baseURL} - Delete User Account`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(STATUS.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 	});
 
 	it("3. Account deletion route is private", async () => {
 		const { status, body } = await request(app).delete(baseURL);
 
-		expect(status).toBe(STATUS.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
-			status: STATUS.UNAUTHORIZED,
-			code: CODE.UNAUTHORIZED,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
 			message: "Sorry, the access token is required!",
 		});
 	});

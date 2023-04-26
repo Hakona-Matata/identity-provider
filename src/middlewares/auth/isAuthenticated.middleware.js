@@ -1,5 +1,5 @@
 const SessionServices = require("../../app/session/session.services");
-const TokenHelper = require("../../helpers/token");
+const TokenHelper = require("../../helpers/tokenHelper");
 
 const { NotFoundException, UnAuthorizedException } = require("../../exceptions/index");
 
