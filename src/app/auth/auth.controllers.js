@@ -1,11 +1,13 @@
+/**
+ * Contains methods for handling signup, verify account, login and logout requests.
+ *
+ * @class
+ */
+
 const { validateInput } = require("../../helpers/index");
 const AuthValidators = require("./auth.validators");
 const AuthServices = require("./auth.services");
 
-/**
- * Contains methods for handling signup, verify account, login and logout requests.
- * @class
- */
 class AuthControllers {
 	/**
 	 * Registers a new account for the user.

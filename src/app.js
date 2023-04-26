@@ -1,4 +1,3 @@
-require("./global/globals");
 const express = require("express");
 require("dotenv").config();
 require("express-async-errors");
