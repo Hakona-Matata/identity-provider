@@ -26,13 +26,19 @@ const {
 	NotFoundException,
 } = require("./../../exceptions/index");
 
+/**
+ * A class representing services for  TOTP (Time-based One-time Password)
+ * @class
+ */
 class TotpServices {
-	/* 
-		=======================================
-			Public methods 
-		=======================================
-	*/
-
+	/**
+	 * Initiates enabling of two-factor authentication.
+	 *
+	 * @async
+	 * @param {string} accountId - The ID of the account.
+	 * @param {boolean} isTotpEnabled - Whether two-factor authentication is already enabled.
+	 * @returns {Promise<{ secret: string }>} An object containing the plain text secret.
+	 */
 	static async initiateEnabling(accountId, isTotpEnabled) {
 		if (isTotpEnabled) {
 			throw new BadRequestException(TOTP_ALREADY_ENABLED);
@@ -45,18 +51,27 @@ class TotpServices {
 		return { secret: plainTextTotpSecret };
 	}
 
-	static async confirmEnabling(accountId, givenTotp, isTotptEnabled) {
-		if (isTotptEnabled) {
+	/**
+	 * Confirms the enabling of two-factor authentication.
+	 *
+	 * @async
+	 * @param {string} accountId - The ID of the account.
+	 * @param {string} givenTotp - The time-based one-time password given by the user.
+	 * @param {boolean} isTotpEnabled - Whether two-factor authentication is already enabled.
+	 * @returns {Promise<string>} A success message.
+	 */
+	static async confirmEnabling(accountId, givenTotp, isTotpEnabled) {
+		if (isTotpEnabled) {
 			throw new BadRequestException(TOTP_ALREADY_ENABLED);
 		}
 
-		const { _id: totpId, secret, isTemp, count } = await TotpServices.findOne({ accountId });
+		const { _id: totpId, secret, isTemp, failedAttemptCount } = await TotpServices.findOne({ accountId });
 
 		if (!isTemp) {
 			throw new BadRequestException(TOTP_ALREADY_CONFIRMED);
 		}
 
-		if (count >= 3) {
+		if (failedAttemptCount >= 3) {
 			await TotpServices.deleteOne({ _id: totpId });
 
 			throw new BadRequestException(START_FROM_SCRATCH);
@@ -65,17 +80,25 @@ class TotpServices {
 		await TotpServices.#verifyTotpCode({
 			totpId,
 			secret,
-			count,
+			failedAttemptCount,
 			givenTotp,
 		});
 
-		await TotpServices.updateOne({ _id: totpId }, { isTemp: false }, { count: 1 });
+		await TotpServices.updateOne({ _id: totpId }, { isTemp: false }, { failedAttemptCount: 1 });
 
 		await AccountServices.updateOne({ _id: accountId }, { isTotpEnabled: true, totpEnabledAt: new Date() });
 
 		return TOTP_ENABLED_SUCCESSFULLY;
 	}
 
+	/**
+	 * Disables two-factor authentication.
+	 *
+	 * @async
+	 * @param {string} accountId - The ID of the account.
+	 * @param {boolean} isTotpEnabled - Whether two-factor authentication is already enabled.
+	 * @returns {Promise<string>} A success message.
+	 */
 	static async disable(accountId, isTotpEnabled) {
 		if (!isTotpEnabled) {
 			throw new BadRequestException(TOTP_ALREADY_DISABLED);
@@ -88,6 +111,14 @@ class TotpServices {
 		return TOTP_DISABLED_SUCCESSFULLY;
 	}
 
+	/**
+	 * Verifies the time-based one-time password for two-factor authentication.
+	 *
+	 * @async
+	 * @param {string} accountId - The ID of the account.
+	 * @param {string} givenTotp - The time-based one-time password given by the user.
+	 * @returns {Promise<string>} A success message.
+	 */
 	static async verify(accountId, givenTotp) {
 		const { isTotpEnabled } = await AccountServices.findOne({ _id: accountId });
 
@@ -101,39 +132,55 @@ class TotpServices {
 			throw new UnAuthorizedException(INVALID_TOTP);
 		}
 
-		await TotpServices.#verifyTotpCode({ totpId: totp._id, secret: totp.secret, count: totp.count, givenTotp });
+		await TotpServices.#verifyTotpCode({
+			totpId: totp._id,
+			secret: totp.secret,
+			failedAttemptCount: totp.failedAttemptCount,
+			givenTotp,
+		});
 
 		return TOTP_VERIFIED_SUCCESSFULLY;
 	}
 
-	/* 
-		=======================================
-			Private methods 
-		=======================================
-	*/
-
+	/**
+	 * Generates an encrypted time-based one-time password secret.
+	 *
+	 * @async
+	 * @private
+	 * @returns {Promise<{ plainTextTotpSecret: string, encryptedTotpSecret: string }>} An object containing the plain text and encrypted secrets.
+	 */
 	static async #generateEncryptedTotpSecret() {
 		const { plainTextTotpSecret, encryptedTotpSecret } = TotpHelper.generateTotpSecret();
 
 		return { plainTextTotpSecret, encryptedTotpSecret };
 	}
 
-	static async #verifyTotpCode({ totpId, secret, count, givenTotp }) {
+	/**
+	 * Verifies the time-based one-time password code.
+	 *
+	 * @async
+	 * @private
+	 * @param {string} totpId - The ID of the time-based one-time password.
+	 * @param {string} secret - The encrypted time-based one-time password secret.
+	 * @param {number} failedAttemptCount - The number of failed attempts.
+	 * @param {string} givenTotp - The time-based one-time password given by the user.
+	 */
+	static async #verifyTotpCode({ totpId, secret, failedAttemptCount, givenTotp }) {
 		const isTotpValid = TotpHelper.verifyTotpCode(givenTotp, secret);
 
 		if (!isTotpValid) {
-			await TotpServices.updateOne({ _id: totpId }, { count: count + 1 });
+			await TotpServices.updateOne({ _id: totpId }, { failedAttemptCount: failedAttemptCount + 1 });
 
 			throw new UnAuthorizedException(INVALID_TOTP);
 		}
 	}
 
-	/* 
-		=======================================
-			CRUD methods 
-		=======================================
-	*/
-
+	/**
+	 * Creates a new TOTP (Time-based One-time Password) entry in the database.
+	 *
+	 * @param {object} payload - The payload containing the data for the TOTP entry.
+	 * @returns {Promise<boolean>} A Promise that resolves to a boolean indicating whether the TOTP entry was created successfully.
+	 */
 	static async createOne(payload) {
 		const isTotpCreated = await TotpRepository.insertOne(payload);
 
@@ -144,10 +191,24 @@ class TotpServices {
 		return isTotpCreated;
 	}
 
+	/**
+	 * Finds a TOTP entry in the database that matches the specified payload.
+	 *
+	 * @param {object} payload - The payload containing the data to match against the TOTP entry.
+	 * @returns {Promise<object|null>} A Promise that resolves to the matched TOTP entry or null if no match was found.
+	 */
 	static async findOne(payload) {
 		return await TotpRepository.findOne(payload);
 	}
 
+	/**
+	 * Updates a TOTP entry in the database that matches the specified filter.
+	 *
+	 * @param {object} filter - The filter used to find the TOTP entry to update.
+	 * @param {object} setPayload - The payload containing the data to set in the TOTP entry.
+	 * @param {object} unsetPayload - The payload containing the data to unset in the TOTP entry.
+	 * @returns {Promise<boolean>} A Promise that resolves to a boolean indicating whether the TOTP entry was updated successfully.
+	 */
 	static async updateOne(filter, setPayload, unsetPayload) {
 		const isTotpUpdated = await TotpRepository.updateOne(filter, setPayload, unsetPayload);
 
@@ -158,6 +219,12 @@ class TotpServices {
 		return isTotpUpdated;
 	}
 
+	/**
+	 * Deletes a TOTP entry from the database that matches the specified filter.
+	 *
+	 * @param {object} filter - The filter used to find the TOTP entry to delete.
+	 * @returns {Promise<void>} A Promise that resolves when the TOTP entry has been deleted.
+	 */
 	static async deleteOne(filter) {
 		const isTotpDeleted = await TotpRepository.deleteOne(filter);
 
@@ -168,6 +235,12 @@ class TotpServices {
 		}
 	}
 
+	/**
+	 * Deletes multiple TOTP entries from the database that match the specified filter.
+	 *
+	 * @param {object} filter - The filter used to find the TOTP entries to delete.
+	 * @returns {Promise<void>} A Promise that resolves when the TOTP entries have been deleted.
+	 */
 	static async deleteMany(filter) {
 		const areTotpDeleted = await TotpRepository.deleteMany(filter);
 

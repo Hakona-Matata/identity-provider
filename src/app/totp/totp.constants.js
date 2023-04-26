@@ -1,3 +1,24 @@
+/**
+ * A module for defining success and failure messages related to TOTP feature.
+ * @module TOTP_MESSAGES
+ *
+ * @property {Object} SUCCESS_MESSAGES - An object containing success messages related to TOTP feature.
+ * @property {string} SUCCESS_MESSAGES.TOTP_ENABLED_SUCCESSFULLY - The message for successful TOTP feature enabling.
+ * @property {string} SUCCESS_MESSAGES.TOTP_DISABLED_SUCCESSFULLY - The message for successful TOTP feature disabling.
+ * @property {string} SUCCESS_MESSAGES.TOTP_VERIFIED_SUCCESSFULLY - The message for successful TOTP verification.
+ *
+ * @property {Object} FAILURE_MESSAGES - An object containing failure messages related to TOTP feature.
+ * @property {string} FAILURE_MESSAGES.TOTP_ALREADY_ENABLED - The message for already enabled TOTP feature.
+ * @property {string} FAILURE_MESSAGES.TOTP_ALREADY_DISABLED - The message for already disabled TOTP feature.
+ * @property {string} FAILURE_MESSAGES.TOTP_ALREADY_CONFIRMED - The message for already confirmed TOTP feature.
+ * @property {string} FAILURE_MESSAGES.TOTP_NOT_ENABLED - The message for TOTP feature not enabled.
+ * @property {string} FAILURE_MESSAGES.START_FROM_SCRATCH - The message for starting TOTP feature from scratch.
+ * @property {string} FAILURE_MESSAGES.INVALID_TOTP - The message for invalid TOTP.
+ * @property {string} FAILURE_MESSAGES.TOTP_CREATE_FAILED - The message for failed TOTP creation.
+ * @property {string} FAILURE_MESSAGES.TOTP_UPDATE_FAILED - The message for failed TOTP update.
+ * @property {string} FAILURE_MESSAGES.TOTP_DELETE_FAILED - The message for failed TOTP deletion.
+ * @property {string} FAILURE_MESSAGES.TOTP_NOT_FOUND - The message for TOTP not found.
+ */
 module.exports = {
 	SUCCESS_MESSAGES: {
 		TOTP_ENABLED_SUCCESSFULLY: "The TOTP feature is enabled successfully!",

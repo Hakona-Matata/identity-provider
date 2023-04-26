@@ -1,5 +1,18 @@
+/**
+ * Mongoose Model for Session
+ * @module SessionModel
+ */
+
 const mongoose = require("mongoose");
 
+/**
+ * Mongoose schema for Session collection
+ * @class
+ * @property {mongoose.Schema.Types.ObjectId} accountId - The ID of the associated account in the Account collection.
+ * @property {string} accessToken - The access token associated with the session.
+ * @property {string} refreshToken - The refresh token associated with the session.
+ * @property {Date} createdAt - The creation date of the session.
+ */
 const SessionSchema = new mongoose.Schema(
 	{
 		accountId: {

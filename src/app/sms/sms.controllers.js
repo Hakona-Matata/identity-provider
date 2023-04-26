@@ -1,9 +1,19 @@
+/**
+ * SmsControllers class which contains functions to handle sms-related HTTP requests
+ */
 const validate = require("../../helpers/validateInput");
-
 const SmsValidators = require("./sms.validators");
 const SmsServices = require("./sms.services");
 
 class SmsControllers {
+	/**
+	 * Enable the SMS OTP feature for an account
+	 * @async
+	 * @param {object} req - Express request object
+	 * @param {object} res - Express response object
+	 * @param {function} next - Express next middleware function
+	 * @returns {void}
+	 */
 	static async enable(req, res, next) {
 		const {
 			phone: { phone, country },
@@ -19,6 +29,14 @@ class SmsControllers {
 		next();
 	}
 
+	/**
+	 * Confirm the received OTP code for an account
+	 * @async
+	 * @param {object} req - Express request object
+	 * @param {object} res - Express response object
+	 * @param {function} next - Express next middleware function
+	 * @returns {void}
+	 */
 	static async confirm(req, res, next) {
 		const { otp } = await validate(SmsValidators.confirm, req.body);
 
@@ -27,12 +45,28 @@ class SmsControllers {
 		next();
 	}
 
+	/**
+	 * Disable the SMS OTP feature for an account
+	 * @async
+	 * @param {object} req - Express request object
+	 * @param {object} res - Express response object
+	 * @param {function} next - Express next middleware function
+	 * @returns {void}
+	 */
 	static async disable(req, res, next) {
 		req.result = await SmsServices.disable(req.accountId, req.account.isSmsEnabled);
 
 		next();
 	}
 
+	/**
+	 * Verify a given OTP code for an account
+	 * @async
+	 * @param {object} req - Express request object
+	 * @param {object} res - Express response object
+	 * @param {function} next - Express next middleware function
+	 * @returns {void}
+	 */
 	static async verify(req, res, next) {
 		const { accountId, otp } = await validate(SmsValidators.verify, req.body);
 
