@@ -15,7 +15,7 @@ const {
 const { UnAuthorizedException, BadRequestException } = require("./../../exceptions/index");
 
 /**
- * AuthServices is a class that provides various authentication services like sign up, verify, log in, and log out.
+ * AuthServices is a class that provides various services like sign up, verify, log in, and log out.
  */
 class AuthServices {
 	/**
@@ -83,7 +83,6 @@ class AuthServices {
 	 * @param {string} data.password - The user's password.
 	 * @returns {Promise<any>} - A Promise that resolves with the logged-in user's data.
 	 */
-
 	static async logIn(data) {
 		const account = await AccountServices.findOne({ email: data.email });
 

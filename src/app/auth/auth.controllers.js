@@ -2,7 +2,20 @@ const { validateInput } = require("../../helpers/index");
 const AuthValidators = require("./auth.validators");
 const AuthServices = require("./auth.services");
 
+/**
+ * Contains methods for handling signup, verify account, login and logout requests.
+ * @class
+ */
 class AuthControllers {
+	/**
+	 * Registers a new account for the user.
+	 * @async
+	 * @function signUp
+	 * @param {Object} req - The request object.
+	 * @param {Object} res - The response object.
+	 * @param {function} next - The next middleware function.
+	 * @returns {void}
+	 */
 	static async signUp(req, res, next) {
 		const accountData = await validateInput(AuthValidators.signUp, req.body);
 
@@ -11,6 +24,15 @@ class AuthControllers {
 		next();
 	}
 
+	/**
+	 * Verifies an account using the provided verification token.
+	 * @async
+	 * @function verify
+	 * @param {Object} req - The request object.
+	 * @param {Object} res - The response object.
+	 * @param {function} next - The next middleware function.
+	 * @returns {void}
+	 */
 	static async verify(req, res, next) {
 		const { verificationToken } = await validateInput(AuthValidators.verify, req.params);
 
@@ -19,6 +41,15 @@ class AuthControllers {
 		next();
 	}
 
+	/**
+	 * Logs in the user using the provided email and password.
+	 * @async
+	 * @function logIn
+	 * @param {Object} req - The request object.
+	 * @param {Object} res - The response object.
+	 * @param {function} next - The next middleware function.
+	 * @returns {void}
+	 */
 	static async logIn(req, res, next) {
 		const { email, password } = await validateInput(AuthValidators.login, req.body);
 
@@ -27,6 +58,15 @@ class AuthControllers {
 		next();
 	}
 
+	/**
+	 * Logs out the user using the provided accountId and accessToken.
+	 * @async
+	 * @function logOut
+	 * @param {Object} req - The request object.
+	 * @param {Object} res - The response object.
+	 * @param {function} next - The next middleware function.
+	 * @returns {void}
+	 */
 	static async logOut(req, res, next) {
 		req.result = await AuthServices.logOut({
 			accountId: req.accountId,

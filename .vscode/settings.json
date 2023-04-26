@@ -1,6 +1,4 @@
 {
-    "dotenv.enableAutocloaking": false,
-    "cSpell.words": [
-        "Middlewares"
-    ]
+	"dotenv.enableAutocloaking": false,
+	"cSpell.words": ["Middlewares"]
 }
