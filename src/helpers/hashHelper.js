@@ -16,7 +16,7 @@ class HashHelper {
 	 */
 	static async generate(plainText, saltRounds = 12) {
 		if (typeof plainText !== "string") {
-			throw new Error("Plain text must be a string");
+			plainText = plainText.toString();
 		}
 
 		return await bcrypt.hash(plainText, saltRounds);

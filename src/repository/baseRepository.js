@@ -131,7 +131,7 @@ class BaseRepository {
 	 * @returns {Promise<Object>} A promise that resolves to the deleted document if found, otherwise resolves to null
 	 */
 	async deleteById(documentId) {
-		return this.model.findByIdAndDelete(documentId).lean();
+		return this.model.findByIdAndDelete(documentId);
 	}
 
 	/**
@@ -141,7 +141,7 @@ class BaseRepository {
 	 * @returns {Promise<Object>} A promise that resolves to the deleted document if found, otherwise resolves to null
 	 */
 	async deleteOne(filter) {
-		return this.model.findOneAndDelete(filter).lean();
+		return this.model.findOneAndDelete(filter);
 	}
 
 	/**
@@ -152,7 +152,7 @@ class BaseRepository {
 	 */
 
 	async deleteMany(filter) {
-		return this.model.deleteMany(filter).lean();
+		return this.model.deleteMany(filter);
 	}
 }
 

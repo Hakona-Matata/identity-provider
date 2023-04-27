@@ -16,10 +16,10 @@ module.exports = async (req, res, next) => {
 	const accessToken = req?.headers["authorization"]?.split(" ")[1];
 
 	if (!accessToken) {
-		throw new NotFoundException("Sorry, the access token is not found");
+		throw new NotFoundException("Sorry, the access token is not found!");
 	}
 
-	const { accountId, role, origin } = await TokenHelper.verifyAccessToken(accessToken);
+	const { accountId, origin } = await TokenHelper.verifyAccessToken(accessToken);
 
 	const isSessionFound = await SessionServices.findOne({ accountId, accessToken });
 
@@ -28,7 +28,6 @@ module.exports = async (req, res, next) => {
 	}
 
 	req.accountId = accountId;
-	req.accountRole = role;
 	req.accessToken = accessToken;
 	req.tokenOrigin = origin;
 

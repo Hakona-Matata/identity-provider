@@ -1,5 +1,3 @@
-const { describe, it, expect } = require("jest");
-
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 const { app } = require("../../../app");
@@ -19,7 +17,7 @@ const fakeUser = {
 	confirmPassword: "teTE!@12",
 };
 
-describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
+describe(`Auth API - Sign up endpoint ${baseURL}`, () => {
 	it("Should return 200 status code and create a new user successfully", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -32,7 +30,7 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: SIGN_UP_SUCCESSFULLY,
+			result: SIGN_UP_SUCCESSFULLY,
 		});
 	});
 
@@ -53,7 +51,7 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: "Sorry, this userName may be already taken!",
+			message: "Sorry, the userName may be already taken!",
 		});
 	});
 
@@ -74,7 +72,7 @@ describe(`Auth API - Sign up endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: "Sorry, this email may be already taken!",
+			message: "Sorry, the email may be already taken!",
 		});
 	});
 

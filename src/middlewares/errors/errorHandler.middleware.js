@@ -7,23 +7,20 @@ const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../consta
  * @param {Error} error - The error object.
  * @param {import('express').Request} req - The Express request object.
  * @param {import('express').Response} res - The Express response object.
+ * @param {Function} next - The next middleware function.
  */
-module.exports = async (error, req, res) => {
-	let statusCode = httpStatusCodeNumbers.INTERNAL_SERVER_ERROR;
-	let errorCode = httpStatusCodeStrings.INTERNAL_SERVER_ERROR;
-	let errorMessage = "Sorry, an internal server error occurred!";
+module.exports = async (error, req, res, next) => {
+	console.log({ error });
+	console.log({ name: error.name, code: error.code, message: error.message, details: error.details });
+
+	let statusCode, errorCode, errorMessage;
 
 	switch (error.name) {
 		case "JsonWebTokenError":
-			statusCode = httpStatusCodeNumbers.UNAUTHORIZED;
-			errorCode = httpStatusCodeStrings.UNAUTHORIZED;
-			errorMessage = "Sorry, the given token is invalid!";
-			break;
-
 		case "TokenExpiredError":
 			statusCode = httpStatusCodeNumbers.UNAUTHORIZED;
 			errorCode = httpStatusCodeStrings.UNAUTHORIZED;
-			errorMessage = "Sorry, the given token has expired!";
+			errorMessage = `Sorry, the given token ${error.name === "JsonWebTokenError" ? "is invalid" : "has expired"}!`;
 			break;
 
 		case "ValidationError":
@@ -36,7 +33,7 @@ module.exports = async (error, req, res) => {
 			if (error.code === 11000) {
 				statusCode = httpStatusCodeNumbers.UNPROCESSABLE_ENTITY;
 				errorCode = httpStatusCodeStrings.UNPROCESSABLE_ENTITY;
-				errorMessage = Object.keys(error.keyValue).map((field) => `Sorry, the ${field} may already be taken!`)[0];
+				errorMessage = Object.keys(error.keyValue).map((field) => `Sorry, the ${field} may be already taken!`)[0];
 			}
 			break;
 
@@ -54,25 +51,25 @@ module.exports = async (error, req, res) => {
 			errorMessage = `Sorry, the ${error.path} is not a valid ID`;
 			break;
 
-		case "Error":
-			statusCode = error.statusCode;
-			errorCode = error.errorCode;
-			errorMessage = error.message;
-			break;
-
 		default:
 			// TODO: Remove this after everything is okay!
 			console.log("Unhandled error!!!!!!!!!!!!!!!");
 			console.log("--------------------------------------------");
-			console.log({ error });
 			console.log({ name: error.name, code: error.code, message: error.message });
 			console.log("--------------------------------------------");
+			statusCode = error.statusCode || httpStatusCodeNumbers.INTERNAL_SERVER_ERROR;
+			errorCode = error.errorCode || httpStatusCodeStrings.INTERNAL_SERVER_ERROR;
+			errorMessage = error.message || "Sorry, an internal server error occurred!";
 	}
 
-	return res.status(statusCode).json({
-		success: false,
-		status: statusCode,
-		code: errorCode,
-		message: errorMessage,
-	});
+	if (error) {
+		return res.status(statusCode).json({
+			success: false,
+			status: statusCode,
+			code: errorCode,
+			message: errorMessage,
+		});
+	}
+
+	next();
 };

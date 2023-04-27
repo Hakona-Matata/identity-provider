@@ -32,6 +32,7 @@ module.exports = {
 	 * @property {string} ACCOUNT_CREATION_FAILED - Sorry, we couldn't create your account!
 	 * @property {string} ACCOUNT_DELETION_FAILED - sorry, the account deletion process failed!
 	 * @property {string} ACCOUNT_NOT_FOUND - Sorry, the account is not found!
+	 * @property {string} ACCOUNT_IS_DELETED - Sorry, the account is deleted!
 	 */
 	FAILURE_MESSAGES: {
 		ACCOUNT_NEED_TO_BE_VERIFIED: "Sorry, your email address isn't verified yet!",
@@ -42,5 +43,6 @@ module.exports = {
 		ACCOUNT_CREATION_FAILED: "Sorry, we couldn't create your account!",
 		ACCOUNT_DELETION_FAILED: "sorry, the account deletion process failed!",
 		ACCOUNT_NOT_FOUND: "Sorry, the account is not found!",
+		ACCOUNT_IS_DELETED: "Sorry, the account is deleted!",
 	},
 };
