@@ -20,6 +20,7 @@ const {
 		ACCOUNT_CREATION_FAILED,
 		ACCOUNT_DELETION_FAILED,
 		ACCOUNT_NOT_FOUND,
+		ACCOUNT_IS_DELETED,
 	},
 } = require("./account.constants");
 
@@ -148,8 +149,9 @@ class AccountServices {
 	 * @returns {void}
 	 */
 
-	static isAccountVerifiedActive(account) {
+	static isAccountVerifiedNotDeletedActive(account) {
 		AccountServices.isAccountVerified(account.isVerified);
+		AccountServices.isAccountDeleted(account.isDeleted);
 		AccountServices.isAccountActive(account.isActive);
 	}
 
@@ -176,6 +178,19 @@ class AccountServices {
 	static isAccountActive(isActive) {
 		if (!isActive) {
 			throw new UnAuthorizedException(ACCOUNT_NEED_TO_BE_ACTIVE);
+		}
+	}
+
+	/**
+	 * Checks if the account is deleted and throws an exception if it is.
+	 *
+	 * @param {boolean} isActive - A boolean value indicating if the account is deleted.
+	 * @throws {UnAuthorizedException} Throws an exception if the account is deleted.
+	 * @returns {void}
+	 */
+	static isAccountDeleted(isDeleted) {
+		if (isDeleted) {
+			throw new UnAuthorizedException(ACCOUNT_IS_DELETED);
 		}
 	}
 

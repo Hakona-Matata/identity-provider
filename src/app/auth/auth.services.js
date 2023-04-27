@@ -90,7 +90,7 @@ class AuthServices {
 			throw new UnAuthorizedException(WRONG_EMAIL_OR_PASSWORD);
 		}
 
-		AccountServices.isAccountVerifiedActive(account);
+		AccountServices.isAccountVerifiedNotDeletedActive(account);
 
 		const isPasswordCorrect = await HashHelper.verify(data.password, account.password);
 

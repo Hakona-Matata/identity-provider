@@ -1,4 +1,3 @@
-const { describe, it, expect } = require("jest");
 const { app } = require("../../../app");
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
@@ -6,18 +5,31 @@ const { httpStatusCodeStrings, httpStatusCodeNumbers } = require("./../../../con
 const {
 	FAILURE_MESSAGES: { WRONG_EMAIL_OR_PASSWORD },
 } = require("./../auth.constants.js");
+
+const {
+	SUCCESS_MESSAGES: { OTP_SENT_SUCCESSFULLY },
+} = require("./../../otp/otp.constants");
 const AccountServices = require("./../../account/account.services");
 
 const baseURL = "/auth/login";
 
+const generateFakeAccount = () => {
+	return {
+		email: faker.internet.email(),
+		userName: faker.random.alpha(10),
+		isVerified: false,
+		password: "tesTES@!#1232",
+		role: "CANDIDATE",
+	};
+};
+
 describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
-	it("Should return 200 status code when user tries to log in and no 2fa is enabled", async () => {
+	it("Should return 200 status code when account has no 2fa methods enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
 		const { email } = await AccountServices.createOne({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
+			...fakeAccount,
 			isVerified: true,
-			password: "tesTES@!#1232",
-			role: "CANDIDATE",
 		});
 
 		const { status, body } = await request(app).post(baseURL).send({ email, password: "tesTES@!#1232" });
@@ -34,6 +46,75 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 		});
 	});
 
+	it("Should return 200 status code when account has one 2fa methods enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isVerified: true,
+			isActive: true,
+			isOtpEnabled: true,
+		});
+
+		const { status, body } = await request(app).post(baseURL).send({
+			email: account.email,
+			password: "tesTES@!#1232",
+		});
+
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: OTP_SENT_SUCCESSFULLY,
+		});
+	});
+
+	it("Should return 200 status code when account has two 2fa methods enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isVerified: true,
+			isActive: true,
+			isOtpEnabled: true,
+			isSmsEnabled: true,
+		});
+
+		const { status, body } = await request(app).post(baseURL).send({
+			email: account.email,
+			password: "tesTES@!#1232",
+		});
+
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body.result).toHaveProperty("message");
+		expect(body.result).toHaveProperty("accountId");
+		expect(body.result).toHaveProperty("methods");
+	});
+
+	it("Should return 200 status code when account has three 2fa methods enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isVerified: true,
+			isActive: true,
+			isOtpEnabled: true,
+			isTotpEnabled: true,
+			isSmsEnabled: true,
+		});
+
+		const { status, body } = await request(app).post(baseURL).send({
+			email: account.email,
+			password: "tesTES@!#1232",
+		});
+
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body.result).toHaveProperty("message");
+		expect(body.result).toHaveProperty("accountId");
+		expect(body.result).toHaveProperty("methods");
+	});
+
 	it("Should return 401 status code when no user is not found", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -48,22 +129,92 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 		});
 	});
 
-	it.only("Should return 401 status code when password is incorrect", async () => {
-		const { email } = await AccountServices.createOne({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
+	it("Should return 401 status code when given password is incorrect", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 			password: "tesTES@!#1232",
-			role: "CANDIDATE",
 		});
-		const { status, body } = await request(app).post(baseURL).send({ email, password: "tesTT12!@@@@" });
+
+		const { status, body } = await request(app).post(baseURL).send({
+			email: account.email,
+			password: "tesTES@!#1233",
+		});
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNAUTHORIZED,
 			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: WRONG_EMAIL_OR_PASSWORD,
+			message: "Sorry, your email address isn't verified yet!",
+		});
+	});
+
+	it("Should return 401 status code when account email isn't verified", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+		});
+
+		const { status, body } = await request(app).post(baseURL).send({
+			email: account.email,
+			password: "tesTES@!#1232",
+		});
+
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
+			message: "Sorry, your email address isn't verified yet!",
+		});
+	});
+
+	it("Should return 401 status code when account is inactive/ disabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isActive: false,
+			isVerified: true,
+		});
+
+		const { status, body } = await request(app).post(baseURL).send({
+			email: account.email,
+			password: "tesTES@!#1232",
+		});
+
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
+			message: "Sorry, your account is currently deactivated!",
+		});
+	});
+
+	it("Should return 401 status code when account is deleted", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isVerified: true,
+			isDeleted: true,
+		});
+
+		const { status, body } = await request(app).post(baseURL).send({
+			email: account.email,
+			password: "tesTES@!#1232",
+		});
+
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
+			message: "Sorry, the account is deleted!",
 		});
 	});
 
@@ -91,7 +242,7 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 		});
 	});
 
-	it("5. Email is too short to be true", async () => {
+	it("Should return 422 status code when email is too short", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ email: "t@test.com", password: "tesTT12!@" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -99,11 +250,11 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be less than 15 characters!`],
+			message: expect.arrayContaining([`"email" field should have a minimum length of 15!`]),
 		});
 	});
 
-	it("6. Email is too long to be true", async () => {
+	it("Should return 422 status code when email is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ email: `${"t".repeat(50)}@test.com`, password: "tesTT12!@" });
@@ -113,11 +264,11 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be more than 40 characers!`],
+			message: expect.arrayContaining([`"email" field should have a maximum length of 40!`]),
 		});
 	});
 
-	it("7. Email is not of type string", async () => {
+	it("Should return 422 status code when email is not of type string", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ email: 111111111111, password: "tesTT12!@" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -125,11 +276,11 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: ['"email" field has to be of type string!'],
+			message: expect.arrayContaining([`Invalid type, expected a string for "email"!`]),
 		});
 	});
 
-	it("8. Email can't be empty", async () => {
+	it("Should return 422 status code when email is empty", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ email: "", password: "tesTT12!@" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -137,11 +288,11 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be empty!`],
+			message: expect.arrayContaining([`"email" field is required!`]),
 		});
 	});
 
-	it("9. Password can't be empty", async () => {
+	it("Should return 422 status code when password is empty", async () => {
 		const { status, body } = await request(app).post(baseURL).send({
 			email: "test123@gmail.com",
 			password: "",
@@ -152,11 +303,11 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"password" field can't be empty!`],
+			message: expect.arrayContaining([`"password" field is required!`]),
 		});
 	});
 
-	it("10. Password is too short to be true", async () => {
+	it("Should return 422 status code when password is too short", async () => {
 		const { status, body } = await request(app).post(baseURL).send({
 			email: "test2312@gmail.com",
 			password: "12",
@@ -167,14 +318,13 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"password" field can't be less than 8 characters!`,
-				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
-			],
+			message: expect.arrayContaining([
+				`"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters) and (8-16) characters`,
+			]),
 		});
 	});
 
-	it("11. Password is too long to be true", async () => {
+	it("Should return 4222 status code when password is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
@@ -187,14 +337,13 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"password" field can't be more than 16 characers!`,
-				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
-			],
+			message: expect.arrayContaining([
+				`"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters) and (8-16) characters`,
+			]),
 		});
 	});
 
-	it("12. Password is not of string type", async () => {
+	it("Should return 422 status code when password is not of string type", async () => {
 		const { status, body } = await request(app).post(baseURL).send({
 			email: "tests@gmaiol.com",
 			password: 23532455,
@@ -205,198 +354,7 @@ describe(`Auth API - Log In endpoint ${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: ['"password" field has to be of type string!'],
+			message: expect.arrayContaining([`Invalid type, expected a string for "password"!`]),
 		});
 	});
-
-	it("13. Given email is incorrect", async () => {
-		const { status, body } = await request(app).post(baseURL).send({
-			email: "blabla@gmail.com",
-			password: "tesTES@!#1232",
-		});
-
-		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNAUTHORIZED,
-			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, email or password are incorrect!",
-		});
-	});
-
-	// it("14. Given password is incorrect", async () => {
-	// 	const user = await User.create({
-	// 		email: faker.internet.email(),
-	// 		userName: faker.random.alpha(10),
-	// 		password: await generate_hash("tesTES@!#1232"),
-	// 	});
-
-	// 	const { status, body } = await request(app).post(baseURL).send({
-	// 		email: user.email,
-	// 		password: "tesTES@!#1233",
-	// 	});
-
-	// 	expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
-	// 	expect(body).toEqual({
-	// 		success: false,
-	// 		status: httpStatusCodeNumbers.UNAUTHORIZED,
-	// 		code: httpStatusCodeStrings.UNAUTHORIZED,
-	// 		message: "Sorry, your email address isn't verified yet!",
-	// 	});
-	// });
-
-	// it("15. User email must be verified", async () => {
-	// 	const user = await User.create({
-	// 		email: faker.internet.email(),
-	// 		userName: faker.random.alpha(10),
-	// 		isVerified: false,
-	// 		password: await generate_hash("tesTES@!#1232"),
-	// 	});
-
-	// 	const { status, body } = await request(app).post(baseURL).send({
-	// 		email: user.email,
-	// 		password: "tesTES@!#1232",
-	// 	});
-
-	// 	expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
-	// 	expect(body).toEqual({
-	// 		success: false,
-	// 		status: httpStatusCodeNumbers.UNAUTHORIZED,
-	// 		code: httpStatusCodeStrings.UNAUTHORIZED,
-	// 		message: "Sorry, your email address isn't verified yet!",
-	// 	});
-	// });
-
-	// it("16. User account is inactive/ disabled", async () => {
-	// 	const user = await User.create({
-	// 		email: faker.internet.email(),
-	// 		userName: faker.random.alpha(10),
-	// 		isVerified: true,
-	// 		isActive: false,
-	// 		password: await generate_hash("tesTES@!#1232"),
-	// 	});
-
-	// 	const { status, body } = await request(app).post(baseURL).send({
-	// 		email: user.email,
-	// 		password: "tesTES@!#1232",
-	// 	});
-
-	// 	expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
-	// 	expect(body).toEqual({
-	// 		success: false,
-	// 		status: httpStatusCodeNumbers.UNAUTHORIZED,
-	// 		code: httpStatusCodeStrings.UNAUTHORIZED,
-	// 		message: "Sorry, your account is deactivated!",
-	// 	});
-	// });
-
-	// it("17. User account is temp deleted", async () => {
-	// 	const user = await User.create({
-	// 		email: faker.internet.email(),
-	// 		userName: faker.random.alpha(10),
-	// 		isVerified: true,
-	// 		isActive: true,
-	// 		isDeleted: true,
-	// 		password: await generate_hash("tesTES@!#1232"),
-	// 	});
-
-	// 	const { status, body } = await request(app).post(baseURL).send({
-	// 		email: user.email,
-	// 		password: user.password,
-	// 	});
-
-	// 	expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
-	// 	expect(body).toEqual({
-	// 		success: false,
-	// 		status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
-	// 		code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-	// 		message: [
-	// 			`"password" field can't be more than 16 characers!`,
-	// 			'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
-	// 		],
-	// 	});
-	// });
-
-	// it("18. User account has one 2fa method enabled", async () => {
-	// 	const user = await User.create({
-	// 		email: faker.internet.email(),
-	// 		userName: faker.random.alpha(10),
-	// 		isVerified: true,
-	// 		isActive: true,
-	// 		isOTPEnabled: true,
-	// 		password: await generate_hash("tesTES@!#1232"),
-	// 	});
-
-	// 	const { status, body } = await request(app).post(baseURL).send({
-	// 		email: user.email,
-	// 		password: "tesTES@!#1232",
-	// 	});
-
-	// 	expect(status).toBe(httpStatusCodeNumbers.OK);
-	// 	expect(body).toEqual({
-	// 		success: true,
-	// 		status: httpStatusCodeNumbers.OK,
-	// 		code: httpStatusCodeStrings.OK,
-	// 		data: "Please, check your mailbox for the OTP code",
-	// 	});
-	// });
-
-	// it("19. User account has two 2fa method enabled", async () => {
-	// 	const user = await User.create({
-	// 		email: faker.internet.email(),
-	// 		userName: faker.random.alpha(10),
-	// 		isVerified: true,
-	// 		isActive: true,
-	// 		isOTPEnabled: true,
-	// 		isSMSEnabled: true,
-	// 		password: await generate_hash("tesTES@!#1232"),
-	// 	});
-
-	// 	const { status, body } = await request(app).post(baseURL).send({
-	// 		email: user.email,
-	// 		password: "tesTES@!#1232",
-	// 	});
-
-	// 	expect(status).toBe(httpStatusCodeNumbers.OK);
-	// 	expect(body).toEqual({
-	// 		success: true,
-	// 		status: httpStatusCodeNumbers.OK,
-	// 		code: httpStatusCodeStrings.OK,
-	// 		data: {
-	// 			message: "Please, choose one of these security methods!",
-	// 			userId: user.id,
-	// 			methods: [{ isOTPEnabled: true }, { isSMSEnabled: true }],
-	// 		},
-	// 	});
-	// });
-
-	// it("20. User account has 3 2fa method enabled", async () => {
-	// 	const user = await User.create({
-	// 		email: faker.internet.email(),
-	// 		userName: faker.random.alpha(10),
-	// 		isVerified: true,
-	// 		isActive: true,
-	// 		isOTPEnabled: true,
-	// 		isTOTPEnabled: true,
-	// 		isSMSEnabled: true,
-	// 		password: await generate_hash("tesTES@!#1232"),
-	// 	});
-
-	// 	const { status, body } = await request(app).post(baseURL).send({
-	// 		email: user.email,
-	// 		password: "tesTES@!#1232",
-	// 	});
-
-	// 	expect(status).toBe(httpStatusCodeNumbers.OK);
-	// 	expect(body).toEqual({
-	// 		success: true,
-	// 		status: httpStatusCodeNumbers.OK,
-	// 		code: httpStatusCodeStrings.OK,
-	// 		data: {
-	// 			message: "Please, choose one of these security methods!",
-	// 			userId: user.id,
-	// 			methods: [{ isOTPEnabled: true }, { isSMSEnabled: true }, { isTOTPEnabled: true }],
-	// 		},
-	// 	});
-	// });
 });

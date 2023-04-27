@@ -49,11 +49,12 @@ const userName = Joi.string()
  */
 const password = Joi.string()
 	.trim()
-	.min(8)
-	.max(16)
 	.pattern(new RegExp("^(?=(.*[a-z]){2,})(?=(.*[A-Z]){2,})(?=(.*[0-9]){2,})(?=(.*[!@#$%^&*()-__+.]){2,}).{8,16}$"))
 	.required()
-	.messages({ ...validationMessages });
+	.messages({
+		...validationMessages,
+		"string.pattern.base": `"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters) and (8-16) characters`,
+	});
 
 /**
  * Joi validation schema for confirmPassword.
