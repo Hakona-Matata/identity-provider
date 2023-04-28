@@ -1,29 +1,40 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+const {
+	SUCCESS_MESSAGES: { DEACTIVATED_SUCCESSFULLY },
+} = require("./../account.constants.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
-const app = require("../../../src/server");
-const { generate_hash } = require("./../../../src/helpers/hash");
+const { app } = require("../../../app");
 
-const User = require("./../../../src/app/Models/User.model");
+const AccountServices = require("./../account.services.js");
 
 const baseURL = "/auth/account/deactivate";
 
-describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
-	it("1. Deactivate account successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Deactivate account endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status when deactivates account successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
 		const { status, body } = await request(app).put(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
@@ -32,41 +43,40 @@ describe(`"PUT" ${baseURL} - Deactivate User Account`, () => {
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: "Account deactivated successfully!",
+			result: DEACTIVATED_SUCCESSFULLY,
 		});
 	});
 
-	it(`2. Account is already deactivated`, async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
+	it(`Should return 401 status code when account is already deactivated`, async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 			isActive: false,
-			password: await generate_hash("tesTES@!#1232"),
 		});
 
 		const { status, body } = await request(app)
 			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+			.send({ email: account.email, password: fakeAccount.password });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNAUTHORIZED,
 			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, your account is deactivated!",
+			message: "Sorry, your account is currently deactivated!",
 		});
 	});
 
-	it(`3. Deactivate account route is private`, async () => {
+	it(`Should return 404 status code when no access token is found`, async () => {
 		const { status, body } = await request(app).put(baseURL);
 
-		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
 		expect(body).toEqual({
 			success: false,
-			status: httpStatusCodeNumbers.UNAUTHORIZED,
-			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, the access token is required!",
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
 		});
 	});
 });

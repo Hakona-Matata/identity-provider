@@ -26,9 +26,9 @@ const {
 
 const {
 	BadRequestException,
-	UnAuthorizedException,
 	InternalServerException,
 	NotFoundException,
+	ForbiddenException,
 } = require("./../../exceptions/index");
 
 /**
@@ -67,7 +67,8 @@ class AccountServices {
 
 		account && account.isActive && AccountServices.#isAccountAlreadyActive(account.isActive);
 
-		await AccountServices.isVerified(account.isVerified);
+		await AccountServices.isAccountVerified(account.isVerified);
+		await AccountServices.isAccountDeleted(account.isDeleted);
 
 		await AccountServices.#hasValidActivationToken(account.activationToken);
 
@@ -101,7 +102,8 @@ class AccountServices {
 		await AccountServices.#isAccountAlreadyActive(account.isActive);
 
 		await AccountServices.isAccountVerified(account.isVerified);
-
+		await AccountServices.isAccountDeleted(account.isDeleted);
+		
 		await AccountServices.updateOne(
 			{ _id: accountId },
 			{ isActive: true, activeStatusChangedAt: new Date() },
@@ -164,7 +166,7 @@ class AccountServices {
 	 */
 	static isAccountVerified(isVerified) {
 		if (!isVerified) {
-			throw new UnAuthorizedException(ACCOUNT_NEED_TO_BE_VERIFIED);
+			throw new ForbiddenException(ACCOUNT_NEED_TO_BE_VERIFIED);
 		}
 	}
 
@@ -177,7 +179,7 @@ class AccountServices {
 	 */
 	static isAccountActive(isActive) {
 		if (!isActive) {
-			throw new UnAuthorizedException(ACCOUNT_NEED_TO_BE_ACTIVE);
+			throw new ForbiddenException(ACCOUNT_NEED_TO_BE_ACTIVE);
 		}
 	}
 
@@ -190,7 +192,7 @@ class AccountServices {
 	 */
 	static isAccountDeleted(isDeleted) {
 		if (isDeleted) {
-			throw new UnAuthorizedException(ACCOUNT_IS_DELETED);
+			throw new ForbiddenException(ACCOUNT_IS_DELETED);
 		}
 	}
 
@@ -203,7 +205,7 @@ class AccountServices {
 	 */
 	static #isAccountAlreadyActive(isActive) {
 		if (isActive) {
-			throw new BadRequestException(ACCOUNT_ALREADY_ACTIVE);
+			throw new ForbiddenException(ACCOUNT_ALREADY_ACTIVE);
 		}
 	}
 

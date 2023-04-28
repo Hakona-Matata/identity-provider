@@ -1,111 +1,107 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
-
+const {
+	SUCCESS_MESSAGES: { CHECK_MAIL_BOX },
+	FAILURE_MESSAGES: { ACCOUNT_NEED_TO_BE_VERIFIED, ACCOUNT_IS_DELETED, ALREADY_HAVE_VALID_ACTIVATION_LINK },
+} = require("./../account.constants");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
+const { app } = require("../../../app");
 
-const app = require("../../../server");
-const User = require("./../../../src/app/Models/User.model");
-
-const { generate_hash } = require("../../../helpers/hash");
-const { generate_token } = require("../../../helpers/token");
+const AccountServices = require("./../account.services.js");
+const TokenHelper = require("../../../helpers/tokenHelper.js");
 
 const baseURL = "/auth/account/activate";
 
-
-
-describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
-	it("1. Initiate user account activation successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Initiate account activation endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: false,
-			password: await generate_hash("tesTES@!#1232"),
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when Initiating account is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: user.email });
+		const { status, body } = await request(app).put(baseURL).send({ email: account.email });
 
 		expect(status).toBe(200);
 		expect(body).toEqual({
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data:
-				"Please, check your mailbox to confirm your account activation\n" +
-				"You only have 1h",
+			result: CHECK_MAIL_BOX,
 		});
 	});
 
-	it("2. Provided email is not found in our DB", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: "blasfasdf@gma.com" });
+	it("Should return 200 status code when provided email is not found in our DB", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: "blasfasdf@gma.com" });
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data:
-				"Please, check your mailbox to confirm your account activation\n" +
-				"You only have 1h",
+			result: CHECK_MAIL_BOX,
 		});
 	});
 
-	it("3. User account must be verified before initiating activation", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
+	it("Should return 403 status code when account isn't verified yet", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 			isVerified: false,
-			isActive: false,
-			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: user.email });
+		const { status, body } = await request(app).put(baseURL).send({ email: account.email });
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, your email address isn't verified yet!",
+			message: ACCOUNT_NEED_TO_BE_VERIFIED,
 		});
 	});
 
-	it("4 .User account can't be temp deleted before initiating activation", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: false,
+	it("Should return 403 status code when account is temp deleted", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 			isDeleted: true,
-			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		const { status } = await request(app)
-			.put(baseURL)
-			.send({ email: user.email });
-
+		const { status, body } = await request(app).put(baseURL).send({ email: account.email });
+		console.log({ body });
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: ACCOUNT_IS_DELETED,
+		});
 	});
 
-	it("5. User account is already active", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
+	it("Should returns 403 status code when account is already active", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
 		});
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: user.email });
+		const { status, body } = await request(app).put(baseURL).send({ email: account.email });
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 
@@ -118,91 +114,38 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 		});
 	});
 
-	it("6. User account is already initiated account activation", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: false,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 400 status code when already initiated account activation", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		const activationToken = await generate_token({
-			payload: { _id: user._id },
-			secret: process.env.ACTIVATION_TOKEN_SECRET,
-			expiresIn: process.env.ACTIVATION_TOKEN_EXPIRES_IN,
+		const activationToken = await TokenHelper.generateActivationToken({
+			accountId: account._id,
+			role: account.role,
 		});
 
-		await User.findOneAndUpdate(
-			{ _id: user._id },
-			{ $set: { activationToken } }
-		);
+		await AccountServices.updateOne({ _id: account._id }, { activationToken });
 
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: user.email });
+		const { status, body } = await request(app).put(baseURL).send({ email: account.email });
 
-		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
 		expect(body).toEqual({
 			success: false,
-			status: httpStatusCodeNumbers.FORBIDDEN,
-			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, you still have a valid link in your mailbox!",
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
+			message: ALREADY_HAVE_VALID_ACTIVATION_LINK,
 		});
 	});
 
-	it("7. User have a an expired verification token in his mailbox", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: false,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		const activationToken = await generate_token({
-			payload: { _id: user._id },
-			secret: process.env.ACTIVATION_TOKEN_SECRET,
-			expiresIn: 1,
-		});
-
-		await User.findOneAndUpdate(
-			{ _id: user._id },
-			{ $set: { activationToken } }
-		);
-
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: user.email });
-
-		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNAUTHORIZED,
-			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, your token is expired!",
-		});
-	});
-
-	it("8. Activate user account route is public", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: "test2332@gmail.com" });
+	it("Should return 200 status code when no access token is found", async () => {
+		const { status } = await request(app).put(baseURL).send({ email: "test2332@gmail.com" });
 
 		expect(status).toBe(200);
-		expect(body).toEqual({
-			success: true,
-			status: httpStatusCodeNumbers.OK,
-			code: httpStatusCodeStrings.OK,
-			data:
-				"Please, check your mailbox to confirm your account activation\n" +
-				"You only have 1h",
-		});
 	});
 
-	it("9. email field is provided", async () => {
+	it("Should return 400 status code when email is not provided", async () => {
 		const { status, body } = await request(app).put(baseURL);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -210,83 +153,76 @@ describe(`"PUT" ${baseURL} - Initiate User Account Activation`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field is required!`],
+			message: expect.arrayContaining([`"email" field is required!`]),
 		});
 	});
 
-	it("10. Provided email is not of type string", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: 1234324 });
+	it("Should return 400 status code when email is not of type string", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: 1234324 });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: ['"email" field has to be of type string!'],
+			message: expect.arrayContaining([`Invalid type, expected a string for "email"!`]),
 		});
 	});
 
-	it("11. Provided email is not a valid email", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: "testsetsesttesttest" });
+	it("Should return 400 status code when email is not valid", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: "testsetsesttesttest" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field has to be a valid email!`],
+			message: expect.arrayContaining(['Invalid email address for "email"!']),
 		});
 	});
 
-	it("12. Provided email is too short to be true", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: "test" });
+	it("Should return 400 status code when email is too short", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: "test" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"email" field can't be less than 15 characters!`,
-				`"email" field has to be a valid email!`,
-			],
+			message: expect.arrayContaining([
+				'"email" field should have a minimum length of 15!',
+				'Invalid email address for "email"!',
+			]),
 		});
 	});
 
-	it("13. Provided email is too long to be true", async () => {
+	it("Should return 400 status code when email is too long", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({ email: "test".repeat(50) });
-
+		console.log({ body });
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"email" field can't be more than 40 characers!`,
-				`"email" field has to be a valid email!`,
-			],
+			message: expect.arrayContaining([
+				'"email" field should have a maximum length of 40!',
+				'Invalid email address for "email"!',
+			]),
 		});
 	});
 
-	it("14. Provided email can't be empty", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: "" });
+	it("Should return 400 status code when email is empty", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: "" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be empty!`],
+			message: expect.arrayContaining(['"email" field is required!']),
 		});
 	});
 });

@@ -31,7 +31,7 @@ const router = express.Router();
  * @param {callback} middleware[1] - isVerified middleware function
  * @param {callback} middleware[2] - AccountControllers.deactivate middleware function
  */
-router.route("/deactivate").put([isAuthenticated, isVerified], deactivate);
+router.route("/deactivate").put([isAuthenticated, isVerified, isActive], deactivate);
 
 /**
  * Initiates the activation process for a user account
