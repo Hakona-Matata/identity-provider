@@ -102,7 +102,8 @@ class AccountServices {
 		await AccountServices.#isAccountAlreadyActive(account.isActive);
 
 		await AccountServices.isAccountVerified(account.isVerified);
-
+		await AccountServices.isAccountDeleted(account.isDeleted);
+		
 		await AccountServices.updateOne(
 			{ _id: accountId },
 			{ isActive: true, activeStatusChangedAt: new Date() },
