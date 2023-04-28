@@ -6,13 +6,13 @@
 const express = require("express");
 
 const { enable, confirm, disable, verify } = require("./otp.controllers");
-const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
+const { isAuthenticated, isVerified, isActive, isNotDeleted } = require("./../../middlewares/index");
 
 const router = express.Router();
 
 /**
  * Enable OTP for a user account.
- * 
+ *
  * @name GET/api/otp/enable
  * @function
  * @memberof module:otpRouter
@@ -22,11 +22,11 @@ const router = express.Router();
  * @param {Object} res - Express response object.
  * @param {Function} next - Express next middleware function.
  */
-router.route("/enable").get([isAuthenticated, isVerified, isActive], enable);
+router.route("/enable").get([isAuthenticated, isVerified, isNotDeleted, isActive], enable);
 
 /**
  * Confirm OTP code for a user account.
- * 
+ *
  * @name POST/api/otp/confirm
  * @function
  * @memberof module:otpRouter
@@ -38,11 +38,11 @@ router.route("/enable").get([isAuthenticated, isVerified, isActive], enable);
  * @param {Object} res - Express response object.
  * @param {Function} next - Express next middleware function.
  */
-router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirm);
+router.route("/confirm").post([isAuthenticated, isVerified, isNotDeleted, isActive], confirm);
 
 /**
  * Disable OTP for a user account.
- * 
+ *
  * @name DELETE/api/otp/disable
  * @function
  * @memberof module:otpRouter
@@ -52,11 +52,11 @@ router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirm);
  * @param {Object} res - Express response object.
  * @param {Function} next - Express next middleware function.
  */
-router.route("/disable").delete([isAuthenticated, isVerified, isActive], disable);
+router.route("/disable").delete([isAuthenticated, isVerified, isNotDeleted, isActive], disable);
 
 /**
  * Verify OTP code for a user account during login.
- * 
+ *
  * @name POST/api/otp/verify
  * @function
  * @memberof module:otpRouter

@@ -6,7 +6,7 @@
 const express = require("express");
 
 const { enable, confirm, disable, verify } = require("./sms.controllers");
-const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
+const { isAuthenticated, isVerified, isActive,isNotDeleted } = require("./../../middlewares/index");
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ const router = express.Router();
  * @param {middleware} isActive - Middleware function to check if the user's account is active.
  * @param {function} enable - Controller function to enable the OTP over SMS feature.
  */
-router.route("/enable").post([isAuthenticated, isVerified, isActive], enable);
+router.route("/enable").post([isAuthenticated, isVerified, isNotDeleted, isActive], enable);
 
 /**
  * Route for confirming the OTP over SMS feature.
@@ -34,7 +34,7 @@ router.route("/enable").post([isAuthenticated, isVerified, isActive], enable);
  * @param {middleware} isActive - Middleware function to check if the user's account is active.
  * @param {function} confirm - Controller function to confirm the OTP over SMS feature.
  */
-router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirm);
+router.route("/confirm").post([isAuthenticated, isVerified, isNotDeleted, isActive], confirm);
 
 /**
  * Route for disabling the OTP over SMS feature.
@@ -47,7 +47,7 @@ router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirm);
  * @param {middleware} isActive - Middleware function to check if the user's account is active.
  * @param {function} disable - Controller function to disable the OTP over SMS feature.
  */
-router.route("/disable").delete([isAuthenticated, isVerified, isActive], disable);
+router.route("/disable").delete([isAuthenticated, isVerified, isNotDeleted, isActive], disable);
 
 /**
  * Route for verifying the OTP sent over SMS.

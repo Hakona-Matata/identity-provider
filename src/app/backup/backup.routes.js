@@ -1,7 +1,7 @@
 const express = require("express");
 
 const { initiateEnabling, confirmEnabling, disable, regenerate, verify } = require("./backup.controllers");
-const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
+const { isAuthenticated, isVerified, isActive ,isNotDeleted } = require("./../../middlewares/index");
 
 /**
  * Express router for backup-related routes.
@@ -19,7 +19,7 @@ const router = express.Router();
  * @param {function[]} middleware - Array of middleware functions to execute.
  * @param {function} handler - Express request handler function.
  */
-router.route("/initiate").post([isAuthenticated, isVerified, isActive], initiateEnabling);
+router.route("/initiate").post([isAuthenticated, isVerified, isNotDeleted, isActive], initiateEnabling);
 
 /**
  * Route for confirming backup enabling.
@@ -31,7 +31,7 @@ router.route("/initiate").post([isAuthenticated, isVerified, isActive], initiate
  * @param {function[]} middleware - Array of middleware functions to execute.
  * @param {function} handler - Express request handler function.
  */
-router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirmEnabling);
+router.route("/confirm").post([isAuthenticated, isVerified, isNotDeleted, isActive], confirmEnabling);
 
 /**
  * Route for disabling backup.
@@ -43,7 +43,7 @@ router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirmEn
  * @param {function[]} middleware - Array of middleware functions to execute.
  * @param {function} handler - Express request handler function.
  */
-router.route("/disable").delete([isAuthenticated, isVerified, isActive], disable);
+router.route("/disable").delete([isAuthenticated, isVerified, isNotDeleted, isActive],disable);
 
 /**
  * Route for regenerating backup.
@@ -55,7 +55,7 @@ router.route("/disable").delete([isAuthenticated, isVerified, isActive], disable
  * @param {function[]} middleware - Array of middleware functions to execute.
  * @param {function} handler - Express request handler function.
  */
-router.route("/regenerate").post([isAuthenticated, isVerified, isActive], regenerate);
+router.route("/regenerate").post([isAuthenticated, isVerified, isNotDeleted, isActive],regenerate);
 
 /**
  * Route for verifying backup.

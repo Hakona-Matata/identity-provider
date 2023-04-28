@@ -7,7 +7,7 @@
 const express = require("express");
 
 const { findAll, cancel, renew, validate } = require("./session.controllers");
-const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
+const { isAuthenticated, isVerified, isActive ,isNotDeleted} = require("./../../middlewares/index");
 
 /**
  * Express router to mount session related functions on.
@@ -32,7 +32,7 @@ const router = express.Router();
 
 router
 	.route("/")
-	.get([isAuthenticated, isVerified, isActive], findAll)
+	.get([isAuthenticated, isVerified, isNotDeleted, isActive], findAll)
 	/**
 	 * Route serving to cancel an active session of an authenticated account.
 	 * @name post/sessions
@@ -44,7 +44,7 @@ router
 	 * @param {function} middleware - isActive middleware function.
 	 * @param {Callback} controller - cancel controller function.
 	 */
-	.post([isAuthenticated, isVerified, isActive], cancel);
+	.post([isAuthenticated, isVerified, isNotDeleted, isActive], cancel);
 
 /**
  * Route serving to renew an expired access token.
