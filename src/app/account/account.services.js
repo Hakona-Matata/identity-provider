@@ -103,7 +103,7 @@ class AccountServices {
 
 		await AccountServices.isAccountVerified(account.isVerified);
 		await AccountServices.isAccountDeleted(account.isDeleted);
-		
+
 		await AccountServices.updateOne(
 			{ _id: accountId },
 			{ isActive: true, activeStatusChangedAt: new Date() },
@@ -126,19 +126,24 @@ class AccountServices {
 	}
 
 	/**
-	 * Cancels the account termination by setting its 'isDeleted' field to false.
+	 * Cancels the termination process of the authenticated user's account.
 	 *
-	 * @param {string} accountId - The ID of the account whose termination is to be canceled.
-	 * @returns {string} A success message indicating that the account termination was canceled successfully.
+	 * @param {string} email - The email of the account to cancel the deletion.
+	 * @returns {Promise<string>} A promise that resolves to a string indicating the cancellation of the account deletion.
+	 * @throws {BadRequestException} If the account is already deleted or not found.
 	 */
-	static async cancelTermination(accountId) {
-		const foundAccount = await AccountServices.findById(accountId);
+	static async cancelTermination(email) {
+		const foundAccount = await AccountServices.findOne({ email });
+
+		if (!foundAccount) {
+			throw new BadRequestException(ACCOUNT_IS_DELETED);
+		}
 
 		if (!foundAccount.isDeleted) {
 			throw new BadRequestException(ALREADY_CANCELED_ACCOUNT_DELETION);
 		}
 
-		await AccountServices.updateOne({ _id: accountId }, { isDeleted: false }, { isDeletedAt: 1 });
+		await AccountServices.updateOne({ _id: foundAccount._id }, { isDeleted: false }, { isDeletedAt: 1 });
 
 		return CANCELED_ACCOUNT_DELETION;
 	}

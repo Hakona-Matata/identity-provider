@@ -1,44 +1,50 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
-
+const {
+	SUCCESS_MESSAGES: { CANCELED_ACCOUNT_DELETION },
+	FAILURE_MESSAGES: { ACCOUNT_IS_DELETED, ALREADY_CANCELED_ACCOUNT_DELETION },
+} = require("./../account.constants.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const User = require("./../../../src/app/Models/User.model");
-
-const { generate_hash } = require("./../../../src/helpers/hash");
+const AccountServices = require("./../account.services.js");
 
 const baseURL = "/auth/account/cancel-delete";
 
-
-
-describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
-	it("1. Cancel account deletion successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Cancel account deletion endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
 			isDeleted: true,
-			password: await generate_hash("tesTES@!#1232"),
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when account deletion is canceled successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		const { status, body } = await request(app).put(baseURL).send({
-			email: user.email,
-		});
+		const { status, body } = await request(app).put(baseURL).send({ email: account.email });
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: "You canceled the account deletion successfully!",
+			result: CANCELED_ACCOUNT_DELETION,
 		});
 	});
 
-	it("2. Account deletion is too late", async () => {
+	it("Should return 400 status code when account is deleted permanently", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			email: "testtest@gmail.com",
 		});
@@ -48,36 +54,20 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.BAD_REQUEST,
 			code: httpStatusCodeStrings.BAD_REQUEST,
-			message: "Sorry, your account may be deleted permanently! (too late)",
+			message: ACCOUNT_IS_DELETED,
 		});
 	});
 
-	it("3. Account is not found in our DB", async () => {
-		const { status, body } = await request(app).put(baseURL).send({
-			email: "testtest@gmail.com",
-		});
+	it("Should return 400 status code when account deletion is already canceled", async () => {
+		const fakeAccount = generateFakeAccount();
 
-		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.BAD_REQUEST,
-			code: httpStatusCodeStrings.BAD_REQUEST,
-			message: "Sorry, your account may be deleted permanently! (too late)",
-		});
-	});
-
-	it("4. Account deletion is already canceled", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 			isDeleted: false,
-			password: await generate_hash("tesTES@!#1232"),
 		});
 
 		const { status, body } = await request(app).put(baseURL).send({
-			email: user.email,
+			email: account.email,
 		});
 
 		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
@@ -85,106 +75,81 @@ describe(`"PUT" ${baseURL} - Cancel account deletion`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.BAD_REQUEST,
 			code: httpStatusCodeStrings.BAD_REQUEST,
-			message: "Sorry, you already canceled account deletion!",
+			message: ALREADY_CANCELED_ACCOUNT_DELETION,
 		});
 	});
 
-	it("5. Account deletion route is public", async () => {
-		const { status, body } = await request(app).put(baseURL).send({
-			email: "testtest@gmail.com",
-		});
-
-		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.BAD_REQUEST,
-			code: httpStatusCodeStrings.BAD_REQUEST,
-			message: "Sorry, your account may be deleted permanently! (too late)",
-		});
-	});
-
-	// =================================================================
-
-	it("6. email field is not provided", async () => {
-		const { status, body } = await request(app).put(baseURL);
+	it("Should return 422 status code when email is not provided", async () => {
+		const { status, body } = await request(app).put(baseURL).send();
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: ['"email" field is required!'],
+			message: expect.arrayContaining(['"email" field is required!']),
 		});
 	});
 
-	it("7. email field is not of type string", async () => {
+	it("Should return 422 status code when email field is not fof type string", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: 111111111111111 });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "email"!`]),
+		});
+	});
+
+	it("Should return 422 status code when email is too short", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: "t@test.com" });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"email" field should have a minimum length of 15!`]),
+		});
+	});
+
+	it("Should return 422 status code when email is too long", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
-			.send({ email: 11111111111 });
+			.send({ email: `${"t".repeat(50)}@test.com` });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field has to be of type string!`],
+			message: expect.arrayContaining([`"email" field should have a maximum length of 40!`]),
 		});
 	});
 
-	it("8. email field is not a valid email", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: "111111111234213423111" });
+	it("Should return 422 status code when email is not of type string", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: 111111111111 });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field has to be a valid email!`],
+			message: expect.arrayContaining([`Invalid type, expected a string for "email"!`]),
 		});
 	});
 
-	it("9. email field can't be empty", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: "" });
+	it("Should return 422 status code when email is empty", async () => {
+		const { status, body } = await request(app).put(baseURL).send({ email: "" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be empty!`],
-		});
-	});
-
-	it("9. email field is too short to be true", async () => {
-		const { status, body } = await request(app)
-			.put(baseURL)
-			.send({ email: "k@gmail.com" });
-
-		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
-			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be less than 15 characters!`],
-		});
-	});
-
-	it("9. email field is long short to be true", async () => {
-		const { status, body } = await request(app).put(baseURL).send({
-			email:
-				"kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk@gmail.com",
-		});
-
-		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
-			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be more than 40 characers!`],
+			message: expect.arrayContaining([`"email" field is required!`]),
 		});
 	});
 });

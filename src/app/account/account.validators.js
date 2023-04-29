@@ -30,4 +30,14 @@ module.exports = {
 	confirmActivation: Joi.object({
 		activationToken: token,
 	}),
+
+	/**
+	 * Joi schema object for validating email during account termination cancelation.
+	 *
+	 * @memberof module:activationValidations
+	 * @type {Joi.ObjectSchema}
+	 */
+	cancel: Joi.object({
+		email,
+	}),
 };

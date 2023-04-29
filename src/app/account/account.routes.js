@@ -85,14 +85,8 @@ router.route("/delete").delete([isAuthenticated, isVerified, isNotDeleted, isAct
  * @function
  * @memberof module:routers/accountRouter
  * @inner
- * @param {string} path - Express path
- * @param {callback[]} middleware - Express middleware
- * @param {callback} middleware[0] - isAuthenticated middleware function
- * @param {callback} middleware[1] - isVerified middleware function
- * @param {callback} middleware[2] - isNotDeleted middleware function
- * @param {callback} middleware[3] - isActive middleware function
- * @param {callback} middleware[4] - cancelTermination middleware function
+ * @param {callback} middleware - cancelTermination middleware function
  */
-router.route("/cancel-delete").put([isAuthenticated, isVerified, isNotDeleted, isActive], cancelTermination);
+router.route("/cancel-delete").put(cancelTermination);
 
 module.exports = router;
