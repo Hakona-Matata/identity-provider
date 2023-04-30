@@ -6,7 +6,7 @@
 const express = require("express");
 
 const { signUp, verify, logIn, logOut } = require("./auth.controllers");
-const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
+const { isAuthenticated, isVerified, isNotDeleted, isActive } = require("./../../middlewares/index");
 
 const router = express.Router();
 
@@ -61,6 +61,6 @@ router.route("/login").post(logIn);
  * @param {Function} next - The next function middleware to be executed.
  * @returns {undefined}
  */
-router.route("/logout").post([isAuthenticated, isVerified, isActive], logOut);
+router.route("/logout").post([isAuthenticated, isVerified, isNotDeleted, isActive], logOut);
 
 module.exports = router;

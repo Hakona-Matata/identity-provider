@@ -71,7 +71,9 @@ class AccountControllers {
 	 * @param {function} next - Express next middleware function
 	 */
 	static async cancelTermination(req, res, next) {
-		req.result = await AccountServices.cancelTermination(req.accountId);
+		const { email } = await validateInput(AccountValidators.cancel, req.body);
+
+		req.result = await AccountServices.cancelTermination(email);
 
 		next();
 	}

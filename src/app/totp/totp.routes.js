@@ -6,7 +6,7 @@
 const express = require("express");
 
 const { initiateEnabling, confirmEnabling, disable, verify } = require("./totp.controllers");
-const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
+const { isAuthenticated, isVerified, isActive, isNotDeleted } = require("./../../middlewares/index");
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ const router = express.Router();
  * @param {callback} middleware - Express middleware.
  * @param {callback} middleware - Controller method.
  */
-router.route("/enable").post([isAuthenticated, isVerified, isActive], initiateEnabling);
+router.route("/enable").post([isAuthenticated, isVerified, isNotDeleted, isActive], initiateEnabling);
 
 /**
  * Route for confirming the TOTP enabling process
@@ -32,7 +32,7 @@ router.route("/enable").post([isAuthenticated, isVerified, isActive], initiateEn
  * @param {callback} middleware - Express middleware.
  * @param {callback} middleware - Controller method.
  */
-router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirmEnabling);
+router.route("/confirm").post([isAuthenticated, isVerified, isNotDeleted, isActive], confirmEnabling);
 
 /**
  * Route for disabling the TOTP feature
@@ -44,7 +44,7 @@ router.route("/confirm").post([isAuthenticated, isVerified, isActive], confirmEn
  * @param {callback} middleware - Express middleware.
  * @param {callback} middleware - Controller method.
  */
-router.route("/disable").delete([isAuthenticated, isVerified, isActive], disable);
+router.route("/disable").delete([isAuthenticated, isVerified, isNotDeleted, isActive], disable);
 
 /**
  * Route for verifying a TOTP code

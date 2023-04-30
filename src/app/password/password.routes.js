@@ -7,7 +7,7 @@
 const express = require("express");
 
 const { change, forget, reset } = require("./password.controllers");
-const { isAuthenticated, isVerified, isActive } = require("./../../middlewares/index");
+const { isAuthenticated, isVerified, isActive,isNotDeleted } = require("./../../middlewares/index");
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ const router = express.Router();
  * @param {function} isActive - Middleware function to check if user account is active.
  * @param {function} change - Controller function to handle the request.
  */
-router.route("/change").put([isAuthenticated, isVerified, isActive], change);
+router.route("/change").put([isAuthenticated, isVerified, isNotDeleted, isActive], change);
 
 /**
  * Route to request a password reset link by email.
