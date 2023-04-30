@@ -16,7 +16,7 @@ class HashHelper {
 	 */
 	static async generate(plainText, saltRounds = 12) {
 		if (typeof plainText !== "string") {
-			plainText = plainText.toString();
+			plainText = String(plainText);
 		}
 
 		return await bcrypt.hash(plainText, saltRounds);
@@ -33,11 +33,11 @@ class HashHelper {
 	 */
 	static async verify(plainText, hash) {
 		if (typeof plainText !== "string") {
-			throw new Error("Plain text must be a string");
+			plainText = String(plainText);
 		}
 
 		if (typeof hash !== "string") {
-			throw new Error("Hash must be a string");
+			hash = String(hash);
 		}
 
 		return await bcrypt.compare(plainText, hash);

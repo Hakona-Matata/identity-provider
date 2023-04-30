@@ -23,7 +23,7 @@ class PasswordControllers {
 
 		req.result = await PasswordServices.change({
 			accountId: req.accountId,
-			accountPassword: req.accountPassword,
+			accountPassword: req.account.password,
 			...passwordData,
 		});
 

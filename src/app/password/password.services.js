@@ -26,14 +26,14 @@ class PasswordServices {
 	 * @param {string} data.accountPassword - The hashed password of the account that the password will be updated
 	 * @returns {string} - A string indicating that the password has been changed successfully
 	 */
-	static async change({ oldPassword, newPassword, accountId, accountPassword }) {
+	static async change({ oldPassword, password, accountId, accountPassword }) {
 		const isPasswordValid = await HashHelper.verify(oldPassword, accountPassword);
 
 		if (!isPasswordValid) {
 			throw new ForbiddenException(INCORRECT_PASSWORD);
 		}
 
-		const hashedPassword = await HashHelper.generate(newPassword);
+		const hashedPassword = await HashHelper.generate(password);
 
 		await AccountServices.updateOne({ _id: accountId }, { password: hashedPassword, passwordChangedAt: new Date() });
 
