@@ -91,9 +91,7 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 		});
 	});
 
-	//==============================================================
-
-	it("3. Reset token is not provided", async () => {
+	it("Should return 422 status code when reset token is not provided", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			password: "tesTE!@12",
 			confirmPassword: "tesTE!@12",
@@ -104,11 +102,11 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param is required!`],
+			message: expect.arrayContaining([`"resetToken" field is required!`]),
 		});
 	});
 
-	it("4. Reset token can't be empty", async () => {
+	it("Should return 422 status code when reset token is empty", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			resetToken: "",
 			password: "tesTE!@12",
@@ -120,11 +118,11 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param can't be empty!`],
+			message: expect.arrayContaining([`"resetToken" field is required!`]),
 		});
 	});
 
-	it("5. Reset token is not of type string", async () => {
+	it("Should return 422 status code when reset token is not of type string", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			resetToken: 234532,
 			password: "tesTE!@12",
@@ -136,11 +134,11 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param has to be of type string!`],
+			message: expect.arrayContaining([`Invalid type, expected a string for "resetToken"!`]),
 		});
 	});
 
-	it("6. Reset token is too short to be true", async () => {
+	it("Should return 422 status code when reset token is too short", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			resetToken: "12",
 			password: "tesTE!@12",
@@ -152,11 +150,11 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param can't be true!`],
+			message: expect.arrayContaining([`"resetToken" field should have a minimum length of 64!`]),
 		});
 	});
 
-	it("7. Reset token is too long to be true", async () => {
+	it("Should return 422 status code when reset token is too long", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -170,12 +168,11 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param can't be true!`],
+			message: expect.arrayContaining([`"resetToken" field should have a maximum length of 300!`]),
 		});
 	});
 
-	//==============================================================
-	it("8. password and confirmPassword fields don't match", async () => {
+	it("Should return 422 status code when password and confirmPassword fields don't match", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -189,7 +186,7 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"confirmPassword" field doesn't match "password" field`],
+			message: expect.arrayContaining([`"confirmPassword" field must match "password" field!`]),
 		});
 	});
 
