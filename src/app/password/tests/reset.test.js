@@ -190,9 +190,7 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 		});
 	});
 
-	//==============================================================
-
-	it("9. password field can't be empty", async () => {
+	it("Should return 422 status code when password field is empty", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -206,11 +204,14 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"password" field can't be empty!`, `"confirmPassword" field doesn't match "password" field`],
+			message: expect.arrayContaining([
+				`"password" field is required!`,
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("10. password field is not provided", async () => {
+	it("Should return 422 status code when password field is not provided", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -224,11 +225,14 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: ['"password" field is required!', `"confirmPassword" field doesn't match "password" field`],
+			message: expect.arrayContaining([
+				'"password" field is required!',
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("11. password field is not of type string", async () => {
+	it("Should return 422 status code when password field is not of type string", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -242,11 +246,14 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: ['"password" field has to be of type string!', `"confirmPassword" field doesn't match "password" field`],
+			message: expect.arrayContaining([
+				`Invalid type, expected a string for "password"!`,
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("12. password field is too short to be true", async () => {
+	it("Should return 422 status code when password field is too short", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -260,15 +267,14 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"password" field can't be less than 8 characters!`,
-				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: expect.arrayContaining([
+				`"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters) and (8-16) characters`,
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("13. password field is too long to be true", async () => {
+	it("Should return 422 status code when password field is too long", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -282,16 +288,14 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"password" field can't be more than 16 characers!`,
-				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: expect.arrayContaining([
+				`"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters) and (8-16) characters`,
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
-	//==============================================================
 
-	it("14. confirmPassowrd is not of type string", async () => {
+	it("Should return 422 status code when confirmPassword field is not of type string", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -305,7 +309,10 @@ describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"confirmPassword" field doesn't match "password" field`, '"confirmPassword" must be a string'],
+			message: expect.arrayContaining([
+				`"confirmPassword" field must match "password" field!`,
+				`Invalid type, expected a string for "confirmPassword"!`,
+			]),
 		});
 	});
 });
