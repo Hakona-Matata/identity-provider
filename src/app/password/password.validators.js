@@ -63,7 +63,7 @@ const forget = Joi.object({
 const reset = Joi.object({
 	resetToken: token,
 	password,
-	confirmPassword: password,
+	confirmPassword,
 });
 
 module.exports = {

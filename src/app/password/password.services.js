@@ -88,9 +88,7 @@ class PasswordServices {
 
 		const account = await AccountServices.findById(accountId);
 
-		if (account && !account.resetToken) {
-			throw new ForbiddenException(ALREADY_RESET_ACCOUNT);
-		}
+		if (account && !account.resetToken) throw new ForbiddenException(ALREADY_RESET_ACCOUNT);
 
 		const hashedPassword = await HashHelper.generate(givenAccountPassword);
 

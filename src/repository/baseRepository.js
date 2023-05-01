@@ -152,7 +152,7 @@ class BaseRepository {
 	 */
 
 	async deleteMany(filter) {
-		return this.model.deleteMany(filter);
+		return this.model.deleteMany({ ...filter });
 	}
 }
 

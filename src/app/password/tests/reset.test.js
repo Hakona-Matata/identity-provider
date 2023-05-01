@@ -1,37 +1,45 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
-
+const {
+	SUCCESS_MESSAGES: { ACCOUNT_RESET_SUCCESSFULLY },
+	FAILURE_MESSAGES: { ALREADY_RESET_ACCOUNT },
+} = require("./../password.constants.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("./../../../src/helpers/hash");
-const { generate_token } = require("./../../../src/helpers/token");
+const AccountServices = require("./../../account/account.services.js");
+const TokenHelper = require("../../../helpers/tokenHelper.js");
 
-const User = require("./../../../src/app/Models/User.model");
+const baseURL = "/auth/account/password/reset";
 
-const baseURL = "/auth/password/reset";
-
-
-
-describe(`"PUT" ${baseURL} - Reset Password`, () => {
-	it("1. Reset password successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#12"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when account reset is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		const resetToken = await generate_token({
-			payload: { _id: user._id },
-			secret: process.env.RESET_PASSWORD_SECRET,
-			expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN,
+		const resetToken = await TokenHelper.generateResetToken({
+			accountId: account._id,
+			role: account.role,
 		});
 
-		await User.findOneAndUpdate({ _id: user._id }, { $set: { resetToken } });
+		await AccountServices.updateOne({ _id: account._id }, { resetToken });
 
 		const { status, body } = await request(app).put(baseURL).send({
 			resetToken,
@@ -44,23 +52,28 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: "Password reset successfully!",
+			result: ACCOUNT_RESET_SUCCESSFULLY,
 		});
 	});
 
-	it("2. Provided resetToken is already used", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#12"),
+	it("Should return 403 status code when reset token is already used", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		const resetToken = await generate_token({
-			payload: { _id: user._id },
-			secret: process.env.RESET_PASSWORD_SECRET,
-			expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN,
+		const resetToken = await TokenHelper.generateResetToken({
+			accountId: account._id,
+			role: account.role,
+		});
+
+		await AccountServices.updateOne({ _id: account._id }, { resetToken });
+
+		await request(app).put(baseURL).send({
+			resetToken,
+			password: "tesTE!@12",
+			confirmPassword: "tesTE!@12",
 		});
 
 		const { status, body } = await request(app).put(baseURL).send({
@@ -74,7 +87,7 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, you already reset your password!",
+			message: ALREADY_RESET_ACCOUNT,
 		});
 	});
 
@@ -196,10 +209,7 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"password" field can't be empty!`,
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: [`"password" field can't be empty!`, `"confirmPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -217,10 +227,7 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				'"password" field is required!',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: ['"password" field is required!', `"confirmPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -238,10 +245,7 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				'"password" field has to be of type string!',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: ['"password" field has to be of type string!', `"confirmPassword" field doesn't match "password" field`],
 		});
 	});
 
@@ -304,10 +308,7 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"confirmPassword" field doesn't match "password" field`,
-				'"confirmPassword" must be a string',
-			],
+			message: [`"confirmPassword" field doesn't match "password" field`, '"confirmPassword" must be a string'],
 		});
 	});
 });
