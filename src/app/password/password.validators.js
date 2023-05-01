@@ -42,8 +42,8 @@ const { confirmPassword, email, token, password } = require("./../../validators/
  */
 const change = Joi.object({
 	oldPassword: password,
-	newPassword: password,
-	confirmNewPassword: confirmPassword,
+	password: password,
+	confirmPassword: confirmPassword,
 });
 
 /**
@@ -63,7 +63,7 @@ const forget = Joi.object({
 const reset = Joi.object({
 	resetToken: token,
 	password,
-	confirmPassword: password,
+	confirmPassword,
 });
 
 module.exports = {

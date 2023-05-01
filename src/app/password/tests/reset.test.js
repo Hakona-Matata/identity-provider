@@ -1,37 +1,45 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
-
+const {
+	SUCCESS_MESSAGES: { ACCOUNT_RESET_SUCCESSFULLY },
+	FAILURE_MESSAGES: { ALREADY_RESET_ACCOUNT },
+} = require("./../password.constants.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("./../../../src/helpers/hash");
-const { generate_token } = require("./../../../src/helpers/token");
+const AccountServices = require("./../../account/account.services.js");
+const TokenHelper = require("../../../helpers/tokenHelper.js");
 
-const User = require("./../../../src/app/Models/User.model");
+const baseURL = "/auth/account/password/reset";
 
-const baseURL = "/auth/password/reset";
-
-
-
-describe(`"PUT" ${baseURL} - Reset Password`, () => {
-	it("1. Reset password successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Reset password endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#12"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when account reset is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		const resetToken = await generate_token({
-			payload: { _id: user._id },
-			secret: process.env.RESET_PASSWORD_SECRET,
-			expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN,
+		const resetToken = await TokenHelper.generateResetToken({
+			accountId: account._id,
+			role: account.role,
 		});
 
-		await User.findOneAndUpdate({ _id: user._id }, { $set: { resetToken } });
+		await AccountServices.updateOne({ _id: account._id }, { resetToken });
 
 		const { status, body } = await request(app).put(baseURL).send({
 			resetToken,
@@ -44,23 +52,28 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: "Password reset successfully!",
+			result: ACCOUNT_RESET_SUCCESSFULLY,
 		});
 	});
 
-	it("2. Provided resetToken is already used", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#12"),
+	it("Should return 403 status code when reset token is already used", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		const resetToken = await generate_token({
-			payload: { _id: user._id },
-			secret: process.env.RESET_PASSWORD_SECRET,
-			expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN,
+		const resetToken = await TokenHelper.generateResetToken({
+			accountId: account._id,
+			role: account.role,
+		});
+
+		await AccountServices.updateOne({ _id: account._id }, { resetToken });
+
+		await request(app).put(baseURL).send({
+			resetToken,
+			password: "tesTE!@12",
+			confirmPassword: "tesTE!@12",
 		});
 
 		const { status, body } = await request(app).put(baseURL).send({
@@ -74,13 +87,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, you already reset your password!",
+			message: ALREADY_RESET_ACCOUNT,
 		});
 	});
 
-	//==============================================================
-
-	it("3. Reset token is not provided", async () => {
+	it("Should return 422 status code when reset token is not provided", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			password: "tesTE!@12",
 			confirmPassword: "tesTE!@12",
@@ -91,11 +102,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param is required!`],
+			message: expect.arrayContaining([`"resetToken" field is required!`]),
 		});
 	});
 
-	it("4. Reset token can't be empty", async () => {
+	it("Should return 422 status code when reset token is empty", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			resetToken: "",
 			password: "tesTE!@12",
@@ -107,11 +118,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param can't be empty!`],
+			message: expect.arrayContaining([`"resetToken" field is required!`]),
 		});
 	});
 
-	it("5. Reset token is not of type string", async () => {
+	it("Should return 422 status code when reset token is not of type string", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			resetToken: 234532,
 			password: "tesTE!@12",
@@ -123,11 +134,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param has to be of type string!`],
+			message: expect.arrayContaining([`Invalid type, expected a string for "resetToken"!`]),
 		});
 	});
 
-	it("6. Reset token is too short to be true", async () => {
+	it("Should return 422 status code when reset token is too short", async () => {
 		const { status, body } = await request(app).put(baseURL).send({
 			resetToken: "12",
 			password: "tesTE!@12",
@@ -139,11 +150,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param can't be true!`],
+			message: expect.arrayContaining([`"resetToken" field should have a minimum length of 64!`]),
 		});
 	});
 
-	it("7. Reset token is too long to be true", async () => {
+	it("Should return 422 status code when reset token is too long", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -157,12 +168,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"resetToken" param can't be true!`],
+			message: expect.arrayContaining([`"resetToken" field should have a maximum length of 300!`]),
 		});
 	});
 
-	//==============================================================
-	it("8. password and confirmPassword fields don't match", async () => {
+	it("Should return 422 status code when password and confirmPassword fields don't match", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -176,13 +186,11 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"confirmPassword" field doesn't match "password" field`],
+			message: expect.arrayContaining([`"confirmPassword" field must match "password" field!`]),
 		});
 	});
 
-	//==============================================================
-
-	it("9. password field can't be empty", async () => {
+	it("Should return 422 status code when password field is empty", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -196,14 +204,14 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"password" field can't be empty!`,
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: expect.arrayContaining([
+				`"password" field is required!`,
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("10. password field is not provided", async () => {
+	it("Should return 422 status code when password field is not provided", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -217,14 +225,14 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
+			message: expect.arrayContaining([
 				'"password" field is required!',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("11. password field is not of type string", async () => {
+	it("Should return 422 status code when password field is not of type string", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -238,14 +246,14 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				'"password" field has to be of type string!',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: expect.arrayContaining([
+				`Invalid type, expected a string for "password"!`,
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("12. password field is too short to be true", async () => {
+	it("Should return 422 status code when password field is too short", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -259,15 +267,14 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"password" field can't be less than 8 characters!`,
-				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: expect.arrayContaining([
+				`"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters) and (8-16) characters`,
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
 
-	it("13. password field is too long to be true", async () => {
+	it("Should return 422 status code when password field is too long", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -281,16 +288,14 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"password" field can't be more than 16 characers!`,
-				'"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters)',
-				`"confirmPassword" field doesn't match "password" field`,
-			],
+			message: expect.arrayContaining([
+				`"password" field must include at least(2 upper, 2 lower characters, 2 numbers and 2 special characters) and (8-16) characters`,
+				`"confirmPassword" field must match "password" field!`,
+			]),
 		});
 	});
-	//==============================================================
 
-	it("14. confirmPassowrd is not of type string", async () => {
+	it("Should return 422 status code when confirmPassword field is not of type string", async () => {
 		const { status, body } = await request(app)
 			.put(baseURL)
 			.send({
@@ -304,10 +309,10 @@ describe(`"PUT" ${baseURL} - Reset Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [
-				`"confirmPassword" field doesn't match "password" field`,
-				'"confirmPassword" must be a string',
-			],
+			message: expect.arrayContaining([
+				`"confirmPassword" field must match "password" field!`,
+				`Invalid type, expected a string for "confirmPassword"!`,
+			]),
 		});
 	});
 });

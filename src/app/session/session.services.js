@@ -155,15 +155,16 @@ class SessionServices {
 	 */
 
 	static async deleteMany(filter) {
-		const areSessionsDeleted = await SessionRepository.deleteMany(filter);
+		return await SessionRepository.deleteMany(filter);
 
-		console.log({ areSessionsDeleted });
+		// TODO: when deleting on reset token part, returns errors(in case there is no right session!)
+		// console.log({ areSessionsDeleted });
 
-		if (!areSessionsDeleted) {
-			throw new NotFoundException(SESSIONS_NOT_FOUND);
-		} else if (areSessionsDeleted.deletedCount === 0) {
-			throw new InternalServerException(SESSIONS_DELETION_FAILED);
-		}
+		// if (!areSessionsDeleted) {
+		// 	throw new NotFoundException(SESSIONS_NOT_FOUND);
+		// } else if (areSessionsDeleted.deletedCount === 0) {
+		// 	throw new InternalServerException(SESSIONS_DELETION_FAILED);
+		// }
 	}
 }
 

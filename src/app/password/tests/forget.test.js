@@ -1,41 +1,52 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index");
+const {
+	SUCCESS_MESSAGES: { CHECK_MAIL_BOX },
+	FAILURE_MESSAGES: { ALREADY_HAVE_VALID_RESET_LINK },
+} = require("./../password.constants");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("./../../../src/helpers/hash");
-const { generate_token } = require("./../../../src/helpers/token");
+const AccountServices = require("./../../account/account.services");
 
-const User = require("./../../../src/app/Models/User.model");
+const baseURL = "/auth/account/password/forget";
 
-const baseURL = "/auth/password/forget";
-
-describe(`"POST" ${baseURL} - Forget Password`, () => {
-	it("1. Initiate forget password successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Forget password endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#12"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when initiating forget password don successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const { status, body } = await request(app).post(baseURL).send({
-			email: user.email,
+			email: account.email,
 		});
-
+		console.log({ body });
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: `Please, check your mailbox!`,
+			result: CHECK_MAIL_BOX,
 		});
 	});
 
-	it("2. Email is not among our DB users", async () => {
+	it("Should return 200 status code when email is not found in our DB", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ email: "blabla@gmail.com" });
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
@@ -43,29 +54,23 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: `Please, check your mailbox!`,
+			result: CHECK_MAIL_BOX,
 		});
 	});
 
-	it("3. User already intiated forget password (should check his mailbox)", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#12"),
+	it("Should return 403 status code when email forget is already initiated", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		const resetToken = await generate_token({
-			payload: { _id: user._id },
-			secret: process.env.RESET_PASSWORD_SECRET,
-			expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN,
+		await request(app).post(baseURL).send({
+			email: account.email,
 		});
-
-		await User.findOneAndUpdate({ _id: user._id }, { $set: { resetToken } });
 
 		const { status, body } = await request(app).post(baseURL).send({
-			email: user.email,
+			email: account.email,
 		});
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
@@ -73,13 +78,11 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, your mailbox already has a valid reset link!",
+			message: ALREADY_HAVE_VALID_RESET_LINK,
 		});
 	});
 
-	//===============================================================
-
-	it("4. Email field is not provided", async () => {
+	it("Should return 422 status code when email field is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -87,11 +90,11 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: ['"email" field is required!'],
+			message: expect.arrayContaining(['"email" field is required!']),
 		});
 	});
 
-	it("5. Email field can't be empty", async () => {
+	it("Should return 422 status code when email field is empty", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ email: "" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -99,11 +102,11 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be empty!`],
+			message: expect.arrayContaining([`"email" field is required!`]),
 		});
 	});
 
-	it("6. Email field too short to be true", async () => {
+	it("Should return 422 status code when email field is too short", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ email: "q@gmail.com" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -111,11 +114,11 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be less than 15 characters!`],
+			message: expect.arrayContaining([`"email" field should have a minimum length of 15!`]),
 		});
 	});
 
-	it("7. Email field too long to be true", async () => {
+	it("Should return 422 status code when email field is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ email: `${"s".repeat(200)}@gmail.com` });
@@ -125,11 +128,14 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field can't be more than 40 characers!`, `"email" field has to be a valid email!`],
+			message: expect.arrayContaining([
+				`"email" field should have a maximum length of 40!`,
+				`Invalid email address for "email"!`,
+			]),
 		});
 	});
 
-	it("8. Email field is not a valid email", async () => {
+	it("Should return 422 status code when email field is not in valid format", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ email: `dsfaasdfsadfadfgmailcom` });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -137,19 +143,19 @@ describe(`"POST" ${baseURL} - Forget Password`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"email" field has to be a valid email!`],
+			message: expect.arrayContaining([`Invalid email address for "email"!`]),
 		});
 	});
 
-	// it("9. Email field is not of type string", async () => {
-	// 	const { status, body } = await request(app).post(baseURL).send({ email: 1111111111111111111111111 });
+	it("Should return 422 status code when email field is not of type string", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ email: 1111111111111111111111111 });
 
-	// 	expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
-	// 	expect(body).toEqual({
-	// 		success: false,
-	// 		status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
-	// 		code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-	// 		message: [`"email" field has to be of type string!`],
-	// 	});
-	// });
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "email"!`]),
+		});
+	});
 });

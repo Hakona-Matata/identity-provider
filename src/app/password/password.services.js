@@ -26,14 +26,14 @@ class PasswordServices {
 	 * @param {string} data.accountPassword - The hashed password of the account that the password will be updated
 	 * @returns {string} - A string indicating that the password has been changed successfully
 	 */
-	static async change({ oldPassword, newPassword, accountId, accountPassword }) {
+	static async change({ oldPassword, password, accountId, accountPassword }) {
 		const isPasswordValid = await HashHelper.verify(oldPassword, accountPassword);
 
 		if (!isPasswordValid) {
 			throw new ForbiddenException(INCORRECT_PASSWORD);
 		}
 
-		const hashedPassword = await HashHelper.generate(newPassword);
+		const hashedPassword = await HashHelper.generate(password);
 
 		await AccountServices.updateOne({ _id: accountId }, { password: hashedPassword, passwordChangedAt: new Date() });
 
@@ -53,12 +53,12 @@ class PasswordServices {
 	static async forget(email) {
 		const account = await AccountServices.findOne({ email });
 
+		if (!account) return CHECK_MAIL_BOX;
+
 		if (account && account.resetToken) {
 			const decodedResetToken = await TokenHelper.verifyResetToken(account.resetToken);
 
-			if (decodedResetToken) {
-				throw new ForbiddenException(ALREADY_HAVE_VALID_RESET_LINK);
-			}
+			if (decodedResetToken) throw new ForbiddenException(ALREADY_HAVE_VALID_RESET_LINK);
 		}
 
 		const resetToken = await TokenHelper.generateResetToken({ accountId: account._id, role: account.role });
@@ -68,7 +68,7 @@ class PasswordServices {
 		// TODO: Send Email
 		console.log({ resetLink });
 
-		await AccountServices.updateOne({ _id: account._id }, { resetToken, resetAt: new Date() }, { resetToken: 1 });
+		await AccountServices.updateOne({ _id: account._id }, { resetToken, resetAt: new Date() });
 
 		return CHECK_MAIL_BOX;
 	}
@@ -88,9 +88,7 @@ class PasswordServices {
 
 		const account = await AccountServices.findById(accountId);
 
-		if (account && !account.resetToken) {
-			throw new ForbiddenException(ALREADY_RESET_ACCOUNT);
-		}
+		if (account && !account.resetToken) throw new ForbiddenException(ALREADY_RESET_ACCOUNT);
 
 		const hashedPassword = await HashHelper.generate(givenAccountPassword);
 
