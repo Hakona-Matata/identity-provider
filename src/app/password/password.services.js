@@ -53,12 +53,12 @@ class PasswordServices {
 	static async forget(email) {
 		const account = await AccountServices.findOne({ email });
 
+		if (!account) return CHECK_MAIL_BOX;
+
 		if (account && account.resetToken) {
 			const decodedResetToken = await TokenHelper.verifyResetToken(account.resetToken);
 
-			if (decodedResetToken) {
-				throw new ForbiddenException(ALREADY_HAVE_VALID_RESET_LINK);
-			}
+			if (decodedResetToken) throw new ForbiddenException(ALREADY_HAVE_VALID_RESET_LINK);
 		}
 
 		const resetToken = await TokenHelper.generateResetToken({ accountId: account._id, role: account.role });
@@ -68,7 +68,7 @@ class PasswordServices {
 		// TODO: Send Email
 		console.log({ resetLink });
 
-		await AccountServices.updateOne({ _id: account._id }, { resetToken, resetAt: new Date() }, { resetToken: 1 });
+		await AccountServices.updateOne({ _id: account._id }, { resetToken, resetAt: new Date() });
 
 		return CHECK_MAIL_BOX;
 	}
