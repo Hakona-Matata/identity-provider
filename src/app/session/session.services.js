@@ -1,4 +1,4 @@
-const { InternalServerException, ForbiddenException } = require("../../exceptions/");
+const { InternalServerException, ForbiddenException, UnAuthorizedException } = require("../../exceptions/");
 
 const SessionRepository = require("./session.repositories");
 const TokenHelper = require("../../helpers/tokenHelper");
@@ -60,7 +60,9 @@ class SessionServices {
 	static async validate(accessToken) {
 		const decodedAccessToken = await TokenHelper.verifyAccessToken(accessToken);
 
-		await SessionServices.findOne({ accountId: decodedAccessToken.accountId, accessToken });
+		const isSessionFound = await SessionServices.findOne({ accountId: decodedAccessToken.accountId, accessToken });
+		
+		if (!isSessionFound) throw new UnAuthorizedException(SESSION_REVOKED);
 
 		return { isValid: true, ...decodedAccessToken };
 	}
