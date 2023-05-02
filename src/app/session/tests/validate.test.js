@@ -1,4 +1,4 @@
-const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("../../../constants/index.js");
 const {
 	FAILURE_MESSAGES: { SESSION_REVOKED },
 } = require("./../session.constants.js");
@@ -9,10 +9,11 @@ const { faker } = require("@faker-js/faker");
 const { app } = require("../../../app");
 
 const AccountServices = require("./../../account/account.services.js");
+const SessionServices = require("./../session.services.js");
 
-const baseURL = "/auth/account/sessions/renew";
+const baseURL = "/auth/account/sessions/validate/";
 
-describe(`Auth API - Renew  session endpoint "${baseURL}"`, () => {
+describe(`Auth API - validate session endpoint "${baseURL}"`, () => {
 	const generateFakeAccount = () => {
 		return {
 			email: faker.internet.email(),
@@ -25,7 +26,7 @@ describe(`Auth API - Renew  session endpoint "${baseURL}"`, () => {
 		};
 	};
 
-	it("Should return 200 status code when session is regenerated successfully", async () => {
+	it("Should return 200 status code accessToken is valid", async () => {
 		const fakeAccount = generateFakeAccount();
 
 		const account = await AccountServices.createOne({
@@ -34,11 +35,11 @@ describe(`Auth API - Renew  session endpoint "${baseURL}"`, () => {
 
 		const {
 			body: {
-				result: { refreshToken },
+				result: { accessToken },
 			},
 		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		const { status, body } = await request(app).post(baseURL).send({ refreshToken });
+		const { status, body } = await request(app).post(baseURL).send({ accessToken });
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
@@ -46,28 +47,18 @@ describe(`Auth API - Renew  session endpoint "${baseURL}"`, () => {
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
 			result: {
-				accessToken: expect.any(String),
-				refreshToken: expect.any(String),
+				isValid: true,
+				accountId: expect.any(String),
+				role: expect.any(String),
+				label: "ACCESS_TOKEN",
+				origin: "IDENTITY_PROVIDER",
+				iat: expect.any(Number),
+				exp: expect.any(Number),
 			},
 		});
 	});
 
-	it("Should return 401 status code when given refresh token is invalid", async () => {
-		const refreshToken =
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-
-		const { status, body } = await request(app).post(baseURL).send({ refreshToken });
-
-		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNAUTHORIZED,
-			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, the given token is invalid!",
-		});
-	});
-
-	it("Should return 403 status code when refresh token is already revoked/ disabled", async () => {
+	it("Should return 401 status code when session is revoked/ canceled", async () => {
 		const fakeAccount = generateFakeAccount();
 
 		const account = await AccountServices.createOne({
@@ -76,12 +67,13 @@ describe(`Auth API - Renew  session endpoint "${baseURL}"`, () => {
 
 		const {
 			body: {
-				result: { refreshToken },
+				result: { accessToken },
 			},
 		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await request(app).post(baseURL).send({ refreshToken });
-		const { status, body } = await request(app).post(baseURL).send({ refreshToken });
+		await SessionServices.deleteOne({ accessToken });
+
+		const { status, body } = await request(app).post(baseURL).send({ accessToken });
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
@@ -92,7 +84,7 @@ describe(`Auth API - Renew  session endpoint "${baseURL}"`, () => {
 		});
 	});
 
-	it("Should return 422 status code when refreshToken field is not provided", async () => {
+	it("Should return 422 status code when accessToken field is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -100,59 +92,59 @@ describe(`Auth API - Renew  session endpoint "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: expect.arrayContaining([`"refreshToken" field is required!`]),
+			message: expect.arrayContaining([`"accessToken" field is required!`]),
 		});
 	});
 
-	it("Should return 422 status code when refreshToken field is empty", async () => {
-		const { status, body } = await request(app).post(baseURL).send({ refreshToken: "" });
+	it("Should return 422 status code when accessToken field is empty", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ accessToken: "" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: expect.arrayContaining([`"refreshToken" field is required!`]),
+			message: expect.arrayContaining([`"accessToken" field is required!`]),
 		});
 	});
 
-	it("Should return 422 status code when refreshToken field is not of type string", async () => {
+	it("Should return 422 status code when accessToken field is not of type string ", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ refreshToken: +"1".repeat(210) });
+			.send({ accessToken: +"1234".repeat(300) });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: expect.arrayContaining([`Invalid type, expected a string for "refreshToken"!`]),
+			message: expect.arrayContaining([`Invalid type, expected a string for "accessToken"!`]),
 		});
 	});
 
-	it("Should return 422 status code when refreshToken field is too short", async () => {
-		const { status, body } = await request(app).post(baseURL).send({ refreshToken: "1" });
+	it("Should return 422 status code when accessToken field is too short", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ accessToken: "12345" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: expect.arrayContaining([`"refreshToken" field should have a minimum length of 64!`]),
+			message: expect.arrayContaining([`"accessToken" field should have a minimum length of 64!`]),
 		});
 	});
 
-	it("Should return 422 status code when refreshToken field is too long", async () => {
+	it("Should return 422 status code when accessToken field is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ refreshToken: "1".repeat(500) });
+			.send({ accessToken: "1234".repeat(300) });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: expect.arrayContaining([`"refreshToken" field should have a maximum length of 300!`]),
+			message: expect.arrayContaining([`"accessToken" field should have a maximum length of 300!`]),
 		});
 	});
 });

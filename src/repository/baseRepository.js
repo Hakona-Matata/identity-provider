@@ -131,7 +131,7 @@ class BaseRepository {
 	 * @returns {Promise<Object>} A promise that resolves to the deleted document if found, otherwise resolves to null
 	 */
 	async deleteById(documentId) {
-		return this.model.findByIdAndDelete(documentId);
+		return this.model.deleteOne({ _id: documentId });
 	}
 
 	/**
@@ -141,7 +141,7 @@ class BaseRepository {
 	 * @returns {Promise<Object>} A promise that resolves to the deleted document if found, otherwise resolves to null
 	 */
 	async deleteOne(filter) {
-		return this.model.findOneAndDelete(filter);
+		return this.model.deleteOne(filter);
 	}
 
 	/**

@@ -22,8 +22,6 @@ module.exports = {
 	 * @property {string} SESSION_REVOKED - The message for already revoked session error.
 	 */
 	FAILURE_MESSAGES: {
-		SESSION_NOT_FOUND: "Sorry, the session is not found!",
-		SESSIONS_NOT_FOUND: "Sorry, the sessions are not found!",
 		SESSION_CREATION_FAILED: "Sorry, the session creation operation failed!",
 		SESSION_DELETION_FAILED: "Sorry, the session deletion process failed!",
 		SESSIONS_DELETION_FAILED: "Sorry, the sessions deletion process failed!",

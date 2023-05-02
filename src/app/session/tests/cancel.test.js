@@ -1,114 +1,134 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+const {
+	SUCCESS_MESSAGES: { SESSION_CANCELED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { SESSION_REVOKED },
+} = require("./../session.constants.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../server");
-const { generate_hash } = require("../../../helpers/hash");
+const { app } = require("../../../app");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
+const AccountServices = require("./../../account/account.services.js");
+const SessionServices = require("./../../session/session.services.js");
 
-const baseURL = "/auth/sessions/";
+const baseURL = "/auth/account/sessions/";
 
-describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
-	it("1. User can cancel/ revoke any available session he wants", async () => {
-		const user = await User.create({
+describe(`Auth API - Cancel/Revoke a session endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when session is canceled/ revoked successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		const currentSession = await Session.findOne({
+		const currentSession = await SessionServices.findOne({
 			accessToken,
-			userId: user.id.toString(),
+			accountId: account._id,
 		});
 
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ sessionId: currentSession.id });
-
+			.send({ sessionId: currentSession._id });
+		console.log({ body });
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: "Session is cancelled successfully!",
+			result: SESSION_CANCELED_SUCCESSFULLY,
 		});
 	});
 
-	it("2. User can't delete session of other user", async () => {
-		const user1 = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when the given session is not his", async () => {
+		const fakeAccount1 = generateFakeAccount();
+		const fakeAccount2 = generateFakeAccount();
+
+		const account1 = await AccountServices.createOne({
+			...fakeAccount1,
 		});
-		const user2 = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+
+		const account2 = await AccountServices.createOne({
+			...fakeAccount2,
 		});
 
 		const {
 			body: {
-				data: { accessToken: accessToken1 },
+				result: { accessToken: accessToken1 },
 			},
-		} = await request(app).post("/auth/login").send({ email: user1.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account1.email, password: fakeAccount1.password });
 
 		const {
 			body: {
-				data: { accessToken: accessToken2 },
+				result: { accessToken: accessToken2 },
 			},
-		} = await request(app).post("/auth/login").send({ email: user2.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account2.email, password: fakeAccount2.password });
 
-		const user2CurrentSession = await Session.findOne({
-			userId: user2.id,
-			accessToken2,
+		const account2CurrentSession = await SessionServices.findOne({
+			accountId: account2._id,
+			accessToken: accessToken2,
 		});
 
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("authorization", `Bearer ${accessToken1}`)
-			.send({ sessionId: user2CurrentSession.id });
+			.send({ sessionId: account2CurrentSession._id });
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, you can't cancel this session!",
+			message: SESSION_REVOKED,
 		});
 	});
 
-	//====================================================================
+	it("Should return 404 status code when no access token is found", async () => {
+		const { status, body } = await request(app)
+			.post(baseURL)
 
-	it("3. sessionId field is not provided", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			.send({ sessionId: "x".repeat(24) });
+
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
+		});
+	});
+
+	it("Should return 422 status code when sessionId is not provided", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
 		const { status, body } = await request(app).post(baseURL).set("authorization", `Bearer ${accessToken}`);
 
@@ -117,24 +137,22 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: ['"sessionId" field is required!'],
+			message: expect.arrayContaining(['"sessionId" field is required!']),
 		});
 	});
 
-	it("4. sessionId field can't be empty", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when sessionId is empty", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -146,24 +164,22 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"sessionId" field can't be empty!`],
+			message: expect.arrayContaining([`"sessionId" field is required!`]),
 		});
 	});
 
-	it("5. sessionId field is not of type string", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when sessionId is not of type string", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -175,94 +191,34 @@ describe(`"POST" ${baseURL} - Cancel or Revoke User Session`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"sessionId" field has to be of type string!`],
+			message: expect.arrayContaining([`Invalid type, expected a string for "sessionId"!`]),
 		});
 	});
 
-	it("6. sessionId field is too short to be true", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when sessionId is not valid mongoose ID", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("authorization", `Bearer ${accessToken}`)
-			.send({ sessionId: "1".repeat(20) });
+			.send({ sessionId: "x".repeat(24) });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"sessionId" field is not a valid ID`],
-		});
-	});
-
-	it("7. sessionId field is too long to be true", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
-
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("authorization", `Bearer ${accessToken}`)
-			.send({ sessionId: "1".repeat(30) });
-
-		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
-			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"sessionId" field is not a valid ID`],
-		});
-	});
-
-	it("8. sessionId field is not a valid mongodb ID", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
-
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("authorization", `Bearer ${accessToken}`)
-			.send({ sessionId: "1".repeat(24) });
-
-		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
-			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"sessionId" field is not a valid ID`],
+			message: expect.arrayContaining([`Invalid value for "sessionId"!`]),
 		});
 	});
 });

@@ -1,18 +1,11 @@
-const InternalServerException = require("../../exceptions/common/internalServer.exception");
-const NotFoundException = require("./../../exceptions/common/notFound.exception");
+const { InternalServerException, ForbiddenException, UnAuthorizedException } = require("../../exceptions/");
+
 const SessionRepository = require("./session.repositories");
 const TokenHelper = require("../../helpers/tokenHelper");
 
 const {
 	SUCCESS_MESSAGES: { SESSION_CANCELED_SUCCESSFULLY },
-	FAILURE_MESSAGES: {
-		SESSION_NOT_FOUND,
-		SESSIONS_NOT_FOUND,
-		SESSION_CREATION_FAILED,
-		SESSION_DELETION_FAILED,
-		SESSIONS_DELETION_FAILED,
-		SESSION_REVOKED,
-	},
+	FAILURE_MESSAGES: { SESSION_CREATION_FAILED, SESSION_DELETION_FAILED, SESSIONS_DELETION_FAILED, SESSION_REVOKED },
 } = require("./session.constants");
 
 /**
@@ -31,6 +24,8 @@ class SessionServices {
 	 * @returns {string} The message indicating the session was canceled successfully.
 	 */
 	static async cancel({ accountId, sessionId }) {
+		await SessionServices.findOne({ _id: sessionId, accountId });
+
 		await SessionServices.deleteOne({ _id: sessionId, accountId });
 
 		return SESSION_CANCELED_SUCCESSFULLY;
@@ -65,7 +60,9 @@ class SessionServices {
 	static async validate(accessToken) {
 		const decodedAccessToken = await TokenHelper.verifyAccessToken(accessToken);
 
-		await SessionServices.findOne({ accountId: decodedAccessToken.accountId, accessToken });
+		const isSessionFound = await SessionServices.findOne({ accountId: decodedAccessToken.accountId, accessToken });
+		
+		if (!isSessionFound) throw new UnAuthorizedException(SESSION_REVOKED);
 
 		return { isValid: true, ...decodedAccessToken };
 	}
@@ -105,7 +102,7 @@ class SessionServices {
 		const isSessionFound = await SessionRepository.findOne(filter);
 
 		if (!isSessionFound) {
-			throw new NotFoundException(SESSION_REVOKED);
+			throw new ForbiddenException(SESSION_REVOKED);
 		}
 
 		return isSessionFound;
@@ -124,47 +121,28 @@ class SessionServices {
 	}
 
 	/**
-	 * Deletes a single session matching the provided filter.
+	 * Delete a session based on the provided filter.
 	 *
-	 * @async
-	 * @function deleteOne
-	 * @param {object} filter - Object containing properties to filter the search for a session to delete.
-	 * @throws {NotFoundException} Will throw an error if no session was found matching the provided filter.
-	 * @throws {InternalServerException} Will throw an error if the session deletion failed.
-	 * @returns {Promise<void>}
+	 * @param {Object} filter - The filter to determine which session(s) to delete.
+	 * @throws {InternalServerException} If session deletion fails.
+	 * @returns {Promise<void>} A promise that resolves when the session is deleted successfully.
 	 */
 	static async deleteOne(filter) {
-		const isSessionDeleted = await SessionRepository.deleteOne(filter);
+		const { deletedCount } = await SessionRepository.deleteOne(filter);
 
-		if (!isSessionDeleted) {
-			throw new NotFoundException(SESSION_NOT_FOUND);
-		} else if (isSessionDeleted.deletedCount === 0) {
-			throw new InternalServerException(SESSION_DELETION_FAILED);
-		}
+		if (deletedCount === 0) throw new InternalServerException(SESSION_DELETION_FAILED);
 	}
 
-	/**
-	 * Deletes multiple sessions matching the provided filter.
+	/** Delete multiple sessions based on the provided filter.
 	 *
-	 * @async
-	 * @function deleteMany
-	 * @param {object} filter - Object containing properties to filter the search for sessions to delete.
-	 * @throws {NotFoundException} Will throw an error if no sessions were found matching the provided filter.
-	 * @throws {InternalServerException} Will throw an error if the sessions deletion failed.
-	 * @returns {Promise<void>}
+	 * @param {Object} filter - The filter to determine which sessions to delete.
+	 * @throws {InternalServerException} If sessions deletion fails.
+	 * @returns {Promise<void>} A promise that resolves when the sessions are deleted successfully.
 	 */
-
 	static async deleteMany(filter) {
-		return await SessionRepository.deleteMany(filter);
+		const { deletedCount } = await SessionRepository.deleteMany(filter);
 
-		// TODO: when deleting on reset token part, returns errors(in case there is no right session!)
-		// console.log({ areSessionsDeleted });
-
-		// if (!areSessionsDeleted) {
-		// 	throw new NotFoundException(SESSIONS_NOT_FOUND);
-		// } else if (areSessionsDeleted.deletedCount === 0) {
-		// 	throw new InternalServerException(SESSIONS_DELETION_FAILED);
-		// }
+		if (deletedCount === 0) throw new InternalServerException(SESSIONS_DELETION_FAILED);
 	}
 }
 
