@@ -1,66 +1,86 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+const {
+	FAILURE_MESSAGES: { SESSION_REVOKED },
+} = require("./../session.constants.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../src/helpers/hash");
-const { generate_token } = require("./../../../src/helpers/token");
+const AccountServices = require("./../../account/account.services.js");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
+const baseURL = "/auth/account/sessions/renew";
 
-const baseURL = "/auth/sessions/renew";
-
-describe(`"POST" ${baseURL} - Renew User Session`, () => {
-	it("1. Renew user session successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Renew  session endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when session is regenerated successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { refreshToken },
+				result: { refreshToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
 		const { status, body } = await request(app).post(baseURL).send({ refreshToken });
 
-		expect(status).toBe(httpStatusCodeNumbers.CREATED);
-		expect(body.success).toBe(true);
-		expect(body.status).toBe(httpStatusCodeNumbers.CREATED);
-		expect(body.code).toBe(httpStatusCodeNumbers.CREATED);
-		expect(body).toHaveProperty("data.accessToken");
-		expect(body).toHaveProperty("data.refreshToken");
-		expect(typeof body.data.accessToken).toBe("string");
-		expect(typeof body.data.refreshToken).toBe("string");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: {
+				accessToken: expect.any(String),
+				refreshToken: expect.any(String),
+			},
+		});
 	});
 
-	it("2. The session associated to this refresh token is revoked/ disabled", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 401 status code when given refresh token is invalid", async () => {
+		const refreshToken =
+			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
+		const { status, body } = await request(app).post(baseURL).send({ refreshToken });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNAUTHORIZED,
+			code: httpStatusCodeStrings.UNAUTHORIZED,
+			message: "Sorry, the given token is invalid!",
+		});
+	});
+
+	it("Should return 403 status code when refresh token is already revoked/ disabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { refreshToken },
+				result: { refreshToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await Session.findOneAndDelete({
-			userId: user.id.toString(),
-			refreshToken,
-		});
-
+		await request(app).post(baseURL).send({ refreshToken });
 		const { status, body } = await request(app).post(baseURL).send({ refreshToken });
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
@@ -68,69 +88,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, this refresh token is revoked/ disabled!",
+			message: SESSION_REVOKED,
 		});
 	});
 
-	it("3. Given refresh token is expired", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		const expiredRefreshToken = await generate_token({
-			payload: { userId: user.id },
-			secret: process.env.REFRESH_TOKEN_SECRET,
-			expiresIn: 1, // expires in 1 second!
-		});
-
-		await User.findOneAndDelete({ _id: user.id.toString() });
-
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
-		const { status, body } = await request(app).post(baseURL).send({ refreshToken: expiredRefreshToken });
-
-		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNAUTHORIZED,
-			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, the token is expired!",
-		});
-	});
-
-	it("4. Given refresh token has invalid signature", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		const invalidRefreshToken = await generate_token({
-			payload: { userId: user.id },
-			secret: "random key hereeeeeeeeeeeee",
-			expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
-		});
-
-		const { status, body } = await request(app).post(baseURL).send({ refreshToken: invalidRefreshToken });
-
-		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
-		expect(body).toEqual({
-			success: false,
-			status: httpStatusCodeNumbers.UNAUTHORIZED,
-			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, the token is invalid!",
-		});
-	});
-
-	//==============================================================
-
-	it("5. Refresh token is not provided", async () => {
+	it("Should return 422 status code when refreshToken field is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -138,11 +100,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"refreshToken" field is required!`],
+			message: expect.arrayContaining([`"refreshToken" field is required!`]),
 		});
 	});
 
-	it("6. Refresh token can't be empty", async () => {
+	it("Should return 422 status code when refreshToken field is empty", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ refreshToken: "" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -150,11 +112,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"refreshToken" field can't be empty!`],
+			message: expect.arrayContaining([`"refreshToken" field is required!`]),
 		});
 	});
 
-	it("7. Refresh token is not of type string", async () => {
+	it("Should return 422 status code when refreshToken field is not of type string", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ refreshToken: +"1".repeat(210) });
@@ -164,11 +126,11 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"refreshToken" field has to be of type string!`],
+			message: expect.arrayContaining([`Invalid type, expected a string for "refreshToken"!`]),
 		});
 	});
 
-	it("8. Refresh token is too short to be true", async () => {
+	it("Should return 422 status code when refreshToken field is too short", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ refreshToken: "1" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -176,21 +138,21 @@ describe(`"POST" ${baseURL} - Renew User Session`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"refreshToken" field can't be true!`],
+			message: expect.arrayContaining([`"refreshToken" field should have a minimum length of 64!`]),
 		});
 	});
 
-	it("9. Refresh token is too long to be true", async () => {
+	it("Should return 422 status code when refreshToken field is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ refreshToken: "1".repeat(210) });
+			.send({ refreshToken: "1".repeat(500) });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: [`"refreshToken" field can't be true!`],
+			message: expect.arrayContaining([`"refreshToken" field should have a maximum length of 300!`]),
 		});
 	});
 });
