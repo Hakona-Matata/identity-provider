@@ -201,51 +201,57 @@ describe(`Auth API - Verify OTP over SMS endpoint (during login)"${baseURL}"`, (
 		});
 	});
 
-	it("12. OTP code is not provided", async () => {
-		const { status, body } = await request(app).post(baseURL).send({ userId: "63f9cd1667da3af21df4e734" });
+	it("Should return 422 status code when otp field is not provided", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ accountId: "63f9cd1667da3af21df4e734" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field is required!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"otp" field is required!']),
+		});
 	});
 
-	it("13. OTP code has to be of type number", async () => {
-		const { status, body } = await request(app).post(baseURL).send({ otp: "", userId: "63f9cd1667da3af21df4e734" });
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be of type number!`);
-	});
-
-	it("14. OTP code has to be integer", async () => {
+	it("Should return 422 status code when otp field is not of type string", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ otp: +"11.2233", userId: "63f9cd1667da3af21df4e734" });
+			.send({ otp: 123132, accountId: "63f9cd1667da3af21df4e734" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be integer!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "otp"!`]),
+		});
 	});
 
-	it("15. OTP code has to be positive", async () => {
+	it("Should return 422 status code when otp field is too short", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ otp: -123123, userId: "63f9cd1667da3af21df4e734" });
+			.send({ otp: "123", accountId: "63f9cd1667da3af21df4e734" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be positive!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field should have a length of 6!`]),
+		});
 	});
 
-	it("16. OTP code is too short to be true", async () => {
-		const { status, body } = await request(app).post(baseURL).send({ otp: 123, userId: "63f9cd1667da3af21df4e734" });
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be 6 digits!`);
-	});
-
-	it("17. OTP code is too long to be true", async () => {
+	it("Should return 422 status code when otp field is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ otp: 123123123, userId: "63f9cd1667da3af21df4e734" });
+			.send({ otp: "123123123", accountId: "63f9cd1667da3af21df4e734" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be 6 digits!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field should have a length of 6!`]),
+		});
 	});
 });
