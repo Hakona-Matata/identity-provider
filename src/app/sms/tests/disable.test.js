@@ -13,7 +13,7 @@ const AccountServices = require("./../../account/account.services");
 
 const baseURL = "/auth/account/sms/disable";
 
-describe(`Auth API - Disable SMS endpoint"${baseURL}"`, () => {
+describe(`Auth API - Disable OTP over SMS endpoint"${baseURL}"`, () => {
 	const generateFakeAccount = () => {
 		return {
 			email: faker.internet.email(),

@@ -44,6 +44,7 @@ module.exports = {
 		INVALID_OTP: "Sorry, the given otp is invalid!",
 		REACHED_MAXIMUM_WRONG_TRIES: "Sorry, You have reached your maximum wrong tries!",
 		ALREADY_DISABLED_SMS: "Sorry, you already disabled OTP over SMS feature!",
+		CANNOT_VERIFY: "Sorry, you can't verify OTP over SMS!",
 		SMS_NOT_FOUND: "Sorry, the sms document is not found!",
 		SMS_CREATE_FAILED: "Sorry, the creation of otp over sms failed!",
 		SMS_READ_FAILED: "Sorry, the finding of otp over sms failed!",

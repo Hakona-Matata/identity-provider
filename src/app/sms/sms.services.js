@@ -6,6 +6,7 @@ const {
 		REACHED_MAXIMUM_WRONG_TRIES,
 		EXPIRED_SMS,
 		INVALID_OTP,
+		CANNOT_VERIFY,
 		ALREADY_DISABLED_SMS,
 		SMS_CREATE_FAILED,
 		SMS_UPDATE_FAILED,
@@ -126,9 +127,11 @@ class SmsServices {
 	 * @throws {ForbiddenException} - If the provided OTP is invalid.
 	 */
 	static async verify({ accountId, givenOtp }) {
-		await SmsServices.#verifyDeleteOtp(accountId, givenOtp);
-
 		const account = await AccountServices.findById(accountId);
+
+		if (!account || !account.isSmsEnabled) throw new ForbiddenException(CANNOT_VERIFY);
+
+		await SmsServices.#verifyDeleteOtp(accountId, givenOtp);
 
 		return await SessionServices.createOne({ accountId: account._id, role: account.role });
 	}
@@ -169,8 +172,7 @@ class SmsServices {
 		if (!isSmsFound) {
 			throw new ForbiddenException(EXPIRED_SMS);
 		}
-		console.log({ isSmsFound });
-		console.log({ count: isSmsFound.failedAttemptCount });
+
 		if (isSmsFound.failedAttemptCount >= 3) {
 			await SmsServices.deleteOne({ _id: isSmsFound._id });
 

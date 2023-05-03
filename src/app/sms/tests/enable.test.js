@@ -13,7 +13,7 @@ const AccountServices = require("./../../account/account.services");
 
 const baseURL = "/auth/account/sms/enable";
 
-describe(`Auth API - Initiate enabling SMS endpoint"${baseURL}"`, () => {
+describe(`Auth API - Initiate enabling OTP over SMS endpoint"${baseURL}"`, () => {
 	const generateFakeAccount = () => {
 			return {
 				email: faker.internet.email(),

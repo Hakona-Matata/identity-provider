@@ -16,7 +16,7 @@ const { RandomGenerator, HashHelper } = require("./../../../helpers");
 
 const baseURL = "/auth/account/sms/confirm";
 
-describe(`Auth API - Confirm enabling SMS endpoint"${baseURL}"`, () => {
+describe(`Auth API - Confirm enabling OTP over SMS endpoint"${baseURL}"`, () => {
 	const generateFakeAccount = () => {
 		return {
 			email: faker.internet.email(),
