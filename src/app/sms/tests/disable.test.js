@@ -1,94 +1,94 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants");
+const {
+	SUCCESS_MESSAGES: { SMS_DISABLED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { ALREADY_DISABLED_SMS },
+} = require("./../sms.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
+const { app } = require("../../../app");
 
-const app = require("../../../src/server");
+const AccountServices = require("./../../account/account.services");
 
-const { generate_hash } = require("../../../src/helpers/hash");
+const baseURL = "/auth/account/sms/disable";
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
-
-const baseURL = "/auth/sms/disable";
-
-
-describe(`"DELETE" ${baseURL} - Disable SMS`, () => {
-	it("1. Disable SMS successfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
+describe(`Auth API - Disable SMS endpoint"${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			phone: "+201210101010",
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when disable SMS feature successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable SMS
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isSMSEnabled: true } }
-		);
+		await AccountServices.updateOne({ _id: account._id }, { isSmsEnabled: true });
 
-		// (4) Disable SMS
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (6) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("You disabled OTP over SMS successfully");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: SMS_DISABLED_SUCCESSFULLY,
+		});
 	});
 
-	it("2. SMS is already disabled", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 400 status code when SMS feature is already enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Disable SMS
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		await AccountServices.updateOne({ _id: account._id }, { isSmsEnabled: true });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
+		await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		// (5) Our expectations
-		expect(status).toBe(400);
-		expect(body.data).toBe("Sorry, you already disabled OTP over SMS!");
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
+
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
+			message: ALREADY_DISABLED_SMS,
+		});
 	});
 
-	it("3. Disable SMS is private route", async () => {
+	it("Should return 404 status code when accessToken is not found", async () => {
 		const { status, body } = await request(app).delete(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
+		});
 	});
 });
