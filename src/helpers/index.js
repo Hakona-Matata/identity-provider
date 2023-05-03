@@ -1,4 +1,3 @@
-const awaitAll = require("./awaitAll");
 const DateConvertor = require("./dateConvertor");
 const Encryptor = require("./encryptor");
 const HashHelper = require("./hashHelper");
@@ -13,7 +12,6 @@ const validateInput = require("./validateInput");
 /**
  * A collection of helper functions.
  * @module helpers
- * @property {Function} awaitAll - A function that awaits multiple promises at once.
  * @property {Object} DateConvertor - An object containing functions to convert dates between different formats.
  * @property {Object} Encryptor - An object containing functions to encrypt and decrypt data.
  * @property {Object} HashHelper - An object containing functions to hash data.
@@ -27,7 +25,6 @@ const validateInput = require("./validateInput");
  */
 
 module.exports = {
-	awaitAll,
 	DateConvertor,
 	Encryptor,
 	HashHelper,

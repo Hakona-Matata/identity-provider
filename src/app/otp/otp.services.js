@@ -1,5 +1,5 @@
 const HashHelper = require("../../helpers/hashHelper");
-const RandomHelper = require("../../helpers/randomGenerator");
+const { RandomGenerator } = require("../../helpers");
 
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
@@ -115,7 +115,7 @@ class OtpServices {
 	 * @returns {Promise<string>} The hashed OTP.
 	 */
 	static async generateSendOtp() {
-		const plainTextOtp = RandomHelper.generateRandomNumber(6);
+		const plainTextOtp = RandomGenerator.generateRandomNumber(6);
 
 		const hashedOtp = await HashHelper.generate(plainTextOtp);
 
@@ -139,7 +139,7 @@ class OtpServices {
 		const isOtpFound = await OtpServices.findOne({ accountId });
 
 		if (isOtpFound) {
-			throw new BadRequestException(ALREADY_HAVE_VALID_OTP);
+			throw new ForbiddenException(ALREADY_HAVE_VALID_OTP);
 		}
 
 		const hashedOtp = await OtpServices.generateSendOtp(accountId);
@@ -180,7 +180,7 @@ class OtpServices {
 			throw new ForbiddenException(INVALID_OTP);
 		}
 
-		return OtpServices.deleteOne({ _id: foundOtp._id });
+		return await OtpServices.deleteOne({ _id: foundOtp._id });
 	}
 
 	/* 

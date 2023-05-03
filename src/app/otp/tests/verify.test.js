@@ -1,259 +1,262 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants");
+const {
+	FAILURE_MESSAGES: { EXPIRED_OTP, INVALID_OTP, REACHED_MAXIMUM_WRONG_TRIES },
+} = require("./../otp.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
+const { app } = require("../../../app");
 
-const app = require("../../../src/server");
+const AccountServices = require("./../../account/account.services");
+const OtpServices = require("./../otp.services");
 
-const { generate_hash } = require("../../../src/helpers/hash");
-const { generate_randomNumber } = require("./../../../src/helpers/randomNumber");
+const { RandomGenerator, HashHelper } = require("./../../../helpers");
 
-const User = require("../../../src/app/Models/User.model");
-const OTP = require("./../../../src/app/Models/OTP.model");
+const baseURL = "/auth/account/otp/verify";
 
-const baseURL = "/auth/otp/verify";
-
-describe(`"POST" ${baseURL} - Verify OTP code during login process`, () => {
-	it("1. Verify OTP code successfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
+describe(`Auth API - Verify OTP endpoint (during login process) "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isActive: true,
+			isOtpEnabled: true,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when otp code is verified successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isOtpEnabled: true,
 		});
 
-		// (2) Generate OTP | 6 random numbers
-		const plainTextOTP = generate_randomNumber({ length: 6 });
-
-		// (3) Hash OTP!
-		const hashedOTP = await generate_hash(`${plainTextOTP}`);
-
-		// (4) Save it into DB
-		await OTP.create({ userId: user.id, otp: hashedOTP, by: "EMAIL" });
-
-		// (5) Verify OTP
-		const { status, body } = await request(app).post(baseURL).send({
-			userId: user.id,
-			otp: plainTextOTP,
-		});
-
-		// (6) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await OTP.findOneAndDelete({ userId: user.id, by: "EMAIL" });
-
-		// (7) Our expectations
-		expect(status).toBe(200);
-		expect(body).toHaveProperty("data.accessToken");
-		expect(body).toHaveProperty("data.refreshToken");
-	});
-
-	it("2. OTP code is expired", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Verify OTP
-		const { status, body } = await request(app).post(baseURL).send({
-			userId: user.id,
-			otp: 123123,
-		});
-
-		// (3) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-
-		// (4) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, the OTP may be expired!");
-	});
-
-	it("3. Invalid OTP code", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Generate OTP | 6 random numbers
-		const plainTextOTP = generate_randomNumber({ length: 6 });
-
-		// (3) Hash OTP!
-		const hashedOTP = await generate_hash(`${plainTextOTP}`);
-
-		// (4) Save it into DB
-		await OTP.create({ userId: user.id, otp: hashedOTP, by: "EMAIL" });
-
-		// (5) Verify OTP
-		const { status, body } = await request(app).post(baseURL).send({
-			userId: user.id,
-			otp: 123123,
-		});
-
-		// (6) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await OTP.findOneAndDelete({ userId: user.id, by: "EMAIL" });
-
-		// (7) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, your OTP is invalid!");
-	});
-
-	it("4. More than 3 times wrong OTP code", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		await OTP.create({ userId: user.id, count: 3, by: "EMAIL", otp: 123123 });
-
-		// (2) Verify OTP
+		const plainTextOtp = RandomGenerator.generateRandomNumber(6);
+		const hashedOtp = await HashHelper.generate(plainTextOtp);
+		await OtpServices.createOne({ accountId: account._id, hashedOtp });
 
 		const { status, body } = await request(app).post(baseURL).send({
-			userId: user.id,
-			otp: 123123,
+			accountId: account._id,
+			otp: plainTextOtp.toString(),
 		});
 
-		// (6) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-
-		// (7) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, You have reached your maximum wrong tries!");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: {
+				accessToken: expect.any(String),
+				refreshToken: expect.any(String),
+			},
+		});
 	});
 
-	it("5. OTP code and userId fields are not provided", async () => {
-		const { status, body } = await request(app).post(baseURL);
+	it("Should return 403 status code when otp code is expired", async () => {
+		const fakeAccount = generateFakeAccount();
 
-		expect(status).toBe(422);
-		expect(body.data.length).toBe(2);
-		expect(body.data[0]).toBe('"userId" field is required!');
-		expect(body.data[1]).toBe('"otp" field is required!');
-	});
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isOtpEnabled: true,
+		});
 
-	//===================================================
-
-	it("6. OTP code is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL).send({
-			userId: "64141cb6c9a4394fcdf04e37",
+			accountId: account._id,
+			otp: "123123",
 		});
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field is required!`);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: EXPIRED_OTP,
+		});
 	});
 
-	it("7. OTP code can't be empty", async () => {
+	it("Should return 403 status code when otp code is invalid", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isOtpEnabled: true,
+		});
+
+		const plainTextOtp = RandomGenerator.generateRandomNumber(6);
+		const hashedOtp = await HashHelper.generate(plainTextOtp);
+		await OtpServices.createOne({ accountId: account._id, hashedOtp });
+
 		const { status, body } = await request(app).post(baseURL).send({
-			userId: "64141cb6c9a4394fcdf04e37",
-			otp: "",
+			accountId: account._id,
+			otp: "123123",
 		});
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be of type number!`);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: INVALID_OTP,
+		});
 	});
 
-	it("8. OTP code is not of type number", async () => {
+	it("Should return 403 status code when user sends more than 3 wrong times", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+			isOtpEnabled: true,
+		});
+
+		const plainTextOtp = RandomGenerator.generateRandomNumber(6);
+		const hashedOtp = await HashHelper.generate(plainTextOtp);
+		await OtpServices.createOne({ accountId: account._id, hashedOtp });
+
+		await request(app).post(baseURL).send({
+			accountId: account._id,
+			otp: "123123",
+		});
+		await request(app).post(baseURL).send({
+			accountId: account._id,
+			otp: "123123",
+		});
+		await request(app).post(baseURL).send({
+			accountId: account._id,
+			otp: "123123",
+		});
 		const { status, body } = await request(app).post(baseURL).send({
-			userId: "64141cb6c9a4394fcdf04e37",
-			otp: "testte",
+			accountId: account._id,
+			otp: "123123",
 		});
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be of type number!`);
-	});
-
-	it("9. OTP code is a negative number", async () => {
-		const { status, body } = await request(app).post(baseURL).send({
-			userId: "64141cb6c9a4394fcdf04e37",
-			otp: -123123,
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: REACHED_MAXIMUM_WRONG_TRIES,
 		});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be positive!`);
 	});
 
-	it("10. OTP code is not integer number", async () => {
-		const { status, body } = await request(app).post(baseURL).send({
-			userId: "64141cb6c9a4394fcdf04e37",
-			otp: 0.121312,
+	it("Should return 422 status code when otp code is not provided", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ accountId: "64141cb6c9a4394fcdf04e37" });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field is required!`]),
 		});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be integer!`);
 	});
 
-	it("11. OTP code is too short to be true", async () => {
-		const { status, body } = await request(app).post(baseURL).send({
-			userId: "64141cb6c9a4394fcdf04e37",
-			otp: 123,
+	it("Should return 422 status code when otp code is empty", async () => {
+		const { status, body } = await request(app)
+			.post(baseURL)
+
+			.send({ otp: "", accountId: "64141cb6c9a4394fcdf04e37" });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field is required!`]),
 		});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be 6 digits!`);
 	});
 
-	it("12. OTP code is too long to be true", async () => {
+	it("Should return 422 status code when otp code is not of type String", async () => {
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.send({ otp: 123456, accountId: "64141cb6c9a4394fcdf04e37" });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "otp"!`]),
+		});
+	});
+
+	it("Should return 422 status code when otp code is too short", async () => {
+		const { status, body } = await request(app)
+			.post(baseURL)
+
+			.send({ otp: "12345", accountId: "64141cb6c9a4394fcdf04e37" });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field should have a length of 6!`]),
+		});
+	});
+
+	it("Should return 422 status code when otp code is too long", async () => {
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.send({ otp: "1234567", accountId: "64141cb6c9a4394fcdf04e37" });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field should have a length of 6!`]),
+		});
+	});
+
+	it("Should return 422 status code when accountId field is not of type string", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({
-				userId: "64141cb6c9a4394fcdf04e37",
-				otp: +"1".repeat(10),
+				otp: "123123",
+				accountId: +"1".repeat(24),
 			});
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be 6 digits!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "accountId"!`]),
+		});
 	});
 
-	//==========================================================
-
-	it("13. userId field is not of type string", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({
-				otp: 12313,
-				userId: +"1".repeat(24),
-			});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field has to be of type string!`);
-	});
-
-	it("14. userId field can't be empty", async () => {
+	it("Should return 422 status code when accountId field is empty", async () => {
 		const { status, body } = await request(app).post(baseURL).send({
-			otp: 12313,
-			userId: "",
+			otp: "123123",
+			accountId: "",
 		});
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field can't be empty!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"accountId" field is required!`]),
+		});
 	});
 
-	it("15. userId field is too short to be true", async () => {
+	it("Should return 422 status code when accountId field is not a valid mongodb ID", async () => {
 		const { status, body } = await request(app).post(baseURL).send({
-			otp: 12313,
-			userId: "1234",
+			otp: "123123",
+			accountId: "1234",
 		});
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field is not a valid ID`);
-	});
-
-	it("16. userId field is too long to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({
-				otp: 12313,
-				userId: "1234".repeat(20),
-			});
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field is not a valid ID`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid value for "accountId"!`]),
+		});
 	});
 });

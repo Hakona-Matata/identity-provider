@@ -1,83 +1,93 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants");
+const {
+	SUCCESS_MESSAGES: { OTP_DISABLED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { OTP_ALREADY_DISABLED },
+} = require("./../otp.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../src/helpers/hash");
+const AccountServices = require("./../../account/account.services");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
+const baseURL = "/auth/account/otp/disable";
 
-const baseURL = "/auth/otp/disable";
-
-describe(`"DELETE" ${baseURL} - Disable OTP`, () => {
-	it("1. Disable OTP successfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
+describe(`Auth API - Disable OTP endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			isOTPEnabled: false,
-			password: await generate_hash("tesTES@!#1232"),
+			isOtpEnabled: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when OTP feature is disabled successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable OTP
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isOTPEnabled: true } });
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
-		// (4) Disable OTP
 		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (6) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("You disabled OTP successfully");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: OTP_DISABLED_SUCCESSFULLY,
+		});
 	});
 
-	it("2. OTP is already disabled", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			isOTPEnabled: false,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 400 status code when OTP feature is already disabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Disable OTP
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
+
+		await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(400);
-		expect(body.data).toBe("Sorry, you already disabled OTP!");
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
+			message: OTP_ALREADY_DISABLED,
+		});
 	});
 
-	it("3. Disable route is private", async () => {
+	it("Should return 404 status code when accessToken is not provided", async () => {
 		const { status, body } = await request(app).delete(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
+		});
 	});
 });
