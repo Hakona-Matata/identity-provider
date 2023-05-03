@@ -11,7 +11,7 @@ const { generate_totp } = require("../../../helpers/totp");
 const User = require("../../../src/app/Models/User.model");
 const Session = require("./../../../src/app/Models/Session.model");
 const TOTP = require("./../../../src/app/Models/TOTP.model");
-const await_all = require("../../../helpers/awaitAll");
+// const await_all = require("../../../helpers/awaitAll");
 
 const baseURL = "/auth/totp/confirm";
 

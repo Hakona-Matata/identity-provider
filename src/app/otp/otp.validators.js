@@ -4,14 +4,14 @@
  */
 
 const Joi = require("joi");
-const { code, id } = require("./../../validators/index");
+const { otp, id } = require("./../../validators/index");
 
 /**
  * Joi schema object for confirming an OTP code.
  * @type {Joi.ObjectSchema}
  */
 const confirm = Joi.object({
-	otp: code,
+	otp,
 });
 
 /**
@@ -28,7 +28,7 @@ const send = Joi.object({
  */
 const verify = Joi.object({
 	accountId: id,
-	otp: code,
+	otp,
 });
 
 module.exports = {

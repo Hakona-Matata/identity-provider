@@ -1,379 +1,315 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants");
+const {
+	SUCCESS_MESSAGES: { OTP_CONFIRMED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { OTP_ALREADY_ENABLED, EXPIRED_OTP, REACHED_MAXIMUM_WRONG_TRIES, INVALID_OTP },
+} = require("./../otp.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
+const { app } = require("../../../app");
 
-const app = require("../../../server");
+const AccountServices = require("./../../account/account.services");
+const OtpServices = require("./../otp.services");
+const { RandomGenerator, HashHelper } = require("./../../../helpers");
 
-const { generate_hash } = require("../../../helpers/hash");
-const {
-	generate_randomNumber,
-} = require("./../../../src/helpers/randomNumber");
+const baseURL = "/auth/account/otp/confirm";
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
-const OTP = require("./../../../src/app/Models/OTP.model");
-
-const baseURL = "/auth/otp/confirm";
-
-
-
-describe(`"POST" ${baseURL} - Confirm enabling OTP as a security Layer`, () => {
-	it("1. Confirm enabling OTP successfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
+describe(`Auth API - Confirm Enabling OTP endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isActive: true,
+			isOtpEnabled: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("should return 200 status code when Otp enabling is confirmed successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Generate OTP | 6 random numbers
-		const plainTextOTP = generate_randomNumber({ length: 6 });
+		const plainTextOtp = RandomGenerator.generateRandomNumber(6);
+		const hashedOtp = await HashHelper.generate(plainTextOtp);
+		await OtpServices.createOne({ accountId: account._id, hashedOtp });
 
-		// (4) Hash OTP!
-		const hashedOTP = await generate_hash(`${plainTextOTP}`);
-
-		// (5) Save OTP
-		const createdOTP = await OTP.create({
-			userId: user.id,
-			otp: hashedOTP,
-			by: "EMAIL",
-		});
-
-		// (6) Confirm OTP enabling
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: plainTextOTP });
+			.send({ otp: plainTextOtp.toString() });
 
-		// (7) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await OTP.findOneAndDelete({ _id: createdOTP.id });
-
-		// (8) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("OTP is enabled successfully");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: OTP_CONFIRMED_SUCCESSFULLY,
+		});
 	});
 
-	it("2. OTP code is expired", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 400 status code when otp feature is already enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm OTP enabling
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: 123123 });
+			.send({ otp: "123456" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, your OTP may be expired!");
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
+			message: OTP_ALREADY_ENABLED,
+		});
 	});
 
-	it("3. OTP code is not expired, but invalid", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("should return 403 status code when otp code is expired", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Generate OTP | 6 random numbers
-		const plainTextOTP = generate_randomNumber({ length: 6 });
-
-		// (4) Hash OTP!
-		const hashedOTP = await generate_hash(`${plainTextOTP}`);
-
-		// (5) Save OTP
-		const createdOTP = await OTP.create({
-			userId: user.id,
-			otp: hashedOTP,
-			by: "EMAIL",
-		});
-
-		// (3) Confirm OTP enabling
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: 123123 });
+			.send({ otp: "123456" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await OTP.findOneAndDelete({ _id: createdOTP.id });
-
-		// (5) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, your OTP is invalid!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: EXPIRED_OTP,
+		});
 	});
 
-	//=================================================================
+	it("Should return 403 status code when otp is invalid", async () => {
+		const fakeAccount = generateFakeAccount();
 
-	it("4. OTP code is not provided", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm OTP enabling
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const plainTextOtp = RandomGenerator.generateRandomNumber(6);
+		const hashedOtp = await HashHelper.generate(plainTextOtp);
+		await OtpServices.createOne({ accountId: account._id, hashedOtp });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field is required!`);
-	});
-
-	it("5. OTP code can't be empty", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) Confirm OTP enabling
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: "" });
+			.send({ otp: "123456" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be of type number!`);
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: INVALID_OTP,
+		});
 	});
 
-	it("6. OTP code is not of type number", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when more than 3 wrong times of sending otp code", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm OTP enabling
+		const plainTextOtp = RandomGenerator.generateRandomNumber(6);
+		const hashedOtp = await HashHelper.generate(plainTextOtp);
+		await OtpServices.createOne({ accountId: account._id, hashedOtp });
+
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`).send({ otp: "123456" });
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`).send({ otp: "123456" });
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`).send({ otp: "123456" });
+
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ otp: "123456" });
+
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: REACHED_MAXIMUM_WRONG_TRIES,
+		});
+	});
+
+	it("Should return 422 status code when otp code is not provided", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+		});
+
+		const {
+			body: {
+				result: { accessToken },
+			},
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
+
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field is required!`]),
+		});
+	});
+
+	it("Should return 422 status code when otp code is empty", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+		});
+
+		const {
+			body: {
+				result: { accessToken },
+			},
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ otp: "" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be of type number!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field is required!`]),
+		});
 	});
 
-	it("7. OTP code is a negative number", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when otp code is not of type String", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm OTP enabling
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: -123123 });
+			.send({ otp: 123456 });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be positive!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "otp"!`]),
+		});
 	});
 
-	it("8. OTP code is not integer number", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when otp code is too short", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm OTP enabling
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: 0.23123 });
+			.send({ otp: "12345" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be integer!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field should have a length of 6!`]),
+		});
 	});
 
-	it("9. OTP code is too short to be true", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when otp code is too long", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm OTP enabling
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: 123 });
+			.send({ otp: "1234567" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be 6 digits!`);
-	});
-
-	it("10. OTP code is too long to be true", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			password: await generate_hash("tesTES@!#1232"),
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"otp" field should have a length of 6!`]),
 		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) Confirm OTP enabling
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: +"1".repeat(10) });
-
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"otp" field has to be 6 digits!`);
 	});
 });

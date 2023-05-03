@@ -119,6 +119,17 @@ const phone = Joi.string()
 	})
 	.messages({ ...validationMessages });
 
+/**
+ * Joi validation schema for phone.
+ *
+ * @type {import("joi").StringSchema}
+ */
+const otp = Joi.string()
+	.trim()
+	.required()
+	.length(6)
+	.messages({ ...validationMessages });
+
 module.exports = {
 	email,
 	token,
@@ -127,6 +138,7 @@ module.exports = {
 	confirmPassword,
 	role,
 	code,
+	otp,
 	id,
 	phone,
 };
