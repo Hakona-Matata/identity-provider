@@ -1,11 +1,3 @@
-const HashHelper = require("../../helpers/hashHelper");
-const SmsRepository = require("./sms.repository");
-const OtpServices = require("./../otp/otp.services");
-const AccountServices = require("./../account/account.services");
-const SessionServices = require("./../session/session.services");
-
-const { ForbiddenException, NotFoundException } = require("./../../exceptions/index");
-
 const {
 	SUCCESS_MESSAGES: { SMS_SENT_SUCCESSFULLY, SMS_ENABLED_SUCCESSFULLY, SMS_DISABLED_SUCCESSFULLY },
 	FAILURE_MESSAGES: {
@@ -21,7 +13,19 @@ const {
 	},
 } = require("./sms.constants");
 
-const { BadRequestException, InternalServerException } = require("./../../exceptions/index");
+const {
+	ForbiddenException,
+	NotFoundException,
+	InternalServerException,
+	BadRequestException,
+} = require("./../../exceptions/index");
+
+const OtpServices = require("./../otp/otp.services");
+const AccountServices = require("./../account/account.services");
+const SessionServices = require("./../session/session.services");
+const SmsRepository = require("./sms.repository");
+
+const HashHelper = require("../../helpers/hashHelper");
 
 /**
  * A class representing the SMS services of the application.
@@ -146,7 +150,7 @@ class SmsServices {
 		const isSmsFound = await SmsServices.findOne({ accountId });
 
 		if (isSmsFound) {
-			throw new BadRequestException(ALREADY_HAVE_VALID_SMS);
+			throw new ForbiddenException(ALREADY_HAVE_VALID_SMS);
 		}
 
 		const hashedOtp = await OtpServices.generateSendOtp();

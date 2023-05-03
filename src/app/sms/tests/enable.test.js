@@ -1,279 +1,203 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants");
+const {
+	SUCCESS_MESSAGES: { SMS_SENT_SUCCESSFULLY },
+	FAILURE_MESSAGES: { SMS_ALREADY_ENABLED, ALREADY_HAVE_VALID_SMS },
+} = require("./../sms.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
+const { app } = require("../../../app");
 
-const app = require("../../../src/server");
-const { generate_hash } = require("../../../src/helpers/hash");
+const AccountServices = require("./../../account/account.services");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
-const OTP = require("./../../../src/app/Models/OTP.model");
+const baseURL = "/auth/account/sms/enable";
 
-const baseURL = "/auth/sms/enable";
+describe(`Auth API - Initiate enabling SMS endpoint"${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+			return {
+				email: faker.internet.email(),
+				userName: faker.random.alpha(10),
+				isVerified: true,
+				isActive: true,
+				password: "tesTES@!#1232",
+				role: "CANDIDATE",
+			};
+		},
+		phone = "+201210101010";
 
+	it("Should return 200 status code when initiating SMS is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
 
-
-describe(`"POST" ${baseURL} - Initiate enabling SMS as a security Layer`, () => {
-	it("1. Enable SMS successsfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Initiate enabling sms
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ phone: "+201210101010" });
+			.send({ phone });
 
-		// (4) clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("OTP code sent to your phone successfully");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: SMS_SENT_SUCCESSFULLY,
+		});
 	});
 
-	it("2. SMS is already enabled", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 400 status code when SMS feature is already enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable SMS | We can't get the access token if it was already enabled!
-		// That's why we need to update user document now after we get valid token!
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isSMSEnabled: true } }
-		);
+		await AccountServices.updateOne({ _id: account._id }, { isSmsEnabled: true });
 
-		// (4) Initiate enabling sms
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ phone: "+201210939257" });
+			.send({ phone });
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (6) Our expectations
-		expect(status).toBe(400);
-		expect(body.data).toBe("Sorry, you already enabled SMS!");
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
+			message: SMS_ALREADY_ENABLED,
+		});
 	});
 
-	it("3. User stil have valid OTP over SMS", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when SMS feature is already Initiated", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Create fake OTP
-		const fakeOTP = await OTP.create({
-			userId: user.id,
-			by: "SMS",
-			otp: 123123,
-		});
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`).send({ phone });
 
-		// (4) Initiate sms enable
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ phone: "+201210101010" });
+			.send({ phone });
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await OTP.findOneAndDelete({ _id: fakeOTP.id });
-
-		// (6) Our expectations
-		expect(status).toBe(400);
-		expect(body.data).toBe("Sorry, the OTP sent to your phone is still valid!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: ALREADY_HAVE_VALID_SMS,
+		});
 	});
 
-	it("4. Enable SMS is private route", async () => {
+	it("Should return 404 status code when accessToken is not found", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
+		});
 	});
 
-	//=========================================================
+	it("Should return 422 status code when phone field is not provided", async () => {
+		const fakeAccount = generateFakeAccount();
 
-	it("5. phone field is not provided", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Initiate SMS Enabling
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"phone" field is required!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"phone" field is required!`]),
+		});
 	});
 
-	it("6. phone field is not of type string", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when phone field is not of type string", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Initiate SMS Enabling
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ phone: 11210101010 });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"phone" field has to be of type string!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "phone"!`]),
+		});
 	});
 
-	it("7. phone field can't be empty", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when phone field format is invalid", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Initiate SMS Enabling
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ phone: "" });
-
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"phone" field can't be empty!`);
-	});
-
-	it("8. phone field is invalid", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) Initiate SMS Enabling
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ phone: "01210101010" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(
-			`"phone" field is invalid (Must be in "E.164" format)`
-		);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid value for "phone"!`]),
+		});
 	});
 });
