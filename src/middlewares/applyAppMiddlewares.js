@@ -38,12 +38,12 @@ module.exports = (app) => {
 	/**
 	 * Registers OTP routes.
 	 */
-	app.use("/auth/otp", OtpRoutes);
+	app.use("/auth/account/otp", OtpRoutes);
 
 	/**
 	 * Registers SMS routes.
 	 */
-	app.use("/auth/sms", SmsRoutes);
+	app.use("/auth/account/sms", SmsRoutes);
 
 	/**
 	 * Registers TOTP routes.
@@ -53,7 +53,7 @@ module.exports = (app) => {
 	/**
 	 * Registers backup routes.
 	 */
-	app.use("/auth/backup", BackupRoutes);
+	app.use("/auth/account/backup", BackupRoutes);
 
 	/**
 	 * Handles requests for routes that are not found.

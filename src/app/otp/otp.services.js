@@ -139,7 +139,7 @@ class OtpServices {
 		const isOtpFound = await OtpServices.findOne({ accountId });
 
 		if (isOtpFound) {
-			throw new BadRequestException(ALREADY_HAVE_VALID_OTP);
+			throw new ForbiddenException(ALREADY_HAVE_VALID_OTP);
 		}
 
 		const hashedOtp = await OtpServices.generateSendOtp(accountId);

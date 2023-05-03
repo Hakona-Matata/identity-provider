@@ -1,12 +1,9 @@
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../src/helpers/hash");
-
-const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
+const AccountServices = require("./../../account/account.services");
 
 const baseURL = "/auth/otp/disable";
 
