@@ -1,103 +1,93 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants");
+const {
+	SUCCESS_MESSAGES: { SMS_ENABLED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { EXPIRED_SMS },
+} = require("./../sms.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
+const { app } = require("../../../app");
 
-const app = require("../../../server");
+const AccountServices = require("./../../account/account.services");
+const SmsServices = require("./../sms.services");
 
-const { generate_hash } = require("../../../helpers/hash");
-const {
-	generate_randomNumber,
-} = require("./../../../src/helpers/randomNumber");
+const { RandomGenerator, HashHelper } = require("./../../../helpers");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("../../../src/app/Models/Session.model");
-const OTP = require("./../../../src/app/Models/OTP.model");
+const baseURL = "/auth/account/sms/confirm";
 
-const baseURL = "/auth/sms/confirm";
-
-
-
-describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
-	it("1. Confirm enabling SMS successfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
+describe(`Auth API - Confirm enabling SMS endpoint"${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			phone: "+201210101010",
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when confirm enabling SMS is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Generate OTP | 6 random numbers
-		const plainTextOTP = generate_randomNumber({ length: 6 });
+		const plainTextOtp = RandomGenerator.generateRandomNumber(6);
+		const hashedOtp = await HashHelper.generate(plainTextOtp);
+		await SmsServices.createOne({ accountId: account._id, hashedOtp });
 
-		// (4) Hash generated OTP!
-		const hashedOTP = await generate_hash(`${plainTextOTP}`);
-
-		// (4) Save OTP
-		await OTP.create({ userId: user.id, otp: hashedOTP, by: "SMS" });
-
-		// (5) Confirm OTP
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: plainTextOTP });
+			.send({ otp: plainTextOtp.toString() });
 
-		// (6) Clean DB
-
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await OTP.findOneAndDelete({ userId: user.id, by: "SMS" });
-
-		// (7) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("OTP over SMS is enabled successfully");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: SMS_ENABLED_SUCCESSFULLY,
+		});
 	});
 
-	it("2. OTP code is expired", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when otp code is expired", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm OTP
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ otp: 234234 });
+			.send({ otp: "234234" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (7) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, your OTP may be expired!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: EXPIRED_SMS,
+		});
 	});
 
-	it("3. OTP code is invalid", async () => {
+	it.only("3. OTP code is invalid", async () => {
 		// (1) Create and save a fake user
 		const user = await User.create({
 			email: faker.internet.email(),
@@ -112,9 +102,7 @@ describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Generate OTP | 6 random numbers
 		const plainTextOTP = generate_randomNumber({ length: 6 });
@@ -157,9 +145,7 @@ describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Generate OTP | 6 random numbers
 		const plainTextOTP = generate_randomNumber({ length: 6 });
@@ -210,14 +196,10 @@ describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm OTP
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		// (4) Clean DB
 		await User.findOneAndDelete({ _id: user.id });
@@ -243,9 +225,7 @@ describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm OTP
 		const { status, body } = await request(app)
@@ -277,9 +257,7 @@ describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm OTP
 		const { status, body } = await request(app)
@@ -311,9 +289,7 @@ describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm OTP
 		const { status, body } = await request(app)
@@ -345,9 +321,7 @@ describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm OTP
 		const { status, body } = await request(app)
@@ -379,9 +353,7 @@ describe(`"POST" ${baseURL} - Confirm enabling SMS as a security Layer`, () => {
 			body: {
 				data: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
 
 		// (3) Confirm OTP
 		const { status, body } = await request(app)

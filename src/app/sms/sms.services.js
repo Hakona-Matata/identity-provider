@@ -172,7 +172,7 @@ class SmsServices {
 		const isSmsFound = await SmsServices.findOne({ accountId });
 
 		if (!isSmsFound) {
-			throw new BadRequestException(EXPIRED_SMS);
+			throw new ForbiddenException(EXPIRED_SMS);
 		}
 
 		const isOtpValid = await HashHelper.verify(givenOtp, isSmsFound.hashedOtp);
@@ -210,12 +210,6 @@ class SmsServices {
 	 */
 	static async findOne(filter) {
 		return await SmsRepository.findOne(filter);
-
-		// if (!isSmsFound) {
-		// 	throw new InternalServerException(SMS_READ_FAILED);
-		// }
-
-		// return isSmsFound;
 	}
 
 	/**
