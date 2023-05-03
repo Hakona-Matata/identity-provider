@@ -3,22 +3,17 @@ const {
 	FAILURE_MESSAGES: {
 		SMS_ALREADY_ENABLED,
 		ALREADY_HAVE_VALID_SMS,
+		REACHED_MAXIMUM_WRONG_TRIES,
 		EXPIRED_SMS,
 		INVALID_OTP,
 		ALREADY_DISABLED_SMS,
-		SMS_NOT_FOUND,
 		SMS_CREATE_FAILED,
 		SMS_UPDATE_FAILED,
 		SMS_DELETION_FAILED,
 	},
 } = require("./sms.constants");
 
-const {
-	ForbiddenException,
-	NotFoundException,
-	InternalServerException,
-	BadRequestException,
-} = require("./../../exceptions/index");
+const { ForbiddenException, InternalServerException, BadRequestException } = require("./../../exceptions/index");
 
 const OtpServices = require("./../otp/otp.services");
 const AccountServices = require("./../account/account.services");
@@ -174,10 +169,19 @@ class SmsServices {
 		if (!isSmsFound) {
 			throw new ForbiddenException(EXPIRED_SMS);
 		}
+		console.log({ isSmsFound });
+		console.log({ count: isSmsFound.failedAttemptCount });
+		if (isSmsFound.failedAttemptCount >= 3) {
+			await SmsServices.deleteOne({ _id: isSmsFound._id });
+
+			throw new ForbiddenException(REACHED_MAXIMUM_WRONG_TRIES);
+		}
 
 		const isOtpValid = await HashHelper.verify(givenOtp, isSmsFound.hashedOtp);
 
 		if (!isOtpValid) {
+			await SmsServices.updateOne({ _id: isSmsFound._id }, { failedAttemptCount: isSmsFound.failedAttemptCount + 1 });
+
 			throw new ForbiddenException(INVALID_OTP);
 		}
 
@@ -240,13 +244,9 @@ class SmsServices {
 	 * @throws {InternalServerException} If the Sms document deletion fails.
 	 */
 	static async deleteOne(filter) {
-		const isSmsDeleted = await SmsRepository.deleteOne(filter);
+		const { deletedCount } = await SmsRepository.deleteOne(filter);
 
-		if (!isSmsDeleted) {
-			throw new NotFoundException(SMS_NOT_FOUND);
-		} else if (isSmsDeleted.deletedCount === 0) {
-			throw new InternalServerException(SMS_DELETION_FAILED);
-		}
+		if (deletedCount === 0) throw new InternalServerException(SMS_DELETION_FAILED);
 	}
 }
 
