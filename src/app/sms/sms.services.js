@@ -1,27 +1,27 @@
-const HashHelper = require("../../helpers/hashHelper");
-const SmsRepository = require("./sms.repository");
-const OtpServices = require("./../otp/otp.services");
-const AccountServices = require("./../account/account.services");
-const SessionServices = require("./../session/session.services");
-
-const { ForbiddenException, NotFoundException } = require("./../../exceptions/index");
-
 const {
 	SUCCESS_MESSAGES: { SMS_SENT_SUCCESSFULLY, SMS_ENABLED_SUCCESSFULLY, SMS_DISABLED_SUCCESSFULLY },
 	FAILURE_MESSAGES: {
 		SMS_ALREADY_ENABLED,
 		ALREADY_HAVE_VALID_SMS,
+		REACHED_MAXIMUM_WRONG_TRIES,
 		EXPIRED_SMS,
 		INVALID_OTP,
+		CANNOT_VERIFY,
 		ALREADY_DISABLED_SMS,
-		SMS_NOT_FOUND,
 		SMS_CREATE_FAILED,
 		SMS_UPDATE_FAILED,
 		SMS_DELETION_FAILED,
 	},
 } = require("./sms.constants");
 
-const { BadRequestException, InternalServerException } = require("./../../exceptions/index");
+const { ForbiddenException, InternalServerException, BadRequestException } = require("./../../exceptions/index");
+
+const OtpServices = require("./../otp/otp.services");
+const AccountServices = require("./../account/account.services");
+const SessionServices = require("./../session/session.services");
+const SmsRepository = require("./sms.repository");
+
+const HashHelper = require("../../helpers/hashHelper");
 
 /**
  * A class representing the SMS services of the application.
@@ -127,9 +127,11 @@ class SmsServices {
 	 * @throws {ForbiddenException} - If the provided OTP is invalid.
 	 */
 	static async verify({ accountId, givenOtp }) {
-		await SmsServices.#verifyDeleteOtp(accountId, givenOtp);
-
 		const account = await AccountServices.findById(accountId);
+
+		if (!account || !account.isSmsEnabled) throw new ForbiddenException(CANNOT_VERIFY);
+
+		await SmsServices.#verifyDeleteOtp(accountId, givenOtp);
 
 		return await SessionServices.createOne({ accountId: account._id, role: account.role });
 	}
@@ -146,7 +148,7 @@ class SmsServices {
 		const isSmsFound = await SmsServices.findOne({ accountId });
 
 		if (isSmsFound) {
-			throw new BadRequestException(ALREADY_HAVE_VALID_SMS);
+			throw new ForbiddenException(ALREADY_HAVE_VALID_SMS);
 		}
 
 		const hashedOtp = await OtpServices.generateSendOtp();
@@ -168,12 +170,20 @@ class SmsServices {
 		const isSmsFound = await SmsServices.findOne({ accountId });
 
 		if (!isSmsFound) {
-			throw new BadRequestException(EXPIRED_SMS);
+			throw new ForbiddenException(EXPIRED_SMS);
+		}
+
+		if (isSmsFound.failedAttemptCount >= 3) {
+			await SmsServices.deleteOne({ _id: isSmsFound._id });
+
+			throw new ForbiddenException(REACHED_MAXIMUM_WRONG_TRIES);
 		}
 
 		const isOtpValid = await HashHelper.verify(givenOtp, isSmsFound.hashedOtp);
 
 		if (!isOtpValid) {
+			await SmsServices.updateOne({ _id: isSmsFound._id }, { failedAttemptCount: isSmsFound.failedAttemptCount + 1 });
+
 			throw new ForbiddenException(INVALID_OTP);
 		}
 
@@ -206,12 +216,6 @@ class SmsServices {
 	 */
 	static async findOne(filter) {
 		return await SmsRepository.findOne(filter);
-
-		// if (!isSmsFound) {
-		// 	throw new InternalServerException(SMS_READ_FAILED);
-		// }
-
-		// return isSmsFound;
 	}
 
 	/**
@@ -242,13 +246,9 @@ class SmsServices {
 	 * @throws {InternalServerException} If the Sms document deletion fails.
 	 */
 	static async deleteOne(filter) {
-		const isSmsDeleted = await SmsRepository.deleteOne(filter);
+		const { deletedCount } = await SmsRepository.deleteOne(filter);
 
-		if (!isSmsDeleted) {
-			throw new NotFoundException(SMS_NOT_FOUND);
-		} else if (isSmsDeleted.deletedCount === 0) {
-			throw new InternalServerException(SMS_DELETION_FAILED);
-		}
+		if (deletedCount === 0) throw new InternalServerException(SMS_DELETION_FAILED);
 	}
 }
 

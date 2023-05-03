@@ -3,7 +3,7 @@
  * @property {Function} validate - Validates the given input value and schema.
  */
 const Joi = require("joi");
-const { phone, code, id } = require("./../../validators/index");
+const { phone, otp, id } = require("./../../validators/index");
 
 /**
  * Joi schema for enabling SMS OTP feature
@@ -20,7 +20,7 @@ const enable = Joi.object({
  * @type {JoiObject}
  */
 const confirm = Joi.object({
-	otp: code,
+	otp,
 });
 
 /**
@@ -39,7 +39,7 @@ const send = Joi.object({
  */
 const verify = Joi.object({
 	accountId: id,
-	otp: code,
+	otp,
 });
 
 module.exports = {
