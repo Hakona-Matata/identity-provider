@@ -48,7 +48,7 @@ module.exports = (app) => {
 	/**
 	 * Registers TOTP routes.
 	 */
-	app.use("/auth/totp", TotpRoutes);
+	app.use("/auth/account/totp", TotpRoutes);
 
 	/**
 	 * Registers backup routes.

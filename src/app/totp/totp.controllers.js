@@ -19,7 +19,7 @@ class TotpControllers {
 	 * @returns {void}
 	 */
 	static async initiateEnabling(req, res, next) {
-		req.result = await TotpServices.initiateEnabling(req.account._id, req.account.ist);
+		req.result = await TotpServices.initiateEnabling(req.account._id, req.account.isTotpEnabled);
 		next();
 	}
 
