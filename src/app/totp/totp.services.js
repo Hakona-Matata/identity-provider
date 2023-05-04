@@ -1,9 +1,5 @@
-const AccountServices = require("./../account/account.services");
-const TotpRepository = require("./totp.repositories");
-const TotpHelper = require("../../helpers/totpHelper");
-
 const {
-	SUCCESS_MESSAGES: { TOTP_ENABLED_SUCCESSFULLY, TOTP_DISABLED_SUCCESSFULLY, TOTP_VERIFIED_SUCCESSFULLY },
+	SUCCESS_MESSAGES: { TOTP_ENABLED_SUCCESSFULLY, TOTP_DISABLED_SUCCESSFULLY },
 	FAILURE_MESSAGES: {
 		TOTP_ALREADY_ENABLED,
 		TOTP_ALREADY_DISABLED,
@@ -25,6 +21,12 @@ const {
 	NotFoundException,
 	ForbiddenException,
 } = require("./../../exceptions/index");
+
+const TotpRepository = require("./totp.repositories");
+const AccountServices = require("./../account/account.services");
+const SessionServices = require("../session/session.services");
+
+const { TotpHelper } = require("../../helpers");
 
 /**
  * A class representing services for  TOTP (Time-based One-time Password)
@@ -120,11 +122,8 @@ class TotpServices {
 	 * @returns {Promise<string>} A success message.
 	 */
 	static async verify(accountId, givenTotp) {
-		const { isTotpEnabled } = await AccountServices.findOne({ _id: accountId });
-
-		if (!isTotpEnabled) {
-			throw new BadRequestException(TOTP_NOT_ENABLED);
-		}
+		const foundAccount = await AccountServices.findOne({ _id: accountId });
+		if (!foundAccount || (foundAccount && !foundAccount.isTotpEnabled)) throw new ForbiddenException(TOTP_NOT_ENABLED);
 
 		const totp = await TotpServices.findOne({ accountId });
 
@@ -139,7 +138,7 @@ class TotpServices {
 			givenTotp,
 		});
 
-		return TOTP_VERIFIED_SUCCESSFULLY;
+		return await SessionServices.createOne({ accountId: foundAccount._id, role: foundAccount.role });
 	}
 
 	/**
