@@ -1,86 +1,96 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+const {
+	SUCCESS_MESSAGES: { TOTP_DISABLED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { TOTP_ALREADY_DISABLED },
+} = require("./../totp.constants.js");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../src/helpers/hash");
+const AccountServices = require("./../../account/account.services");
+const TotpServices = require("../totp.services.js");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
+const baseURL = "/auth/account/totp/disable";
 
-const baseURL = "/auth/totp/disable";
-
-describe(`"DELETE" ${baseURL} - Disable TOTP as security layer`, () => {
-	it("1. Disable TOTP successfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
+describe(`Auth API - Disable TOTP endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isTotpEnabled: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when TOTP is disabled successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable TOTP
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isTOTPEnabled: true } });
+		await AccountServices.updateOne({ _id: account._id }, { isTotpEnabled: true });
+		await TotpServices.createOne({ accountId: account._id, isTemp: false, secret: "test" });
 
-		// (4) Disable TOTP
 		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (6) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("TOTP disabled successfully!");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: TOTP_DISABLED_SUCCESSFULLY,
+		});
 	});
 
-	it("2. TOTP is already disabled", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 400 status code when TOTP is already disabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable TOTP
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isTOTPEnabled: true } });
+		await AccountServices.updateOne({ _id: account._id }, { isTotpEnabled: true });
+		await TotpServices.createOne({ accountId: account._id, isTemp: false, secret: "test" });
 
-		// (4) Disable TOTP
 		await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
-
 		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (6) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, you already disabled TOTP!");
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
+			message: TOTP_ALREADY_DISABLED,
+		});
 	});
 
-	it("3. TOTP diable route is private", async () => {
+	it("Should return 404 status code when access token is not found", async () => {
 		const { status, body } = await request(app).delete(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
+		});
 	});
 });

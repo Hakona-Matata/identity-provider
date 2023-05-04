@@ -226,13 +226,9 @@ class TotpServices {
 	 * @returns {Promise<void>} A Promise that resolves when the TOTP entry has been deleted.
 	 */
 	static async deleteOne(filter) {
-		const isTotpDeleted = await TotpRepository.deleteOne(filter);
+		const { deletedCount } = await TotpRepository.deleteOne(filter);
 
-		if (!isTotpDeleted) {
-			throw new NotFoundException(TOTP_NOT_FOUND);
-		} else if (isTotpDeleted.deletedCount === 0) {
-			throw new InternalServerException(TOTP_DELETE_FAILED);
-		}
+		if (deletedCount === 0) throw new InternalServerException(TOTP_DELETE_FAILED);
 	}
 
 	/**
