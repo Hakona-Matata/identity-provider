@@ -68,7 +68,7 @@ class TotpServices {
 		const { _id: totpId, secret, isTemp, failedAttemptCount } = await TotpServices.findOne({ accountId });
 
 		if (!isTemp) {
-			throw new BadRequestException(TOTP_ALREADY_CONFIRMED);
+			throw new ForbiddenException(TOTP_ALREADY_CONFIRMED);
 		}
 
 		if (failedAttemptCount >= 3) {
