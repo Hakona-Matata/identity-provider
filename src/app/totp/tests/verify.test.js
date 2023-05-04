@@ -140,7 +140,7 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: expect.arrayContaining([`"totp" field is required!`]),
+			message: expect.arrayContaining([`Invalid type, expected a string for "totp"!`]),
 		});
 	});
 
@@ -154,7 +154,7 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: expect.arrayContaining([`"totp" field is required!`]),
+			message: expect.arrayContaining(['"totp" field should have a length of 6!']),
 		});
 	});
 
@@ -168,7 +168,7 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
 			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
-			message: expect.arrayContaining([`"totp" field is required!`]),
+			message: expect.arrayContaining(['"totp" field should have a length of 6!']),
 		});
 	});
 
