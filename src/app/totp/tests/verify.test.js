@@ -104,7 +104,7 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 		});
 	});
 
-	it.only("Should return 422 status code when totp code is not provided", async () => {
+	it("Should return 422 status code when totp code is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL).send({
 			accountId: "64171cbd792d92b7ed2416b3",
 		});
@@ -118,7 +118,7 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 		});
 	});
 
-	it.only("Should return 422 status code when totp code is empty", async () => {
+	it("Should return 422 status code when totp code is empty", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ totp: "", accountId: "64171cbd792d92b7ed2416b3" });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
@@ -130,7 +130,7 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 		});
 	});
 
-	it.only("Should return 422 status code when totp code is not of type string", async () => {
+	it("Should return 422 status code when totp code is not of type string", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ totp: 123123, accountId: "64171cbd792d92b7ed2416b3" });
@@ -144,7 +144,7 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 		});
 	});
 
-	it.only("Should return 422 status code when totp code is too short", async () => {
+	it("Should return 422 status code when totp code is too short", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ totp: "123", accountId: "64171cbd792d92b7ed2416b3" });
@@ -158,7 +158,7 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 		});
 	});
 
-	it.only("Should return 422 status code when totp code is too long", async () => {
+	it("Should return 422 status code when totp code is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.send({ totp: "123123123", accountId: "64171cbd792d92b7ed2416b3" });
@@ -172,54 +172,41 @@ describe(`Auth API - Verify TOTP endpoint (during login) "${baseURL}"`, () => {
 		});
 	});
 
-	//========================================================
-	it("14. userId field is not provided", async () => {
+	it("Should return 422 status code when accountId field is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL).send({ totp: "123123" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"userId" field is required!');
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"accountId" field is required!']),
+		});
 	});
 
-	it("15. usersId field can't be empty", async () => {
-		const { status, body } = await request(app).post(baseURL).send({ userId: "", totp: "123123" });
+	it("Should return 422 status code when accountId field is empty", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ accountId: "", totp: "123123" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field can't be empty!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"accountId" field is required!']),
+		});
 	});
 
-	it("16. userId field is not of type string", async () => {
+	it("Should return 422 status code when accountId field is not a valid mongodb ID", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ userId: +"1".repeat(24), totp: "123123" });
+			.send({ accountId: "1".repeat(50), totp: "123123" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field has to be of type string!`);
-	});
-
-	it("17. userId field is too short to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ userId: "1".repeat(20), totp: "123123" });
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field is not a valid ID`);
-	});
-
-	it("18. userId field is too long to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ userId: "1".repeat(30), totp: "123123" });
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field is not a valid ID`);
-	});
-
-	it("19. userId field is not a valid mongodb ID", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ userId: "1".repeat(24), totp: "123123" });
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"userId" field is not a valid ID`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['Invalid value for "accountId"!']),
+		});
 	});
 });
