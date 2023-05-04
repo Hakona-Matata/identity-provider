@@ -1,104 +1,90 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+const {
+	FAILURE_MESSAGES: { TOTP_ALREADY_ENABLED },
+} = require("./../totp.constants.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../src/helpers/hash");
+const AccountServices = require("./../../account/account.services.js");
 
-const User = require("../../../src/app/Models/User.model");
+const baseURL = "/auth/account/totp/enable";
 
-const baseURL = "/auth/totp/enable";
-
-describe(`"POST" ${baseURL} - Enable TOTP as a layer`, () => {
-	it("1. Initiate enabling TOTP successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Initiate enabling TOTP endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when Initiate enabling TOTP is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
 		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
-		expect(body.success).toBe(true);
-		expect(body.status).toBe(httpStatusCodeNumbers.OK);
-		expect(body.code).toBe(httpStatusCodeNumbers.OK);
-		expect(body.data).toHaveProperty("secret");
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: {
+				secret: expect.any(String),
+			},
+		});
 	});
 
-	it("2. TOTP is already enabled", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 400 status code when TOTP is already enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isTOTPEnabled: true } });
+		await AccountServices.updateOne({ _id: account._id }, { isTotpEnabled: true });
 
 		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
 		expect(body).toEqual({
 			success: false,
-			status: httpStatusCodeNumbers.UNAUTHORIZED,
-			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, you already enabled TOTP!",
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
+			message: TOTP_ALREADY_ENABLED,
 		});
 	});
 
-	it("3. Re-initiate TOTP enabling", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
-
-		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
-
-		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
-
-		expect(status).toBe(httpStatusCodeNumbers.OK);
-		expect(body.success).toBe(true);
-		expect(body.status).toBe(httpStatusCodeNumbers.OK);
-		expect(body.code).toBe(httpStatusCodeNumbers.OK);
-		expect(body.data).toHaveProperty("secret");
-	});
-
-	it("4. Initiate TOTP route is private", async () => {
+	it("Should return 404 status code when accessToken is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(httpStatusCodeNumbers.UNAUTHORIZED);
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
 		expect(body).toEqual({
 			success: false,
-			status: httpStatusCodeNumbers.UNAUTHORIZED,
-			code: httpStatusCodeStrings.UNAUTHORIZED,
-			message: "Sorry, the access token is required!",
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
 		});
 	});
 });

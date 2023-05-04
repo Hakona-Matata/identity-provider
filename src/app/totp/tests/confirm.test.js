@@ -1,126 +1,148 @@
 const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("./../../../constants/index.js");
+const {
+	SUCCESS_MESSAGES: { TOTP_ENABLED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { INVALID_TOTP, START_FROM_SCRATCH, TOTP_ALREADY_ENABLED, TOTP_ALREADY_CONFIRMED },
+} = require("./../totp.constants.js");
 
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../helpers/hash");
-const { generate_totp } = require("../../../helpers/totp");
+const AccountServices = require("./../../account/account.services.js");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
-const TOTP = require("./../../../src/app/Models/TOTP.model");
-// const await_all = require("../../../helpers/awaitAll");
+const { TotpHelper } = require("./../../../helpers");
+const TotpServices = require("../totp.services.js");
 
-const baseURL = "/auth/totp/confirm";
+const baseURL = "/auth/account/totp/confirm";
 
-
-describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
-	it("1. Confirm enabling TOTP successfullly", async () => {
-		const user = await User.create({
+describe(`Auth API - Confirm enabling TOTP endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when confirm enabling TOTP is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
 		const {
 			body: {
-				data: { secret },
+				result: { secret },
 			},
-		} = await request(app)
-			.post("/auth/totp/enable")
-			.set("Authorization", `Bearer ${accessToken}`);
+		} = await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
 
-		const generatedTOTP = generate_totp({ secret });
+		const generatedTotp = TotpHelper.generateTotpCode(secret);
 
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: generatedTOTP });
+			.send({ totp: generatedTotp.toString() });
 
 		expect(status).toBe(httpStatusCodeNumbers.OK);
 		expect(body).toEqual({
 			success: true,
 			status: httpStatusCodeNumbers.OK,
 			code: httpStatusCodeStrings.OK,
-			data: "TOTP enabled successfully!",
+			result: TOTP_ENABLED_SUCCESSFULLY,
 		});
 	});
 
-	it("2. TOTP is expired", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 400 status code when TOTP feature is already enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
+
+		await AccountServices.updateOne({ _id: account._id }, { isTotpEnabled: true });
+
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ totp: "123123" });
+
+		expect(status).toBe(httpStatusCodeNumbers.BAD_REQUEST);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.BAD_REQUEST,
+			code: httpStatusCodeStrings.BAD_REQUEST,
+			message: TOTP_ALREADY_ENABLED,
+		});
+	});
+
+	it("Should return 403 status code when TOTP code is expired", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+		});
 
 		const {
 			body: {
-				data: { secret },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/totp/enable")
-			.set("Authorization", `Bearer ${accessToken}`);
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		const generatedTOTP = generate_totp({ secret });
+		const {
+			body: {
+				result: { secret },
+			},
+		} = await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
+
+		const generatedTotp = TotpHelper.generateTotpCode(secret);
 
 		await new Promise((resolve) => setTimeout(resolve, 70000));
 
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: generatedTOTP });
+			.send({ totp: generatedTotp.toString() });
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, the given code is invalid!",
+			message: INVALID_TOTP,
 		});
 	});
 
-	it("3. TOTP is invalid", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when TOTP code is invalid", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await request(app)
-			.post("/auth/totp/enable")
-			.set("Authorization", `Bearer ${accessToken}`);
+		await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
 
 		const { status, body } = await request(app)
 			.post(baseURL)
@@ -132,350 +154,195 @@ describe(`"POST" ${baseURL} - Confirm Enabling TOTP as security layer`, () => {
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, the given code is invalid!",
+			message: INVALID_TOTP,
 		});
 	});
 
-	it.only("4. More than 3 times of invalid TOTP ", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when TOTP sent 3 times wrong", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await request(app)
-			.post("/auth/totp/enable")
-			.set("Authorization", `Bearer ${accessToken}`);
+		await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
 
-		const asyncFn = () => {
-			return request(app)
-				.post(baseURL)
-				.set("Authorization", `Bearer ${accessToken}`)
-				.send({ totp: "123123" });
-		};
-
-		const resutl = await await_all({ count: 3, asyncFn });
-		console.log({ resutl });
-		const uuuu = await TOTP.findOne({ userId: user.id });
-		console.log({ uuuu });
-		console.log("-----------------");
-		// await request(app)
-		// 	.post(baseURL)
-		// 	.set("Authorization", `Bearer ${accessToken}`)
-		// 	.send({ totp: "123123" });
-		// await request(app)
-		// 	.post(baseURL)
-		// 	.set("Authorization", `Bearer ${accessToken}`)
-		// 	.send({ totp: "123123" });
-		// await request(app)
-		// 	.post(baseURL)
-		// 	.set("Authorization", `Bearer ${accessToken}`)
-		// 	.send({ totp: "123123" });
-
-		// const { status, body } = await request(app)
-		// 	.post(baseURL)
-		// 	.set("Authorization", `Bearer ${accessToken}`)
-		// 	.send({ totp: "123123" });
-
-		// console.log({ status, body });
-		// expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
-		// expect(body).toEqual({
-		// 	success: false,
-		// 	status: httpStatusCodeNumbers.FORBIDDEN,
-		// 	code: httpStatusCodeStrings.FORBIDDEN,
-		// 	message: "Sorry, you need to start from scratch!",
-		// });
-	});
-
-	it("5. User need to initiate TOTP first", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
-
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`).send({ totp: "123123" });
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`).send({ totp: "123123" });
+		await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`).send({ totp: "123123" });
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123" });
-
-		console.log({ status, body });
 
 		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
 		expect(body).toEqual({
 			success: false,
 			status: httpStatusCodeNumbers.FORBIDDEN,
 			code: httpStatusCodeStrings.FORBIDDEN,
-			message: "Sorry, you can't confirm TOTP before setting it up!",
+			message: START_FROM_SCRATCH,
 		});
 	});
 
-	it("6. TOTP is already confirmed", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when TOTP isn't initiated", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Update TOTP document
-		await TOTP.create({ userId: user.id, isSecretTemp: false });
+		await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Confirm TOTP
+		await TotpServices.updateOne({ accountId: account._id }, { isTemp: false });
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123" });
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await TOTP.deleteMany({ useId: user.id });
-
-		// (6) Our expectations
-		expect(status).toBe(400);
-		expect(body.data).toBe("Sorry, you already confirmed TOTP!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: TOTP_ALREADY_CONFIRMED,
+		});
 	});
 
-	it("7. TOTP confirm route is private", async () => {
+	it("Should return 404 status code when access token is not found", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
-	});
-	// ===========================================================
-
-	it("8. TOTP code is not provided", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
 		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) confirm
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
-
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ useId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"totp" field is required!`);
 	});
 
-	it("9. TOTP code is not of type string", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when totp code is not provided", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) confirm TOTP
+		await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
+
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"totp" field is required!`]),
+		});
+	});
+
+	it("Should return 422 status code when totp code is not of type string", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+		});
+
+		const {
+			body: {
+				result: { accessToken },
+			},
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
+
+		await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: 123123 });
+			.send({ totp: 123456 });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ useId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"totp" field has to be of type string!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "totp"!`]),
+		});
 	});
 
-	it("10. TOTP code can't be empty", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when totp code is too short", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) confirm TOTP
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: "" });
+		await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ useId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"totp" field can't be empty!`);
-	});
-
-	it("10. TOTP code is too short to be true", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) confirm TOTP
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ useId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"totp" field length must be 6 digits!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"totp" field should have a length of 6!`]),
+		});
 	});
 
-	it("10. TOTP code is too long to be true", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when totp code is too long", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) confirm TOTP
+		await request(app).post("/auth/account/totp/enable").set("Authorization", `Bearer ${accessToken}`);
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ totp: "123123123" });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ useId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"totp" field length must be 6 digits!`);
-	});
-
-	it("12. TOTP code is float not integer", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"totp" field should have a length of 6!`]),
 		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) confirm TOTP
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ totp: "123.132" });
-
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ useId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"totp" field length must be 6 digits!`);
 	});
 });
