@@ -4,14 +4,14 @@
  */
 
 const Joi = require("joi");
-const { id, code } = require("./../../validators/index");
+const { id, otp } = require("./../../validators/index");
 
 /**
  * Joi schema for validating TOTP confirmation input data.
  * @type {Joi.ObjectSchema}
  */
 const confirm = Joi.object({
-	totp: code,
+	totp: otp,
 });
 
 /**
@@ -20,7 +20,7 @@ const confirm = Joi.object({
  */
 const verify = Joi.object({
 	accountId: id,
-	totp: code,
+	totp: otp,
 });
 
 module.exports = {

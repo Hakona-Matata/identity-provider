@@ -12,7 +12,7 @@ const AccountServices = require("./../../account/account.services.js");
 
 const baseURL = "/auth/account/totp/enable";
 
-describe(`Auth API - Initiate enabling TOTP endpoint"${baseURL}"`, () => {
+describe(`Auth API - Initiate enabling TOTP endpoint "${baseURL}"`, () => {
 	const generateFakeAccount = () => {
 		return {
 			email: faker.internet.email(),

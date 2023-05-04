@@ -22,8 +22,8 @@ const {
 const {
 	BadRequestException,
 	InternalServerException,
-	UnAuthorizedException,
 	NotFoundException,
+	ForbiddenException,
 } = require("./../../exceptions/index");
 
 /**
@@ -74,7 +74,7 @@ class TotpServices {
 		if (failedAttemptCount >= 3) {
 			await TotpServices.deleteOne({ _id: totpId });
 
-			throw new BadRequestException(START_FROM_SCRATCH);
+			throw new ForbiddenException(START_FROM_SCRATCH);
 		}
 
 		await TotpServices.#verifyTotpCode({
@@ -129,7 +129,7 @@ class TotpServices {
 		const totp = await TotpServices.findOne({ accountId });
 
 		if (!totp) {
-			throw new UnAuthorizedException(INVALID_TOTP);
+			throw new ForbiddenException(INVALID_TOTP);
 		}
 
 		await TotpServices.#verifyTotpCode({
@@ -171,7 +171,7 @@ class TotpServices {
 		if (!isTotpValid) {
 			await TotpServices.updateOne({ _id: totpId }, { failedAttemptCount: failedAttemptCount + 1 });
 
-			throw new UnAuthorizedException(INVALID_TOTP);
+			throw new ForbiddenException(INVALID_TOTP);
 		}
 	}
 
