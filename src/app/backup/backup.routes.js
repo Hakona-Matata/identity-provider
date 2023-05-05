@@ -1,7 +1,7 @@
 const express = require("express");
 
 const { initiateEnabling, confirmEnabling, disable, regenerate, verify } = require("./backup.controllers");
-const { isAuthenticated, isVerified, isActive ,isNotDeleted } = require("./../../middlewares/index");
+const { isAuthenticated, isVerified, isActive, isNotDeleted } = require("./../../middlewares/index");
 
 /**
  * Express router for backup-related routes.
@@ -43,7 +43,7 @@ router.route("/confirm").post([isAuthenticated, isVerified, isNotDeleted, isActi
  * @param {function[]} middleware - Array of middleware functions to execute.
  * @param {function} handler - Express request handler function.
  */
-router.route("/disable").delete([isAuthenticated, isVerified, isNotDeleted, isActive],disable);
+router.route("/disable").delete([isAuthenticated, isVerified, isNotDeleted, isActive], disable);
 
 /**
  * Route for regenerating backup.
@@ -55,7 +55,7 @@ router.route("/disable").delete([isAuthenticated, isVerified, isNotDeleted, isAc
  * @param {function[]} middleware - Array of middleware functions to execute.
  * @param {function} handler - Express request handler function.
  */
-router.route("/regenerate").post([isAuthenticated, isVerified, isNotDeleted, isActive],regenerate);
+router.route("/regenerate").post([isAuthenticated, isVerified, isNotDeleted, isActive], regenerate);
 
 /**
  * Route for verifying backup.
@@ -66,7 +66,7 @@ router.route("/regenerate").post([isAuthenticated, isVerified, isNotDeleted, isA
  * @param {string} path - Express route path.
  * @param {function} handler - Express request handler function.
  */
-router.route("/verify", verify);
+router.route("/verify").post(verify);
 
 /**
  * Module representing backup-related routes.

@@ -15,20 +15,14 @@ const {
 		BACKUP_ALREADY_GENERATED,
 		BACKUP_NOT_GENERATED,
 		INVALID_BACKUP,
-		NEED_TO_HAVE_GENERATED_httpStatusCodeNumbersS,
-
+		NEED_TO_HAVE_GENERATED,
 		BACKUP_CREATE_FAILED,
 		BACKUP_UPDATE_FAILED,
 		BACKUP_DELETE_FAILED,
 	},
 } = require("./backup.constants");
 
-const {
-	BadRequestException,
-	UnAuthorizedException,
-	InternalServerException,
-	ForbiddenException,
-} = require("./../../exceptions/index");
+const { BadRequestException, InternalServerException, ForbiddenException } = require("./../../exceptions/index");
 
 /**
  * A class representing backup services.
@@ -107,7 +101,7 @@ class BackupServices {
 		const accountHashedBackupCodesList = await BackupServices.findMany({ accountId });
 
 		if (accountHashedBackupCodesList.length === 0) {
-			throw new UnAuthorizedException(NEED_TO_HAVE_GENERATED_httpStatusCodeNumbersS);
+			throw new ForbiddenException(NEED_TO_HAVE_GENERATED);
 		}
 
 		await BackupServices.deleteMany({ accountId });
@@ -128,9 +122,8 @@ class BackupServices {
 	static async verify({ email, code }) {
 		const account = await AccountServices.findOne({ email });
 
-		// TODO handle if condition from account services!
 		if (!account || !account.isBackupEnabled) {
-			throw new UnAuthorizedException(INVALID_BACKUP);
+			throw new ForbiddenException(INVALID_BACKUP);
 		}
 
 		await BackupServices.#verifyDeleteBackupCode(account._id, code);

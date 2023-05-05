@@ -148,7 +148,9 @@ describe(`Auth API - Forget password endpoint "${baseURL}"`, () => {
 	});
 
 	it("Should return 422 status code when email field is not of type string", async () => {
-		const { status, body } = await request(app).post(baseURL).send({ email: 1111111111111111111111111 });
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.send({ email: +"1".repeat(20) });
 
 		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
 		expect(body).toEqual({

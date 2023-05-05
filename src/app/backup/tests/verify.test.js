@@ -1,272 +1,310 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("../../../constants/index");
+const {
+	FAILURE_MESSAGES: { INVALID_BACKUP },
+} = require("../backup.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../src/helpers/hash");
+const AccountServices = require("./../../account/account.services");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
-const Backup = require("./../../../src/app/Models/Backup.model");
+const baseURL = "/auth/account/backup/verify";
 
-const baseURL = "/auth/backup/verify";
-
-
-
-describe(`"POST" ${baseURL} - Verify Backup codes | Account Recovery`, () => {
-	it("1. Verify Backup code and give access successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Verify Backup code endpoint during account recovery "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("should return 200 status code when backup code is verified successfully | Account Recovery", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isOTPEnabled: true } }
-		);
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
 		const {
-			body: { data: codes },
-		} = await request(app)
-			.post("/auth/backup/generate")
-			.set("Authorization", `Bearer ${accessToken}`);
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
 
 		await request(app)
-			.post("/auth/backup/confirm")
+			.post("/auth/account/backup/confirm")
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ code: codes[0] });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: user.email, code: codes[1] });
+		const { status, body } = await request(app).post(baseURL).send({ email: account.email, code: codes[1] });
 
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		expect(status).toBe(200);
-		expect(body.data).toHaveProperty("accessToken");
-		expect(body.data).toHaveProperty("refreshToken");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: "Please, check your mail box!",
+		});
 	});
 
-	it("2. Invalid backup code during verification", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 statuscode when backup code is invalid", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isOTPEnabled: true } }
-		);
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
 		const {
-			body: { data: codes },
-		} = await request(app)
-			.post("/auth/backup/generate")
-			.set("Authorization", `Bearer ${accessToken}`);
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
 
 		await request(app)
-			.post("/auth/backup/confirm")
+			.post("/auth/account/backup/confirm")
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ code: codes[0] });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: user.email, code: codes[0] });
+		const { status, body } = await request(app).post(baseURL).send({ email: account.email, code: codes[0] });
 
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, backup code is invalid!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: INVALID_BACKUP,
+		});
 	});
 
-	it("3. Invalid backup code during verification", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 statuscode when email is not found in DB", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isOTPEnabled: true } }
-		);
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
 		const {
-			body: { data: codes },
-		} = await request(app)
-			.post("/auth/backup/generate")
-			.set("Authorization", `Bearer ${accessToken}`);
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
 
 		await request(app)
-			.post("/auth/backup/confirm")
+			.post("/auth/account/backup/confirm")
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ code: codes[0] });
 
-		for (let i = 0; i <= codes.length; i++) {
-			await request(app)
-				.post(baseURL)
-				.send({ email: user.email, code: codes[i] });
-		}
+		await AccountServices.deleteOne({ _id: account._id });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: user.email, code: codes[0] });
+		const { status, body } = await request(app).post(baseURL).send({ email: account.email, code: codes[0] });
 
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, no remaining valid codes!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: INVALID_BACKUP,
+		});
 	});
 
-	it("4. Verify backup code route is public", async () => {
-		const { status, body } = await request(app).post(baseURL).send({
-			email: "test12345@gmail.com",
-			code: 123451234512,
+	it("Should return 403 statuscode when backup feature is not enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, backup code is invalid!");
+		const {
+			body: {
+				result: { accessToken },
+			},
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
+
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
+
+		const {
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
+
+		const { status, body } = await request(app).post(baseURL).send({ email: account.email, code: codes[0] });
+
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: INVALID_BACKUP,
+		});
 	});
 
-	it("5. email and code fields aren't provided", async () => {
-		const { status, body } = await request(app).post(baseURL);
+	it("Should return 422 statuscode when email field is not provided", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ code: 123451234512 });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"email" field is required!');
-		expect(body.data[1]).toBe('"code" field is required!');
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"email" field is required!']),
+		});
 	});
 
-	//====================================================================
+	it("Should return 422 statuscode when email field is empty", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ email: "", code: "1234512345123451" });
 
-	it("6. Email is not a valid email", async () => {
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"email" field is required!']),
+		});
+	});
+
+	it("Should return 422 statuscode when email field is not of type string", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ email: 111111111111, code: "1234512345123451" });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['Invalid type, expected a string for "email"!']),
+		});
+	});
+
+	it("Should return 422 statuscode when email field is invalid", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ email: "testtesttesttest", code: 123451234512 });
+			.send({ email: "testtesttesttest", code: "1234512345123451" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"email" field has to be a valid email!');
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['Invalid email address for "email"!']),
+		});
 	});
 
-	it("7. Email is too short to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: "t@test.com", code: 123451234512 });
+	it("Should return 422 statuscode when email field is too short", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ email: "t@test.com", code: "1234512345123451" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(
-			`"email" field can't be less than 15 characters!`
-		);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"email" field should have a minimum length of 15!']),
+		});
 	});
 
-	it("8. Email is too long to be true", async () => {
+	it("Should return 422 statuscode when email field is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ email: `${"t".repeat(50)}@test.com`, code: 123451234512 });
+			.send({ email: `${"t".repeat(50)}@test.com`, code: "1234512345123451" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"email" field can't be more than 40 characers!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"email" field should have a maximum length of 40!']),
+		});
 	});
 
-	it("9. Email is not of type string", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: 111111111111, code: 123451234512 });
+	it("Should return 422 status code when backup code is not provided", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ email: "test1234124@gmail.com" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"email" field has to be of type string!');
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"code" field is required!']),
+		});
 	});
 
-	it("10. Email can't be empty", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ email: "", code: 123451234512 });
+	it("Should return 422 status code when backup code is empty", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ code: "", email: "test1234124@gmail.com" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"email" field can't be empty!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"code" field is required!']),
+		});
 	});
 
-	//====================================================================
+	it("Should return 422 status code when backup code is not of type string", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ code: 12345, email: "test1234124@gmail.com" });
 
-	it("11. Backup code has to be of type number", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ code: "", email: "test1234124@gmail.com" });
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"code" field has to be of type number!');
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "code"!`]),
+		});
 	});
 
-	it("12. Backup code has to be of type integer", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ code: 22.1234512345, email: "test1234124@gmail.com" });
+	it("Should return 422 status code when backup code is too short", async () => {
+		const { status, body } = await request(app).post(baseURL).send({ code: "22125", email: "test1234124@gmail.com" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field has to be integer!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"code" field should have a length of 16!']),
+		});
 	});
 
-	it("13. Backup code has to be positive", async () => {
+	it("Should return 422 status code when backup code is too long", async () => {
 		const { status, body } = await request(app)
 			.post(baseURL)
-			.send({ code: -221234512345, email: "test1234124@gmail.com" });
+			.send({ code: "12345123423413423421234512", email: "test1234124@gmail.com" });
 
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field has to be positive!`);
-	});
-
-	it("14. Backup code is too short to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.send({ code: 22125, email: "test1234124@gmail.com" });
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field has to be 12 digits!`);
-	});
-
-	it("15. Backup code is too long to be true", async () => {
-		const { status, body } = await request(app)
-			.post(baseURL)
-			// .send({ code: 12345123423421234512, email: "test1234124@gmail.com" });
-
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field has to be 12 digits!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"code" field should have a length of 16!']),
+		});
 	});
 });
