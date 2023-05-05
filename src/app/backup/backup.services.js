@@ -23,7 +23,12 @@ const {
 	},
 } = require("./backup.constants");
 
-const { BadRequestException, UnAuthorizedException, InternalServerException } = require("./../../exceptions/index");
+const {
+	BadRequestException,
+	UnAuthorizedException,
+	InternalServerException,
+	ForbiddenException,
+} = require("./../../exceptions/index");
 
 /**
  * A class representing backup services.
@@ -43,13 +48,13 @@ class BackupServices {
 		const enabledSecurityMethods = await AuthServices.getEnabledSecurityLayers(account);
 
 		if (enabledSecurityMethods.length == 0) {
-			throw new BadRequestException(BACKUP_CANNOT_ENABLED);
+			throw new ForbiddenException(BACKUP_CANNOT_ENABLED);
 		}
 
 		const foundBackupCodes = await BackupServices.findMany({ accountId: account._id });
 
 		if (foundBackupCodes.length >= 1) {
-			throw new BadRequestException(BACKUP_ALREADY_GENERATED);
+			throw new ForbiddenException(BACKUP_ALREADY_GENERATED);
 		}
 
 		return await BackupServices.#generateHashSaveBackupCodesList(account._id, 10);
@@ -142,7 +147,7 @@ class BackupServices {
 	 */
 	static #isBackupAlreadyEnabled(isBackupEnabled) {
 		if (isBackupEnabled) {
-			throw new BadRequestException(BACKUP_ALREADY_ENABLED);
+			throw new ForbiddenException(BACKUP_ALREADY_ENABLED);
 		}
 	}
 
