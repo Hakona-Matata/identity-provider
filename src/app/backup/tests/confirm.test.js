@@ -1,359 +1,264 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("../../../constants/index");
+const {
+	SUCCESS_MESSAGES: { BACKUP_ENABLED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { BACKUP_ALREADY_ENABLED, INVALID_BACKUP },
+} = require("../backup.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../helpers/hash");
+const AccountServices = require("./../../account/account.services");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
-const Backup = require("./../../../src/app/Models/Backup.model");
+const baseURL = "/auth/account/backup/confirm";
 
-const baseURL = "/auth/backup/confirm";
-
-describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
-	it("1. Confirm enabling Backup codes succesfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
+describe(`Auth API - Confirm enabling Backup endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when confirm enabling Backup codes is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable at least one 2FA method
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isOTPEnabled: true } });
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
-		// (4) Generate backup codes
 		const {
-			body: { data: codes },
-		} = await request(app).post("/auth/backup/generate").set("Authorization", `Bearer ${accessToken}`);
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
 
-		// (5) Conirm Backup codes
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ code: codes[0] });
 
-		// (6) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		// (7) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("Backup codes enabled successfully");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: BACKUP_ENABLED_SUCCESSFULLY,
+		});
 	});
 
-	it("2. Backup codes feature already enabled", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when backup codes feature is already enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable backup codes
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isBackupEnabled: true } });
+		await AccountServices.updateOne({ _id: account._id }, { isBackupEnabled: true });
 
-		// (4) Conirm Backup codes
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: 123451234512 });
+			.send({ code: "1234512345123456" });
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		// (6) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, backup codes feature already enabled!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: BACKUP_ALREADY_ENABLED,
+		});
 	});
 
-	it("3. No remaining valid backup codes to confirm aganist", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when given backup code is invalid", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Delete all backup codes
-		await Backup.deleteMany({ userId: user.id });
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
-		// (4) Conirm Backup codes
+		await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: 123451234512 });
+			.send({ code: "1234512345123451" });
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (6) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, no remaining valid codes!");
-	});
-
-	it("4. Invalid backup code", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: INVALID_BACKUP,
 		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) Enable at least one 2FA method
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isOTPEnabled: true } });
-
-		// (4) Generate backup codes
-		await request(app).post("/auth/backup/generate").set("Authorization", `Bearer ${accessToken}`);
-
-		// (5) Conirm Backup codes
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: 123451234512 });
-
-		// (6) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		// (7) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, backup code is invalid!");
 	});
 
-	it("5. Backup codes route is private", async () => {
+	it("should return 404 status code when access token is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
+		});
 	});
 
-	it("6. Backup code is not provided", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when code backup code is not provided", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm backup code
 		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field is required!`);
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"code" field is required!`]),
+		});
 	});
 
-	it("7. Backup code has to be of type number", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 422 status code when code backup code is empty", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Confirm backup code
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: "" });
-
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe('"code" field has to be of type number!');
-	});
-
-	it("8. Backup code has to be of type integer", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) Confirm backup code
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: 22.1234512345 });
-
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field has to be integer!`);
-	});
-
-	it("9. Backup code has to be positive", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) Confirm backup code
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: -221234512345 });
-
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field has to be positive!`);
-	});
-
-	it("10. Backup code is too short to be true", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) Confirm backup code
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: 22125 });
-
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field has to be 12 digits!`);
-	});
-
-	it("11. Backup code is too long to be true", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
-		});
-
-		// (2) Log user In to get needed tokens
-		const {
-			body: {
-				data: { accessToken },
-			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
-
-		// (3) Confirm backup code
 		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
-		// .send({ code: 123423424221234512345 });
 
-		// (4) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`"code" field is required!`]),
+		});
+	});
 
-		// (5) Our expectations
-		expect(status).toBe(422);
-		expect(body.data[0]).toBe(`"code" field has to be 12 digits!`);
+	it("Should return 422 status code when code backup code has to be of type string", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+		});
+
+		const {
+			body: {
+				result: { accessToken },
+			},
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
+
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ code: 1234512345123451 });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining([`Invalid type, expected a string for "code"!`]),
+		});
+	});
+
+	it("Should return 422 status code when code backup code is too short", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+		});
+
+		const {
+			body: {
+				result: { accessToken },
+			},
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
+
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ code: "1" });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"code" field should have a length of 16!']),
+		});
+	});
+
+	it("Should return 422 status code when code backup code is too long", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
+		});
+
+		const {
+			body: {
+				result: { accessToken },
+			},
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
+
+		const { status, body } = await request(app)
+			.post(baseURL)
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ code: "1".repeat(20) });
+
+		expect(status).toBe(httpStatusCodeNumbers.UNPROCESSABLE_ENTITY);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.UNPROCESSABLE_ENTITY,
+			code: httpStatusCodeStrings.UNPROCESSABLE_ENTITY,
+			message: expect.arrayContaining(['"code" field should have a length of 16!']),
+		});
 	});
 });

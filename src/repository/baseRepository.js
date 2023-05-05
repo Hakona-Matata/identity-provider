@@ -56,14 +56,15 @@ class BaseRepository {
 	}
 
 	/**
-	 * Finds multiple documents in the MongoDB collection matching the specified filter.
-	 * @method findMany
-	 * @async
-	 * @param {Object} filter - The filter to apply to the search.
-	 * @returns {Promise<Array<Object>>} An array of found documents.
+	 *
+	 * Finds multiple documents from the model's collection that match the specified filter, with an optional limit.
+	 * 
+	 * @param {Object} filter - The filter used to find the documents.
+	 * @param {number} limit - The maximum number of documents to find.
+	 * @returns {Promise<Array>} A promise that resolves to an array of found documents.
 	 */
-	async findMany(filter) {
-		return this.model.find(filter).lean();
+	async findMany(filter, limit) {
+		return this.model.find(filter).limit(limit).lean();
 	}
 
 	/**
@@ -145,12 +146,12 @@ class BaseRepository {
 	}
 
 	/**
-	 * Deletes all documents matching the given filter from the repository's model
 	 *
-	 * @param {Object} filter - The filter to be applied for finding the documents to be deleted
-	 * @returns {Promise<Object>} A promise that resolves to the result of the delete operation
+	 * Deletes multiple documents from the model's collection that match the specified filter, with an optional limit.
+	 *
+	 * @param {Object} filter - The filter used to find the documents to delete.
+	 * @returns {Promise<Object>} A promise that resolves to the result of the delete operation.
 	 */
-
 	async deleteMany(filter) {
 		return this.model.deleteMany({ ...filter });
 	}
