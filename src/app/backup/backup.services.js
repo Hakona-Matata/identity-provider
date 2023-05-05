@@ -14,7 +14,7 @@ const {
 		BACKUP_CANNOT_ENABLED,
 		BACKUP_ALREADY_GENERATED,
 		BACKUP_NOT_GENERATED,
-		INVALID_BACKUP_httpStatusCodeNumbers,
+		INVALID_BACKUP,
 		NEED_TO_HAVE_GENERATED_httpStatusCodeNumbersS,
 
 		BACKUP_CREATE_FAILED,
@@ -130,7 +130,7 @@ class BackupServices {
 
 		// TODO handle if condition from account services!
 		if (!account || !account.isBackupEnabled) {
-			throw new UnAuthorizedException(INVALID_BACKUP_httpStatusCodeNumbers);
+			throw new UnAuthorizedException(INVALID_BACKUP);
 		}
 
 		await BackupServices.#verifyDeleteBackupCode(account._id, code);
@@ -229,25 +229,29 @@ class BackupServices {
 			throw new BadRequestException(BACKUP_NOT_GENERATED);
 		}
 
-		const matchedBackupCode = accountHashedBackupCodesList
-			.filter(async (accountHashedBackupCode) => await HashHelper.verify(givenBackupCode, accountHashedBackupCode.code))
-			.map(({ _id, code }) => ({ _id, code }))
-			.shift();
+		const verificationPromises = accountHashedBackupCodesList.map(async (backupCode) => {
+			const isMatched = await HashHelper.verify(givenBackupCode, backupCode.code);
+			if (isMatched) {
+				return { _id: backupCode._id, code: backupCode.code };
+			}
+		});
+
+		const matchedBackupCode = await Promise.all(verificationPromises)[0];
 
 		if (!matchedBackupCode) {
-			throw new UnAuthorizedException(INVALID_BACKUP_httpStatusCodeNumbers);
+			throw new ForbiddenException(INVALID_BACKUP);
 		}
 
 		return matchedBackupCode;
 	}
 
 	/**
-	 *Verifies and deletes the given backup code for the account.
+	 * Verifies and deletes the given backup code for the account.
 	 *
-	 *@async
-	 *@param {string} accountId - The ID of the account.
-	 *@param {string} givenBackupCode - The backup code to be deleted.
-	 *@returns {Promise<Object>} An object indicating the success of the deletion.
+	 * @async
+	 * @param {string} accountId - The ID of the account.
+	 * @param {string} givenBackupCode - The backup code to be deleted.
+	 * @returns {Promise<Object>} An object indicating the success of the deletion.
 	 */
 	static async #verifyDeleteBackupCode(accountId, givenBackupCode) {
 		const { code } = await BackupServices.#verifyBackupCode(accountId, givenBackupCode);
@@ -256,11 +260,11 @@ class BackupServices {
 	}
 
 	/**
-	 *Creates multiple backup codes in the database.
+	 * Creates multiple backup codes in the database.
 	 *
-	 *@param {Object[]} payload - The payload containing the accountId and backup codes.
-	 *@returns {Promise<boolean>} A Promise that resolves to a boolean indicating if the backup codes were successfully created.
-	 *@throws {InternalServerException} If the backup codes could not be created.
+	 * @param {Object[]} payload - The payload containing the accountId and backup codes.
+	 * @returns {Promise<boolean>} A Promise that resolves to a boolean indicating if the backup codes were successfully created.
+	 * @throws {InternalServerException} If the backup codes could not be created.
 	 */
 	static async createMany(payload) {
 		const areBackupCodesCreated = await BackupRepository.insertMany(payload);
@@ -273,10 +277,10 @@ class BackupServices {
 	}
 
 	/**
-	 *Finds a single backup code in the database based on the provided filter.
+	 * Finds a single backup code in the database based on the provided filter.
 	 *
-	 *@param {Object} filter - The filter object to search for the backup code.
-	 *@returns {Promise<Object|null>} A Promise that resolves to the backup code object or null if not found.
+	 * @param {Object} filter - The filter object to search for the backup code.
+	 * @returns {Promise<Object|null>} A Promise that resolves to the backup code object or null if not found.
 	 */
 	static async findOne(filter) {
 		return await BackupRepository.findOne(filter);
@@ -288,34 +292,32 @@ class BackupServices {
 	 *@param {Object} filter - The filter object to search for backup codes.
 	 *@returns {Promise<Object[]>} A Promise that resolves to an array of backup code objects.
 	 */
-	static async findMany(filter) {
-		return await BackupRepository.findMany(filter);
+	static async findMany(filter, limit) {
+		return await BackupRepository.findMany(filter, limit);
 	}
 
 	/**
-	 *Updates multiple backup codes in the database based on the provided filter and update payloads.
+	 * Updates multiple backup codes in the database based on the provided filter and update payloads.
 	 *
-	 *@param {Object} filter - The filter object to select the backup codes to update.
-	 *@param {Object} setPayload - The payload to set values for update.
-	 *@param {Object} unsetPayload - The payload to unset values for update.
-	 *@returns {Promise<void>} A Promise that resolves when the backup codes are updated.
-	 *@throws {InternalServerException} If the backup codes could not be updated.
+	 * @param {Object} filter - The filter object to select the backup codes to update.
+	 * @param {Object} setPayload - The payload to set values for update.
+	 * @param {Object} unsetPayload - The payload to unset values for update.
+	 * @returns {Promise<void>} A Promise that resolves when the backup codes are updated.
+	 * @throws {InternalServerException} If the backup codes could not be updated.
 	 */
 	static async updateMany(filter, setPayload, unsetPayload) {
 		const { modifiedCount } = await BackupRepository.updateMany(filter, setPayload, unsetPayload);
 
-		if (modifiedCount === 0) {
-			throw new InternalServerException(BACKUP_UPDATE_FAILED);
-		}
+		if (modifiedCount === 0) throw new InternalServerException(BACKUP_UPDATE_FAILED);
 	}
 
 	/**
 	 *
-	 *Deletes a single backup code in the database based on the provided filter.
+	 * Deletes a single backup code in the database based on the provided filter.
 	 *
-	 *@param {Object} filter - The filter object to select the backup code to delete.
-	 *@returns {Promise<void>} A Promise that resolves when the backup code is deleted.
-	 *@throws {InternalServerException} If the backup code could not be deleted.
+	 * @param {Object} filter - The filter object to select the backup code to delete.
+	 * @returns {Promise<void>} A Promise that resolves when the backup code is deleted.
+	 * @throws {InternalServerException} If the backup code could not be deleted.
 	 */
 	static async deleteOne(filter) {
 		const { deletedCount } = await BackupRepository.deleteOne(filter);
@@ -326,11 +328,12 @@ class BackupServices {
 	}
 
 	/**
-	 * Deletes multiple backup codes in the database based on the provided filter.
 	 *
-	 * @param {Object} filter - The filter object to select the backup codes to delete.
-	 * @returns {Promise<void>} A Promise that resolves when the backup codes are deleted.
-	 * @throws {InternalServerException} If the backup codes could not be deleted.
+	 * Deletes multiple documents from the backup repository that match the specified filter, with an optional limit.
+	 *
+	 * @param {Object} filter - The filter used to find the documents to delete.
+	 * @returns {Promise<void>} A Promise that resolves when the documents have been deleted.
+	 * @throws {InternalServerException} If the deletion operation fails or no documents are deleted.
 	 */
 	static async deleteMany(filter) {
 		const { deletedCount } = await BackupRepository.deleteMany(filter);

@@ -1,127 +1,125 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("../../../constants/index");
+const {
+	SUCCESS_MESSAGES: { BACKUP_ENABLED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { BACKUP_ALREADY_ENABLED, INVALID_BACKUP },
+} = require("../backup.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../helpers/hash");
+const AccountServices = require("./../../account/account.services");
+const BackupServices = require("./../backup.services");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
-const Backup = require("./../../../src/app/Models/Backup.model");
+const baseURL = "/auth/account/backup/confirm";
 
-const baseURL = "/auth/backup/confirm";
-
-describe(`"POST" ${baseURL} - Confirm enabling Backup codes`, () => {
-	it("1. Confirm enabling Backup codes succesfully", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
+describe(`Auth API - Confirm enabling Backup endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when confirm enabling Backup codes is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable at least one 2FA method
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isOTPEnabled: true } });
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
-		// (4) Generate backup codes
 		const {
-			body: { data: codes },
-		} = await request(app).post("/auth/backup/generate").set("Authorization", `Bearer ${accessToken}`);
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
 
-		// (5) Conirm Backup codes
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
 			.send({ code: codes[0] });
 
-		// (6) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		// (7) Our expectations
-		expect(status).toBe(200);
-		expect(body.data).toBe("Backup codes enabled successfully");
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: BACKUP_ENABLED_SUCCESSFULLY,
+		});
 	});
 
-	it("2. Backup codes feature already enabled", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when backup codes feature is already enabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Enable backup codes
-		await User.findOneAndUpdate({ _id: user.id }, { $set: { isBackupEnabled: true } });
+		await AccountServices.updateOne({ _id: account._id }, { isBackupEnabled: true });
 
-		// (4) Conirm Backup codes
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: 123451234512 });
+			.send({ code: "1234512345123456" });
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		// (6) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, backup codes feature already enabled!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: BACKUP_ALREADY_ENABLED,
+		});
 	});
 
-	it("3. No remaining valid backup codes to confirm aganist", async () => {
-		// (1) Create and save a fake user
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it.only("Should return 403 status code when given backup code is invalid", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
-		// (2) Log user In to get needed tokens
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app).post("/auth/login").send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		// (3) Delete all backup codes
-		await Backup.deleteMany({ userId: user.id });
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
-		// (4) Conirm Backup codes
+		await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
+
 		const { status, body } = await request(app)
 			.post(baseURL)
 			.set("Authorization", `Bearer ${accessToken}`)
-			.send({ code: 123451234512 });
+			.send({ code: "1234512345123451" });
 
-		// (5) Clean DB
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-
-		// (6) Our expectations
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, no remaining valid codes!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: INVALID_BACKUP,
+		});
 	});
 
 	it("4. Invalid backup code", async () => {

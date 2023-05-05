@@ -231,19 +231,16 @@ class TotpServices {
 	}
 
 	/**
-	 * Deletes multiple TOTP entries from the database that match the specified filter.
 	 *
-	 * @param {object} filter - The filter used to find the TOTP entries to delete.
+	 * Deletes multiple TOTP entries from the database that match the specified filter.
+	 * @param {object} filter - The filter used to find the TOTP entries to delete
 	 * @returns {Promise<void>} A Promise that resolves when the TOTP entries have been deleted.
+	 * @throws {InternalServerException} If the delete operation fails or no entries are deleted.
 	 */
 	static async deleteMany(filter) {
-		const areTotpDeleted = await TotpRepository.deleteMany(filter);
+		const { deletedCount } = await TotpRepository.deleteMany(filter);
 
-		if (!areTotpDeleted) {
-			throw new NotFoundException(TOTP_NOT_FOUND);
-		} else if (areTotpDeleted.deletedCount === 0) {
-			throw new InternalServerException(TOTP_DELETE_FAILED);
-		}
+		if (deletedCount === 0) throw new InternalServerException(TOTP_DELETE_FAILED);
 	}
 }
 
