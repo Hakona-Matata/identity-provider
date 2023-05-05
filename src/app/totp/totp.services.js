@@ -11,16 +11,10 @@ const {
 		TOTP_CREATE_FAILED,
 		TOTP_UPDATE_FAILED,
 		TOTP_DELETE_FAILED,
-		TOTP_NOT_FOUND,
 	},
 } = require("./totp.constants");
 
-const {
-	BadRequestException,
-	InternalServerException,
-	NotFoundException,
-	ForbiddenException,
-} = require("./../../exceptions/index");
+const { BadRequestException, InternalServerException, ForbiddenException } = require("./../../exceptions/index");
 
 const TotpRepository = require("./totp.repositories");
 const AccountServices = require("./../account/account.services");

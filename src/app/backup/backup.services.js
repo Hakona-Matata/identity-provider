@@ -22,12 +22,7 @@ const {
 	},
 } = require("./backup.constants");
 
-const {
-	BadRequestException,
-	UnAuthorizedException,
-	InternalServerException,
-	ForbiddenException,
-} = require("./../../exceptions/index");
+const { BadRequestException, InternalServerException, ForbiddenException } = require("./../../exceptions/index");
 
 /**
  * A class representing backup services.
@@ -127,9 +122,8 @@ class BackupServices {
 	static async verify({ email, code }) {
 		const account = await AccountServices.findOne({ email });
 
-		// TODO handle if condition from account services!
 		if (!account || !account.isBackupEnabled) {
-			throw new UnAuthorizedException(INVALID_BACKUP);
+			throw new ForbiddenException(INVALID_BACKUP);
 		}
 
 		await BackupServices.#verifyDeleteBackupCode(account._id, code);
