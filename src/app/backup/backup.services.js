@@ -87,10 +87,10 @@ class BackupServices {
 	 */
 	static async disable(account) {
 		if (!account.isBackupEnabled) {
-			throw new BadRequestException(BACKUP_ALREADY_DISABLED);
+			throw new ForbiddenException(BACKUP_ALREADY_DISABLED);
 		}
 
-		await BackupServices.deleteMany({ account: account._id });
+		await BackupServices.deleteMany({ accountId: account._id });
 
 		await AccountServices.updateOne({ _id: account._id }, { isBackupEnabled: false }, { backupEnabledAt: 1 });
 

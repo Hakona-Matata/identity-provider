@@ -1,84 +1,116 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("../../../constants/index");
+const {
+	SUCCESS_MESSAGES: { BACKUP_DISABLED_SUCCESSFULLY },
+	FAILURE_MESSAGES: { BACKUP_ALREADY_DISABLED },
+} = require("../backup.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
+const { app } = require("../../../app");
 
-const app = require("../../../src/server");
+const AccountServices = require("./../../account/account.services");
 
-const { generate_hash } = require("../../../src/helpers/hash");
+const baseURL = "/auth/account/backup/disable";
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
-
-const baseURL = "/auth/backup/disable";
-
-
-
-describe(`"DELETE" ${baseURL} - Disable Backup codes`, () => {
-	it("1. Disable Backup codes successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Disable Backup code endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when disabling backup codes is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isBackupEnabled: true } }
-		);
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const {
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
 
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOne({ _id: user.id, accessToken });
+		await request(app)
+			.post("/auth/account/backup/confirm")
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ code: codes[0] });
 
-		expect(status).toBe(200);
-		expect(body.data).toBe("Backup codes disabled successfully!");
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
+
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: BACKUP_DISABLED_SUCCESSFULLY,
+		});
 	});
 
-	it("2. Backup codes is not enabled", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when Backup codes feature is already disabled", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		const { status, body } = await request(app)
-			.delete(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
 
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOne({ _id: user.id, accessToken });
+		const {
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, backup codes isn't enabled!");
+		await request(app)
+			.post("/auth/account/backup/confirm")
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ code: codes[0] });
+
+		await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
+
+		const { status, body } = await request(app).delete(baseURL).set("Authorization", `Bearer ${accessToken}`);
+
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: BACKUP_ALREADY_DISABLED,
+		});
 	});
 
-	it("3. Backup codes route is private", async () => {
+	it("Should return 404 status code when access token is not found", async () => {
 		const { status, body } = await request(app).delete(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
+		});
 	});
 });
