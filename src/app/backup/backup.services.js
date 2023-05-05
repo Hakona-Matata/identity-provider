@@ -215,12 +215,17 @@ class BackupServices {
 	}
 
 	/**
-	 *Verifies if the given backup code is valid for the account.
 	 *
+	 * Verifies a given backup code for a specific account.
+	 *
+	 * @private
+	 * @static
 	 * @async
-	 * @param {string} accountId - The ID of the account.
-	 * @param {string} givenBackupCode - The backup code to be verified.
-	 * @returns {Promise<Object>} An object containing the matched backup code ID and code.
+	 * @param {string} accountId - The ID of the account to verify the backup code for.
+	 * @param {string} givenBackupCode - The backup code to verify.
+	 * @returns {Promise<Object>} A promise that resolves to the matched backup code object.
+	 * @throws {BadRequestException} If no backup codes are generated for the account.
+	 * @throws {ForbiddenException} If the given backup code is invalid.
 	 */
 	static async #verifyBackupCode(accountId, givenBackupCode) {
 		const accountHashedBackupCodesList = await BackupServices.findMany({ accountId });
@@ -229,14 +234,16 @@ class BackupServices {
 			throw new BadRequestException(BACKUP_NOT_GENERATED);
 		}
 
-		const verificationPromises = accountHashedBackupCodesList.map(async (backupCode) => {
-			const isMatched = await HashHelper.verify(givenBackupCode, backupCode.code);
-			if (isMatched) {
-				return { _id: backupCode._id, code: backupCode.code };
-			}
-		});
+		let matchedBackupCode;
 
-		const matchedBackupCode = await Promise.all(verificationPromises)[0];
+		for (const backupCode of accountHashedBackupCodesList) {
+			const isMatched = await HashHelper.verify(givenBackupCode, backupCode.code);
+
+			if (isMatched) {
+				matchedBackupCode = { _id: backupCode._id, code: backupCode.code };
+				break;
+			}
+		}
 
 		if (!matchedBackupCode) {
 			throw new ForbiddenException(INVALID_BACKUP);
