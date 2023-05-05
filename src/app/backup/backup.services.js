@@ -15,8 +15,7 @@ const {
 		BACKUP_ALREADY_GENERATED,
 		BACKUP_NOT_GENERATED,
 		INVALID_BACKUP,
-		NEED_TO_HAVE_GENERATED_httpStatusCodeNumbersS,
-
+		NEED_TO_HAVE_GENERATED,
 		BACKUP_CREATE_FAILED,
 		BACKUP_UPDATE_FAILED,
 		BACKUP_DELETE_FAILED,
@@ -107,7 +106,7 @@ class BackupServices {
 		const accountHashedBackupCodesList = await BackupServices.findMany({ accountId });
 
 		if (accountHashedBackupCodesList.length === 0) {
-			throw new UnAuthorizedException(NEED_TO_HAVE_GENERATED_httpStatusCodeNumbersS);
+			throw new ForbiddenException(NEED_TO_HAVE_GENERATED);
 		}
 
 		await BackupServices.deleteMany({ accountId });

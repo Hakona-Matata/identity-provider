@@ -1,89 +1,105 @@
+const { httpStatusCodeNumbers, httpStatusCodeStrings } = require("../../../constants/index");
+const {
+	FAILURE_MESSAGES: { NEED_TO_HAVE_GENERATED },
+} = require("../backup.constants");
+
 const request = require("supertest");
 const { faker } = require("@faker-js/faker");
 
-const app = require("../../../src/server");
+const { app } = require("../../../app");
 
-const { generate_hash } = require("../../../src/helpers/hash");
+const AccountServices = require("./../../account/account.services");
 
-const User = require("../../../src/app/Models/User.model");
-const Session = require("./../../../src/app/Models/Session.model");
-const Backup = require("./../../../src/app/Models/Backup.model");
+const baseURL = "/auth/account/backup/regenerate";
 
-const baseURL = "/auth/backup/regenerate";
-
-
-
-describe(`"POST" ${baseURL} - Regenerate New Backup codes`, () => {
-	it("1. Regenerate new backup codes successfully", async () => {
-		const user = await User.create({
+describe(`Auth API - Regenerate Backup codes endpoint "${baseURL}"`, () => {
+	const generateFakeAccount = () => {
+		return {
 			email: faker.internet.email(),
 			userName: faker.random.alpha(10),
 			isVerified: true,
 			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+			isDeleted: false,
+			password: "tesTES@!#1232",
+			role: "CANDIDATE",
+		};
+	};
+
+	it("Should return 200 status code when regenerate new backup codes is done successfully", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		await User.findOneAndUpdate(
-			{ _id: user.id },
-			{ $set: { isOTPEnabled: true } }
-		);
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true });
+
+		const {
+			body: {
+				result: { codes },
+			},
+		} = await request(app).post("/auth/account/backup/initiate").set("Authorization", `Bearer ${accessToken}`);
 
 		await request(app)
-			.post("/auth/backup/generate")
-			.set("Authorization", `Bearer ${accessToken}`);
+			.post("/auth/account/backup/confirm")
+			.set("Authorization", `Bearer ${accessToken}`)
+			.send({ code: codes[0] });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
-		await Backup.deleteMany({ userId: user.id });
-
-		expect(status).toBe(200);
-		expect(body.data.length).toEqual(10);
+		expect(status).toBe(httpStatusCodeNumbers.OK);
+		expect(body.result.codes).toHaveLength(10);
+		expect(body).toEqual({
+			success: true,
+			status: httpStatusCodeNumbers.OK,
+			code: httpStatusCodeStrings.OK,
+			result: {
+				codes: expect.arrayContaining([expect.any(String)]),
+			},
+		});
 	});
 
-	it("2. User can't regenerate codes if he doesn't previously generated ones", async () => {
-		const user = await User.create({
-			email: faker.internet.email(),
-			userName: faker.random.alpha(10),
-			isVerified: true,
-			isActive: true,
-			password: await generate_hash("tesTES@!#1232"),
+	it("Should return 403 status code when there are no previously generated ones", async () => {
+		const fakeAccount = generateFakeAccount();
+
+		const account = await AccountServices.createOne({
+			...fakeAccount,
 		});
 
 		const {
 			body: {
-				data: { accessToken },
+				result: { accessToken },
 			},
-		} = await request(app)
-			.post("/auth/login")
-			.send({ email: user.email, password: "tesTES@!#1232" });
+		} = await request(app).post("/auth/login").send({ email: account.email, password: fakeAccount.password });
 
-		const { status, body } = await request(app)
-			.post(baseURL)
-			.set("Authorization", `Bearer ${accessToken}`);
+		await AccountServices.updateOne({ _id: account._id }, { isOtpEnabled: true, isBackupEnabled: true });
 
-		await User.findOneAndDelete({ _id: user.id });
-		await Session.findOneAndDelete({ userId: user.id, accessToken });
+		const { status, body } = await request(app).post(baseURL).set("Authorization", `Bearer ${accessToken}`);
 
-		expect(status).toBe(401);
-		expect(body.data).toBe("Sorry, you can't regenerate backup codes!");
+		expect(status).toBe(httpStatusCodeNumbers.FORBIDDEN);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.FORBIDDEN,
+			code: httpStatusCodeStrings.FORBIDDEN,
+			message: NEED_TO_HAVE_GENERATED,
+		});
 	});
 
-	it("3. Regenerate backup codes route is private", async () => {
+	it("Should return 404 status code when access token is not provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
 
-		expect(status).toBe(404);
-		expect(body.data).toBe("Sorry, access token is not found");
+		expect(status).toBe(httpStatusCodeNumbers.NOT_FOUND);
+		expect(body).toEqual({
+			success: false,
+			status: httpStatusCodeNumbers.NOT_FOUND,
+			code: httpStatusCodeStrings.NOT_FOUND,
+			message: "Sorry, the access token is not found!",
+		});
 	});
 });
