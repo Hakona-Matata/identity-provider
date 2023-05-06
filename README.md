@@ -1,1 +1,1 @@
-### Our Identity Provider server
+### Our Identity Provider API server
