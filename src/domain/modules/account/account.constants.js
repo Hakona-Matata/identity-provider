@@ -29,9 +29,6 @@ module.exports = {
 	 * @property {string} ACCOUNT_ALREADY_ACTIVE - Sorry, your account is already active!
 	 * @property {string} ALREADY_HAVE_VALID_ACTIVATION_LINK - Sorry, you still have a valid activation link in your mailbox!
 	 * @property {string} ALREADY_CANCELED_ACCOUNT_DELETION - Sorry, you already canceled account deletion!
-	 * @property {string} ACCOUNT_CREATION_FAILED - Sorry, we couldn't create your account!
-	 * @property {string} ACCOUNT_DELETION_FAILED - sorry, the account deletion process failed!
-	 * @property {string} ACCOUNT_NOT_FOUND - Sorry, the account is not found!
 	 * @property {string} ACCOUNT_IS_DELETED - Sorry, the account is deleted!
 	 */
 	FAILURE_MESSAGES: {
@@ -40,9 +37,6 @@ module.exports = {
 		ACCOUNT_ALREADY_ACTIVE: "Sorry, your account is already active!",
 		ALREADY_HAVE_VALID_ACTIVATION_LINK: "Sorry, you still have a valid activation link in your mailbox!",
 		ALREADY_CANCELED_ACCOUNT_DELETION: "Sorry, you already canceled account deletion!",
-		ACCOUNT_CREATION_FAILED: "Sorry, we couldn't create your account!",
-		ACCOUNT_DELETION_FAILED: "sorry, the account deletion process failed!",
-		ACCOUNT_NOT_FOUND: "Sorry, the account is not found!",
 		ACCOUNT_IS_DELETED: "Sorry, the account is deleted!",
 	},
 };

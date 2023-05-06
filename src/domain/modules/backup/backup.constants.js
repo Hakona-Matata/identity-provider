@@ -13,9 +13,6 @@
  * @property {string} FAILURE_MESSAGES.BACKUP_ALREADY_GENERATED - The message to show when backup codes have already been generated.
  * @property {string} FAILURE_MESSAGES.INVALID_BACKUP - The message to show when an invalid backup code is provided.
  * @property {string} FAILURE_MESSAGES.NEED_TO_HAVE_GENERATED - The message to show when backup codes can only be regenerated if they have already been generated once.
- * @property {string} FAILURE_MESSAGES.BACKUP_CREATE_FAILED - The message to show when creating the backup codes feature has failed.
- * @property {string} FAILURE_MESSAGES.BACKUP_UPDATE_FAILED - The message to show when updating the backup codes feature has failed.
- * @property {string} FAILURE_MESSAGES.BACKUP_DELETE_FAILED - The message to show when deleting the backup codes feature has failed.
  */
 
 /**
@@ -36,8 +33,5 @@ module.exports = {
 		BACKUP_ALREADY_GENERATED: "Sorry, you already generated backup codes!",
 		INVALID_BACKUP: "Sorry, the given backup code is invalid!",
 		NEED_TO_HAVE_GENERATED: "Sorry, you can only regenerate backup codes if you have already generated them once!",
-		BACKUP_CREATE_FAILED: "Sorry, the backup codes feature create process has failed!",
-		BACKUP_UPDATE_FAILED: "Sorry, the backup codes feature update process has failed!",
-		BACKUP_DELETE_FAILED: "Sorry, the backup codes feature delete process has failed!",
 	},
 };

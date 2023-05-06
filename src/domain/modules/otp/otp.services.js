@@ -7,18 +7,10 @@ const {
 		INVALID_OTP,
 		OTP_ALREADY_DISABLED,
 		REACHED_MAXIMUM_WRONG_TRIES,
-		OTP_CREATION_FAILED,
-		OTP_DELETION_FAILED,
-		OTP_NOT_FOUND,
 	},
 } = require("./otp.constants");
 
-const {
-	BadRequestException,
-	ForbiddenException,
-	InternalServerException,
-	NotFoundException,
-} = require("./../../../shared/exceptions");
+const { BadRequestException, ForbiddenException } = require("./../../../shared/exceptions");
 
 const AccountServices = require("./../account/account.services");
 const SessionServices = require("./../session/session.services");
@@ -196,13 +188,7 @@ class OtpServices {
 	 * @throws {InternalServerException} - Throws an error if the OTP creation fails.
 	 */
 	static async createOne(payload) {
-		const isOtpCreated = await OtpRepository.insertOne(payload);
-
-		if (!isOtpCreated) {
-			throw new InternalServerException(OTP_CREATION_FAILED);
-		}
-
-		return isOtpCreated;
+		return await OtpRepository.insertOne(payload);
 	}
 
 	/**
@@ -234,13 +220,7 @@ class OtpServices {
 	 * @returns {Promise<Boolean>} - Returns a boolean indicating if the OTP was deleted successfully or not.
 	 */
 	static async deleteOne(filter) {
-		const isOtpDeleted = await OtpRepository.deleteOne(filter);
-
-		if (!isOtpDeleted) {
-			throw new NotFoundException(OTP_NOT_FOUND);
-		} else if (isOtpDeleted.deletedCount === 0) {
-			throw new InternalServerException(OTP_DELETION_FAILED);
-		}
+		return await OtpRepository.deleteOne(filter);
 	}
 }
 

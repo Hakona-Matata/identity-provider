@@ -33,5 +33,12 @@ module.exports = class BaseException extends Error {
 		 * @type {string}
 		 */
 		this.errorMessage = errorMessage;
+
+		/**
+		 * Name of the custom error.
+		 *
+		 * @type {string}
+		 */
+		this.name = "CustomError";
 	}
 };

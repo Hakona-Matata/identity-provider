@@ -48,10 +48,17 @@ module.exports = async (error, req, res, next) => {
 			errorMessage = `Sorry, the ${error.path} is not a valid ID`;
 			break;
 
+		case "CustomError":
+			statusCode = error.statusCode;
+			statusMessage = error.statusMessage;
+			errorMessage = error.errorMessage;
+			break;
+
 		default:
-			statusCode = error.statusCode || httpStatusCodes.INTERNAL_SERVER_ERROR;
-			statusMessage = error.statusMessage || httpStatusMessages.INTERNAL_SERVER_ERROR;
-			errorMessage = error.errorMessage || "Sorry, an internal server error occurred!";
+			// TODO: Send the error stack to our Logging Server (in the future)
+			statusCode = httpStatusCodes.INTERNAL_SERVER_ERROR;
+			statusMessage = httpStatusMessages.INTERNAL_SERVER_ERROR;
+			errorMessage = "Sorry, an internal server error occurred!";
 	}
 
 	if (error) {
