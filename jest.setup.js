@@ -1,4 +1,4 @@
-const { startServer, closeServer } = require("./src/app");
+const { startServer, closeServer } = require("./src/core/app");
 
 beforeAll(async () => {
 	await startServer();

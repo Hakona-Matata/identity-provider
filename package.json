@@ -1,16 +1,17 @@
 {
 	"name": "identity-provider",
 	"version": "1.0.0",
-	"description": "My Identity Provider server | Anything related to identity handling ",
-	"main": "server.js",
+	"description": "My Identity Provider API server | Anything related to account identity handling",
+	"main": "/core/server.js",
 	"scripts": {
-		"prod": "NODE_ENV=production node src/server.js",
-		"dev": "NODE_ENV=development nodemon src/server.js",
+		"prod": "NODE_ENV=production node src/core/server.js",
+		"stage": "NODE_ENV=production node src/core/server.js",
+		"dev": "NODE_ENV=development nodemon src/core/server.js",
 		"lint": "eslint src --ext .js",
-		"test": "NODE_ENV=test jest --verbose --maxWorkers=50% --detectOpenHandles",
-		"test-clear-cache": " NODE_ENV=test jest --clearCache",
-		"test-watch": " NODE_ENV=test jest --watch --detectOpenHandles --maxWorkers=50%",
-		"test-coverage": "NODE_ENV=test jest --coverage --maxWorkers=50%"
+		"test": "NODE_ENV=testing jest --verbose --maxWorkers=50% --detectOpenHandles",
+		"test-clear-cache": " NODE_ENV=testing jest --clearCache",
+		"test-watch": " NODE_ENV=testing jest --watch --detectOpenHandles --maxWorkers=50%",
+		"test-coverage": "NODE_ENV=testing jest --coverage --maxWorkers=50%"
 	},
 	"repository": {
 		"type": "git",
