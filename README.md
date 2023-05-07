@@ -153,8 +153,4 @@ This API is categorized into modules, such as :
 
 ### 9. Notes:
 
-This API is not finished 100%. I Know, that I'll do more modification in the future to suit and to be easily integrated to the other pieces of the project!
-
-```
-
-```
+This API is not 100% finished. I Know, that I'll do more modification in the future to make suit and be easily integrated to the other pieces of the project!
