@@ -154,3 +154,19 @@ This API is categorized into modules, such as :
 ### 9. Notes:
 
 This API is not 100% finished. I Know, that I'll do more modification in the future to make suit and be easily integrated to the other pieces of the project!
+
+### 10. Results of API tests:
+
+<div align="center">
+  <img src="./images/1.png" width="48%"/>
+  <img src="./images/2.png" width="48%"/>
+  <img src="./images/3.png" width="48%"/>
+  <img src="./images/4.png" width="48%"/>
+  <img src="./images/5.png" width="48%"/>
+  <img src="./images/6.png" width="48%"/>
+  <img src="./images/7.png" width="48%"/>
+  <img src="./images/8.png" width="48%"/>
+  <img src="./images/9.png" width="48%"/>
+  <img src="./images/10.png" width="48%"/>
+  <img src="./images/11.png" >
+</div>
