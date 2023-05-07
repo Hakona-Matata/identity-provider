@@ -170,9 +170,3 @@ This API is not 100% finished. I Know, that I'll do more modification in the fut
   <img src="./images/10.png" width="48%"/>
   <img src="./images/11.png" width="97%" >
 </div>
-
-### Snippet of postman documentation:
-
-<div align="center">
-  <img src="./images/12.png" width="97%"/>
-</div>
