@@ -18,7 +18,7 @@ class OtpControllers {
 	 * @throws {Error} - Throws an error if the OTP enabling process fails.
 	 */
 	static async enable(req, res, next) {
-		req.result = await OtpServices.enable(req.account._id, req.account.isOtpEnabled);
+		res.locals.result = await OtpServices.enable(req.account._id, req.account.isOtpEnabled);
 
 		next();
 	}
@@ -34,7 +34,7 @@ class OtpControllers {
 	static async confirm(req, res, next) {
 		const { otp } = await validateInput(OtpValidators.confirm, req.body);
 
-		req.result = await OtpServices.confirm(req.account._id, otp);
+		res.locals.result = await OtpServices.confirm(req.account._id, otp);
 
 		next();
 	}
@@ -48,7 +48,7 @@ class OtpControllers {
 	 * @throws {Error} - Throws an error if the OTP disabling process fails.
 	 */
 	static async disable(req, res, next) {
-		req.result = await OtpServices.disable(req.accountId, req.account.isOtpEnabled);
+		res.locals.result = await OtpServices.disable(req.accountId, req.account.isOtpEnabled);
 
 		next();
 	}
@@ -64,7 +64,7 @@ class OtpControllers {
 	static async verify(req, res, next) {
 		const { accountId, otp } = await validateInput(OtpValidators.verify, req.body);
 
-		req.result = await OtpServices.verify(accountId, otp);
+		res.locals.result = await OtpServices.verify(accountId, otp);
 
 		next();
 	}

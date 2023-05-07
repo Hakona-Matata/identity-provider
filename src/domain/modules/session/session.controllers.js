@@ -19,7 +19,7 @@ class SessionControllers {
 	 * @returns {Promise<void>} - Promise representing the completion of this request
 	 */
 	static async findAll(req, res, next) {
-		req.result = await SessionServices.findMany({ accountId: req.accountId });
+		res.locals.result = await SessionServices.findMany({ accountId: req.accountId });
 		next();
 	}
 
@@ -34,7 +34,7 @@ class SessionControllers {
 	 */
 	static async cancel(req, res, next) {
 		const { sessionId } = await validateInput(SessionValidators.cancel, req.body);
-		req.result = await SessionServices.cancel({ accountId: req.accountId, sessionId });
+		res.locals.result = await SessionServices.cancel({ accountId: req.accountId, sessionId });
 		next();
 	}
 
@@ -49,7 +49,7 @@ class SessionControllers {
 	 */
 	static async renew(req, res, next) {
 		const { refreshToken } = await validateInput(SessionValidators.renew, req.body);
-		req.result = await SessionServices.renew(refreshToken);
+		res.locals.result = await SessionServices.renew(refreshToken);
 		next();
 	}
 
@@ -64,7 +64,7 @@ class SessionControllers {
 	 */
 	static async validate(req, res, next) {
 		const { accessToken } = await validateInput(SessionValidators.validate, req.body);
-		req.result = await SessionServices.validate(accessToken);
+		res.locals.result = await SessionServices.validate(accessToken);
 		next();
 	}
 }

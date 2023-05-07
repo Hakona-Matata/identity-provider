@@ -20,7 +20,7 @@ class SmsControllers {
 			phone: { phone, country },
 		} = await validateInput(SmsValidators.enable, req.body);
 
-		req.result = await SmsServices.enable({
+		res.locals.result = await SmsServices.enable({
 			accountId: req.accountId,
 			isSmsEnabled: req.account.isSmsEnabled,
 			phone,
@@ -41,7 +41,7 @@ class SmsControllers {
 	static async confirm(req, res, next) {
 		const { otp } = await validateInput(SmsValidators.confirm, req.body);
 
-		req.result = await SmsServices.confirm(req.accountId, otp);
+		res.locals.result = await SmsServices.confirm(req.accountId, otp);
 
 		next();
 	}
@@ -55,7 +55,7 @@ class SmsControllers {
 	 * @returns {void}
 	 */
 	static async disable(req, res, next) {
-		req.result = await SmsServices.disable(req.accountId, req.account.isSmsEnabled);
+		res.locals.result = await SmsServices.disable(req.accountId, req.account.isSmsEnabled);
 
 		next();
 	}
@@ -71,7 +71,7 @@ class SmsControllers {
 	static async verify(req, res, next) {
 		const { accountId, otp } = await validateInput(SmsValidators.verify, req.body);
 
-		req.result = await SmsServices.verify({
+		res.locals.result = await SmsServices.verify({
 			accountId,
 			givenOtp: otp,
 		});
