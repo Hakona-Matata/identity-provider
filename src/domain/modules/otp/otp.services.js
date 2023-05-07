@@ -111,7 +111,7 @@ class OtpServices {
 		const hashedOtp = await HashHelper.generate(plainTextOtp);
 
 		// TODO: Send email
-		// console.log({ plainTextOtp, hashedOtp });
+		if (process.env.NODE_ENV === "development") console.log({ plainTextOtp, hashedOtp });
 
 		return hashedOtp;
 	}

@@ -35,10 +35,10 @@ class AuthServices {
 			role,
 		});
 
-		// const verificationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/verify-email/${verificationToken}`;
+		const verificationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/verify-email/${verificationToken}`;
 
 		// TODO: Send email
-		// console.log({ verificationLink });
+		if (process.env.NODE_ENV === "development") console.log({ verificationLink });
 
 		await AccountServices.updateOne({ _id: accountId }, { verificationToken });
 

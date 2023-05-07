@@ -69,10 +69,10 @@ class AccountServices {
 			role: account.role,
 		});
 
-		// const activationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/account/activate/${activationToken}`;
+		const activationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/account/activate/${activationToken}`;
 
 		// TODO: Send email
-		// console.log({ activationLink });
+		if (process.env.NODE_ENV === "development") console.log({ activationLink });
 
 		await AccountServices.updateOne({ _id: account._id }, { activationToken });
 

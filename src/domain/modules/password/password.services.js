@@ -62,10 +62,10 @@ class PasswordServices {
 
 		const resetToken = await TokenHelper.generateResetToken({ accountId: account._id, role: account.role });
 
-		// const resetLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/password/reset/${resetToken}`;
+		const resetLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/password/reset/${resetToken}`;
 
 		// TODO: Send Email
-		// console.log({ resetLink });
+		if (process.env.NODE_ENV === "development") console.log({ resetLink });
 
 		await AccountServices.updateOne({ _id: account._id }, { resetToken, resetAt: new Date() });
 

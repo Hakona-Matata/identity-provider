@@ -82,10 +82,10 @@ class BackupControllers {
 	 * @returns {void}
 	 */
 
-	static async verify(req, res, next) {
-		const { email, code } = await validateInput(BackupValidators.verify, req.body);
+	static async recover(req, res, next) {
+		const { email, code } = await validateInput(BackupValidators.recover, req.body);
 
-		req.result = await BackupServices.verify({ email, code });
+		req.result = await BackupServices.recover({ email, code });
 
 		next();
 	}

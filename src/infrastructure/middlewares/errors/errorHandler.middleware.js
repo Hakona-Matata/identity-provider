@@ -56,7 +56,8 @@ module.exports = async (error, req, res, next) => {
 
 		default:
 			// TODO: Send the error stack to our Logging Server (in the future)
-			console.log({ error });
+			if (process.env.NODE_ENV === "development") console.log({ error });
+			
 			statusCode = httpStatusCodes.INTERNAL_SERVER_ERROR;
 			statusMessage = httpStatusMessages.INTERNAL_SERVER_ERROR;
 			errorMessage = "Sorry, an internal server error occurred!";

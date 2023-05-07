@@ -115,7 +115,7 @@ class BackupServices {
 	 * @param {string} params.code - The backup code to verify.
 	 * @returns {string} A success message.
 	 */
-	static async verify({ email, code }) {
+	static async recover({ email, code }) {
 		const account = await AccountServices.findOne({ email });
 
 		if (!account || !account.isBackupEnabled) {
