@@ -36,12 +36,11 @@ etc...
 2. Start the server
 
 ```
-
 // Run in any environment you want
 
-For development mode: npm run dev (recommend this)
-For staging mode: npm run stage
-For production mode: npm run prod
+npm run dev         // For development mode (recommend this)
+npm run stage       // For staging mode
+npm run prod        // For production mode
 
 ```
 
