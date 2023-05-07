@@ -70,10 +70,10 @@ I've been trying to follow the **"Domain Driven Design (DDD)"** as much as possi
 ```
 
 /src
-/core // The necessary files for making the API alive!
-/domain // The domain-specific logic of the application
-/infrastructure // The details of the infrastructure of the application
-/shared // The shared code across the application
+   /core              // The necessary files for making the API alive!
+   /domain            // The domain-specific logic of the application
+   /infrastructure    // The details of the infrastructure of the application
+   /shared            // The shared code across the application
 
 ```
 
