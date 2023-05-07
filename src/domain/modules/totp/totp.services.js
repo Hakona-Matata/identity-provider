@@ -7,14 +7,10 @@ const {
 		TOTP_NOT_ENABLED,
 		START_FROM_SCRATCH,
 		INVALID_TOTP,
-
-		TOTP_CREATE_FAILED,
-		TOTP_UPDATE_FAILED,
-		TOTP_DELETE_FAILED,
 	},
 } = require("./totp.constants");
 
-const { BadRequestException, InternalServerException, ForbiddenException } = require("./../../../shared/exceptions");
+const { BadRequestException, ForbiddenException } = require("./../../../shared/exceptions");
 
 const TotpRepository = require("./totp.repositories");
 const AccountServices = require("./../account/account.services");
@@ -175,13 +171,7 @@ class TotpServices {
 	 * @returns {Promise<boolean>} A Promise that resolves to a boolean indicating whether the TOTP entry was created successfully.
 	 */
 	static async createOne(payload) {
-		const isTotpCreated = await TotpRepository.insertOne(payload);
-
-		if (!isTotpCreated) {
-			throw new InternalServerException(TOTP_CREATE_FAILED);
-		}
-
-		return isTotpCreated;
+		return await TotpRepository.insertOne(payload);
 	}
 
 	/**
@@ -203,13 +193,7 @@ class TotpServices {
 	 * @returns {Promise<boolean>} A Promise that resolves to a boolean indicating whether the TOTP entry was updated successfully.
 	 */
 	static async updateOne(filter, setPayload, unsetPayload) {
-		const isTotpUpdated = await TotpRepository.updateOne(filter, setPayload, unsetPayload);
-
-		if (!isTotpUpdated) {
-			throw new InternalServerException(TOTP_UPDATE_FAILED);
-		}
-
-		return isTotpUpdated;
+		return await TotpRepository.updateOne(filter, setPayload, unsetPayload);
 	}
 
 	/**
@@ -219,9 +203,7 @@ class TotpServices {
 	 * @returns {Promise<void>} A Promise that resolves when the TOTP entry has been deleted.
 	 */
 	static async deleteOne(filter) {
-		const { deletedCount } = await TotpRepository.deleteOne(filter);
-
-		if (deletedCount === 0) throw new InternalServerException(TOTP_DELETE_FAILED);
+		return await TotpRepository.deleteOne(filter);
 	}
 
 	/**
@@ -232,9 +214,7 @@ class TotpServices {
 	 * @throws {InternalServerException} If the delete operation fails or no entries are deleted.
 	 */
 	static async deleteMany(filter) {
-		const { deletedCount } = await TotpRepository.deleteMany(filter);
-
-		if (deletedCount === 0) throw new InternalServerException(TOTP_DELETE_FAILED);
+		return await TotpRepository.deleteMany(filter);
 	}
 }
 

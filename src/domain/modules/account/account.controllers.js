@@ -15,7 +15,7 @@ class AccountControllers {
 	 * @param {function} next - Express next middleware function
 	 */
 	static async deactivate(req, res, next) {
-		req.result = await AccountServices.deactivate(req.accountId);
+		res.locals.result = await AccountServices.deactivate(req.accountId);
 
 		next();
 	}
@@ -30,7 +30,7 @@ class AccountControllers {
 	static async initiateActivation(req, res, next) {
 		const { email } = await validateInput(AccountValidators.activate, req.body);
 
-		req.result = await AccountServices.initiateActivation(email);
+		res.locals.result = await AccountServices.initiateActivation(email);
 
 		next();
 	}
@@ -45,7 +45,7 @@ class AccountControllers {
 	static async confirmActivation(req, res, next) {
 		const { activationToken } = await validateInput(AccountValidators.confirmActivation, req.params);
 
-		req.result = await AccountServices.confirmActivation(activationToken);
+		res.locals.result = await AccountServices.confirmActivation(activationToken);
 
 		next();
 	}
@@ -58,7 +58,7 @@ class AccountControllers {
 	 * @param {function} next - Express next middleware function
 	 */
 	static async terminate(req, res, next) {
-		req.result = await AccountServices.terminate(req.accountId);
+		res.locals.result = await AccountServices.terminate(req.accountId);
 
 		next();
 	}
@@ -73,7 +73,7 @@ class AccountControllers {
 	static async cancelTermination(req, res, next) {
 		const { email } = await validateInput(AccountValidators.cancel, req.body);
 
-		req.result = await AccountServices.cancelTermination(email);
+		res.locals.result = await AccountServices.cancelTermination(email);
 
 		next();
 	}

@@ -12,19 +12,11 @@ const {
 		ACCOUNT_ALREADY_ACTIVE,
 		ALREADY_HAVE_VALID_ACTIVATION_LINK,
 		ALREADY_CANCELED_ACCOUNT_DELETION,
-		ACCOUNT_CREATION_FAILED,
-		ACCOUNT_DELETION_FAILED,
-		ACCOUNT_NOT_FOUND,
 		ACCOUNT_IS_DELETED,
 	},
 } = require("./account.constants");
 
-const {
-	BadRequestException,
-	InternalServerException,
-	NotFoundException,
-	ForbiddenException,
-} = require("./../../../shared/exceptions");
+const { BadRequestException, ForbiddenException } = require("./../../../shared/exceptions");
 
 const { TokenHelper, HashHelper } = require("../../../shared/helpers");
 
@@ -77,10 +69,10 @@ class AccountServices {
 			role: account.role,
 		});
 
-		// const activationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/account/activate/${activationToken}`;
+		const activationLink = `${process.env.BASE_URL}:${process.env.PORT}/auth/account/activate/${activationToken}`;
 
 		// TODO: Send email
-		// console.log({ activationLink });
+		if (process.env.NODE_ENV === "development") console.log({ activationLink });
 
 		await AccountServices.updateOne({ _id: account._id }, { activationToken });
 
@@ -241,19 +233,12 @@ class AccountServices {
 	 * @param {string} payload.password - The password of the account.
 	 * @param {string} payload.firstName - The first name of the account owner.
 	 * @param {string} payload.lastName - The last name of the account owner.
-	 * @throws {InternalServerException} If account creation fails.
 	 * @returns {Object} Returns the created account object.
 	 */
 	static async createOne(payload) {
 		const password = await HashHelper.generate(payload.password);
 
-		const isAccountCreated = await AccountRepository.insertOne({ ...payload, password });
-
-		if (!isAccountCreated) {
-			throw new InternalServerException(ACCOUNT_CREATION_FAILED);
-		}
-
-		return isAccountCreated;
+		return await AccountRepository.insertOne({ ...payload, password });
 	}
 
 	/**
@@ -288,17 +273,10 @@ class AccountServices {
 	 * @param {Object} filter - The filter to find the account to update.
 	 * @param {Object} setPayload - The payload to set on the account.
 	 * @param {Object} unsetPayload - The payload to unset from the account.
-	 * @throws {NotFoundException} If the account to update is not found.
 	 * @returns {Object} Returns the updated account object.
 	 */
 	static async updateOne(filter, setPayload, unsetPayload) {
-		const isAccountUpdated = await AccountRepository.updateOne(filter, setPayload, unsetPayload);
-
-		if (!isAccountUpdated) {
-			throw new NotFoundException(ACCOUNT_NOT_FOUND);
-		}
-
-		return isAccountUpdated;
+		return await AccountRepository.updateOne(filter, setPayload, unsetPayload);
 	}
 
 	/**
@@ -307,18 +285,10 @@ class AccountServices {
 	 * @async
 	 * @static
 	 * @param {string} accountId - The ID of the account to delete.
-	 * @throws {NotFoundException} If the account to delete is not found.
-	 * @throws {InternalServerException} If account deletion fails.
 	 * @returns {Object} Returns the deletion result object.
 	 */
 	static async deleteOne(accountId) {
-		const isAccountDeleted = await AccountRepository.deleteOne(accountId);
-
-		if (!isAccountDeleted) {
-			throw new NotFoundException(ACCOUNT_NOT_FOUND);
-		} else if (isAccountDeleted.deletedCount === 0) {
-			throw new InternalServerException(ACCOUNT_DELETION_FAILED);
-		}
+		return await AccountRepository.deleteOne(accountId);
 	}
 }
 

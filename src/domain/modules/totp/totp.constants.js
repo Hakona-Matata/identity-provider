@@ -13,9 +13,6 @@
  * @property {string} FAILURE_MESSAGES.TOTP_NOT_ENABLED - The message for TOTP feature not enabled.
  * @property {string} FAILURE_MESSAGES.START_FROM_SCRATCH - The message for starting TOTP feature from scratch.
  * @property {string} FAILURE_MESSAGES.INVALID_TOTP - The message for invalid TOTP.
- * @property {string} FAILURE_MESSAGES.TOTP_CREATE_FAILED - The message for failed TOTP creation.
- * @property {string} FAILURE_MESSAGES.TOTP_UPDATE_FAILED - The message for failed TOTP update.
- * @property {string} FAILURE_MESSAGES.TOTP_DELETE_FAILED - The message for failed TOTP deletion.
  * @property {string} FAILURE_MESSAGES.TOTP_NOT_FOUND - The message for TOTP not found.
  */
 module.exports = {
@@ -30,9 +27,6 @@ module.exports = {
 		TOTP_NOT_ENABLED: "Sorry, the TOTP feature is not enabled!",
 		START_FROM_SCRATCH: "Sorry, you need to start from scratch!",
 		INVALID_TOTP: "Sorry, the totp is invalid!",
-		TOTP_CREATE_FAILED: "Sorry, the TOTP delete process failed!",
-		TOTP_UPDATE_FAILED: "Sorry, the TOTP update process failed!",
-		TOTP_DELETE_FAILED: "Sorry, the TOTP delete process failed!",
 		TOTP_NOT_FOUND: "Sorry, the TOTP is not found!",
 	},
 };

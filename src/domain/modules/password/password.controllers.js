@@ -22,7 +22,7 @@ class PasswordControllers {
 	static async change(req, res, next) {
 		const passwordData = await validateInput(PasswordValidators.change, req.body);
 
-		req.result = await PasswordServices.change({
+		res.locals.result = await PasswordServices.change({
 			accountId: req.accountId,
 			accountPassword: req.account.password,
 			...passwordData,
@@ -45,7 +45,7 @@ class PasswordControllers {
 	static async forget(req, res, next) {
 		const { email } = await validateInput(PasswordValidators.forget, req.body);
 
-		req.result = await PasswordServices.forget(email);
+		res.locals.result = await PasswordServices.forget(email);
 
 		next();
 	}
@@ -64,7 +64,7 @@ class PasswordControllers {
 	static async reset(req, res, next) {
 		const resetAccountData = await validateInput(PasswordValidators.reset, req.body);
 
-		req.result = await PasswordServices.reset(resetAccountData);
+		res.locals.result = await PasswordServices.reset(resetAccountData);
 
 		next();
 	}

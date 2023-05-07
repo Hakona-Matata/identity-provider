@@ -16,7 +16,7 @@ class NotFoundControllers {
 	 * @throws {NotFoundException} - Throws a NotFoundException if no result is found in the request object.
 	 */
 	static async notFound(req, res, next) {
-		if (!req.result) {
+		if (!res.locals.result) {
 			next(new NotFoundException("Sorry, this endpoint is not found!"));
 		} else {
 			next();

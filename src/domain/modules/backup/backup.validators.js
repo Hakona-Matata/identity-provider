@@ -25,10 +25,10 @@ module.exports = {
 		code,
 	}),
 	/**
-	 * The Joi schema for verifying the user.
+	 * The Joi schema for account recovery.
 	 * @type {import('joi').Schema}
 	 */
-	verify: Joi.object({
+	recover: Joi.object({
 		email,
 		code,
 	}),

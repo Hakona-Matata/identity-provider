@@ -8,13 +8,10 @@ const {
 		INVALID_OTP,
 		CANNOT_VERIFY,
 		ALREADY_DISABLED_SMS,
-		SMS_CREATE_FAILED,
-		SMS_UPDATE_FAILED,
-		SMS_DELETION_FAILED,
 	},
 } = require("./sms.constants");
 
-const { ForbiddenException, InternalServerException, BadRequestException } = require("./../../../shared/exceptions");
+const { ForbiddenException, BadRequestException } = require("./../../../shared/exceptions");
 
 const OtpServices = require("./../otp/otp.services");
 const AccountServices = require("./../account/account.services");
@@ -198,13 +195,7 @@ class SmsServices {
 	 * @throws {InternalServerException} If the Sms document creation fails.
 	 */
 	static async createOne(payload) {
-		const isSmsCreated = await SmsRepository.insertOne(payload);
-
-		if (!isSmsCreated) {
-			throw new InternalServerException(SMS_CREATE_FAILED);
-		}
-
-		return isSmsCreated;
+		return await SmsRepository.insertOne(payload);
 	}
 
 	/**
@@ -228,13 +219,7 @@ class SmsServices {
 	 * @throws {InternalServerException} If the Sms document update fails.
 	 */
 	static async updateOne(filter, setPayload, unsetPayload) {
-		const isSmsUpdated = await SmsRepository.updateOne(filter, setPayload, unsetPayload);
-
-		if (!isSmsUpdated) {
-			throw new InternalServerException(SMS_UPDATE_FAILED);
-		}
-
-		return isSmsUpdated;
+		return await SmsRepository.updateOne(filter, setPayload, unsetPayload);
 	}
 
 	/**
@@ -246,9 +231,7 @@ class SmsServices {
 	 * @throws {InternalServerException} If the Sms document deletion fails.
 	 */
 	static async deleteOne(filter) {
-		const { deletedCount } = await SmsRepository.deleteOne(filter);
-
-		if (deletedCount === 0) throw new InternalServerException(SMS_DELETION_FAILED);
+		return await SmsRepository.deleteOne(filter);
 	}
 }
 

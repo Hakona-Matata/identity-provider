@@ -2,7 +2,7 @@
 	"name": "identity-provider",
 	"version": "1.0.0",
 	"description": "My Identity Provider API server | Anything related to account identity handling",
-	"main": "/core/server.js",
+	"main": "server.js",
 	"scripts": {
 		"prod": "NODE_ENV=production node src/core/server.js",
 		"stage": "NODE_ENV=production node src/core/server.js",

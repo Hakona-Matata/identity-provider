@@ -17,7 +17,7 @@ class BackupControllers {
 	 * @returns {void}
 	 */
 	static async initiateEnabling(req, res, next) {
-		req.result = await BackupServices.initiateEnabling(req.account);
+		res.locals.result = await BackupServices.initiateEnabling(req.account);
 		next();
 	}
 
@@ -35,7 +35,7 @@ class BackupControllers {
 	 */
 	static async confirmEnabling(req, res, next) {
 		const { code } = await validateInput(BackupValidators.confirm, req.body);
-		req.result = await BackupServices.confirmEnabling(req.account, code);
+		res.locals.result = await BackupServices.confirmEnabling(req.account, code);
 		next();
 	}
 
@@ -50,7 +50,7 @@ class BackupControllers {
 	 * @returns {void}
 	 */
 	static async disable(req, res, next) {
-		req.result = await BackupServices.disable(req.account);
+		res.locals.result = await BackupServices.disable(req.account);
 		next();
 	}
 
@@ -65,7 +65,7 @@ class BackupControllers {
 	 * @returns {void}
 	 */
 	static async regenerate(req, res, next) {
-		req.result = await BackupServices.regenerate(req.account._id);
+		res.locals.result = await BackupServices.regenerate(req.account._id);
 		next();
 	}
 
@@ -82,10 +82,10 @@ class BackupControllers {
 	 * @returns {void}
 	 */
 
-	static async verify(req, res, next) {
-		const { email, code } = await validateInput(BackupValidators.verify, req.body);
+	static async recover(req, res, next) {
+		const { email, code } = await validateInput(BackupValidators.recover, req.body);
 
-		req.result = await BackupServices.verify({ email, code });
+		res.locals.result = await BackupServices.recover({ email, code });
 
 		next();
 	}

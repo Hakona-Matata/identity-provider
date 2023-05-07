@@ -10,7 +10,7 @@ const { app } = require("../../../../core/app");
 
 const AccountServices = require("./../../account/account.services");
 
-const baseURL = "/auth/account/backup/verify";
+const baseURL = "/auth/account/backup/recover";
 
 describe(`Identity Provider API - Verify Backup code endpoint during account recovery "${baseURL}"`, () => {
 	const generateFakeAccount = () => {

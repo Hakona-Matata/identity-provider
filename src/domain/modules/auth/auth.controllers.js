@@ -21,7 +21,7 @@ class AuthControllers {
 	static async signUp(req, res, next) {
 		const accountData = await validateInput(AuthValidators.signUp, req.body);
 
-		req.result = await AuthServices.signUp(accountData);
+		res.locals.result = await AuthServices.signUp(accountData);
 
 		next();
 	}
@@ -38,7 +38,7 @@ class AuthControllers {
 	static async verify(req, res, next) {
 		const { verificationToken } = await validateInput(AuthValidators.verify, req.params);
 
-		req.result = await AuthServices.verify(verificationToken);
+		res.locals.result = await AuthServices.verify(verificationToken);
 
 		next();
 	}
@@ -55,7 +55,7 @@ class AuthControllers {
 	static async logIn(req, res, next) {
 		const { email, password } = await validateInput(AuthValidators.login, req.body);
 
-		req.result = await AuthServices.logIn({ email, password });
+		res.locals.result = await AuthServices.logIn({ email, password });
 
 		next();
 	}
@@ -70,7 +70,7 @@ class AuthControllers {
 	 * @returns {void}
 	 */
 	static async logOut(req, res, next) {
-		req.result = await AuthServices.logOut({
+		res.locals.result = await AuthServices.logOut({
 			accountId: req.accountId,
 			accessToken: req.accessToken,
 		});

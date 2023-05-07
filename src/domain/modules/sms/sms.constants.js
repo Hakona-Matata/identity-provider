@@ -15,10 +15,6 @@
  * @property {string} INVALID_OTP - Message indicating that the OTP code is invalid.
  * @property {string} ALREADY_DISABLED_SMS - Message indicating that the OTP over SMS feature is already disabled.
  * @property {string} SMS_NOT_FOUND - Message indicating that the SMS document is not found.
- * @property {string} SMS_CREATE_FAILED - Message indicating that the creation of the OTP over SMS feature has failed.
- * @property {string} SMS_READ_FAILED - Message indicating that the finding of the OTP over SMS feature has failed.
- * @property {string} SMS_UPDATE_FAILED - Message indicating that the update of the OTP over SMS feature has failed.
- * @property {string} SMS_DELETION_FAILED - Message indicating that the deletion of the OTP over SMS feature has failed.
  */
 
 /**
@@ -46,9 +42,5 @@ module.exports = {
 		ALREADY_DISABLED_SMS: "Sorry, you already disabled OTP over SMS feature!",
 		CANNOT_VERIFY: "Sorry, you can't verify OTP over SMS!",
 		SMS_NOT_FOUND: "Sorry, the sms document is not found!",
-		SMS_CREATE_FAILED: "Sorry, the creation of otp over sms failed!",
-		SMS_READ_FAILED: "Sorry, the finding of otp over sms failed!",
-		SMS_UPDATE_FAILED: "Sorry, the otp over sms update failed!",
-		SMS_DELETION_FAILED: "Sorry, the deletion of otp over sms failed!",
 	},
 };

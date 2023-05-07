@@ -25,7 +25,7 @@ class SmsHelper {
 			});
 		}
 
-		// console.log({ phoneNumber, message });
+		if (process.env.NODE_ENV === "development") console.log({ phoneNumber, message });
 	}
 }
 

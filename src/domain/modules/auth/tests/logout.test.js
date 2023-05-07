@@ -66,7 +66,7 @@ describe(`Identity Provider API - Log Out endpoint ${baseURL}"`, () => {
 
 	it("Should return 404 status code when no accessToken is provided", async () => {
 		const { status, body } = await request(app).post(baseURL);
-		console.log({ status, body });
+
 		expect(status).toBe(httpStatusCodes.NOT_FOUND);
 		expect(body).toEqual({
 			success: false,

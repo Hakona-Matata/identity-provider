@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { initiateEnabling, confirmEnabling, disable, regenerate, verify } = require("./backup.controllers");
+const { initiateEnabling, confirmEnabling, disable, regenerate, recover } = require("./backup.controllers");
 const { isAuthenticated, isVerified, isActive, isNotDeleted } = require("./../../../infrastructure/middlewares");
 
 /**
@@ -58,15 +58,15 @@ router.route("/disable").delete([isAuthenticated, isVerified, isNotDeleted, isAc
 router.route("/regenerate").post([isAuthenticated, isVerified, isNotDeleted, isActive], regenerate);
 
 /**
- * Route for verifying backup.
- * @name POST /backup/verify
+ * Route for Account Recovery.
+ * @name POST /backup/recover
  * @function
  * @memberof module:backupRoutes
  * @inner
  * @param {string} path - Express route path.
  * @param {function} handler - Express request handler function.
  */
-router.route("/verify").post(verify);
+router.route("/recover").post(recover);
 
 /**
  * Module representing backup-related routes.

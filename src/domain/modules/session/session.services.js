@@ -1,9 +1,9 @@
 const {
 	SUCCESS_MESSAGES: { SESSION_CANCELED_SUCCESSFULLY },
-	FAILURE_MESSAGES: { SESSION_CREATION_FAILED, SESSION_DELETION_FAILED, SESSION_REVOKED },
+	FAILURE_MESSAGES: { SESSION_REVOKED },
 } = require("./session.constants");
 
-const { InternalServerException, ForbiddenException, UnAuthorizedException } = require("../../../shared/exceptions");
+const { ForbiddenException, UnAuthorizedException } = require("../../../shared/exceptions");
 
 const SessionRepository = require("./session.repositories");
 
@@ -81,13 +81,9 @@ class SessionServices {
 	static async createOne(payload) {
 		const sessionTokens = await TokenHelper.generateAccessRefreshTokens(payload);
 
-		const isSessionCreated = await SessionRepository.insertOne({ ...payload, ...sessionTokens });
+		const createdSession = await SessionRepository.insertOne({ ...payload, ...sessionTokens });
 
-		if (!isSessionCreated) {
-			throw new InternalServerException(SESSION_CREATION_FAILED);
-		}
-
-		return { accessToken: isSessionCreated.accessToken, refreshToken: isSessionCreated.refreshToken };
+		return { accessToken: createdSession.accessToken, refreshToken: createdSession.refreshToken };
 	}
 
 	/**
@@ -129,9 +125,7 @@ class SessionServices {
 	 * @returns {Promise<void>} A promise that resolves when the session is deleted successfully.
 	 */
 	static async deleteOne(filter) {
-		const { deletedCount } = await SessionRepository.deleteOne(filter);
-
-		if (deletedCount === 0) throw new InternalServerException(SESSION_DELETION_FAILED);
+		return await SessionRepository.deleteOne(filter);
 	}
 
 	/** Delete multiple sessions based on the provided filter.

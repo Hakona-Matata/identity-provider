@@ -15,13 +15,10 @@ const {
 		BACKUP_NOT_GENERATED,
 		INVALID_BACKUP,
 		NEED_TO_HAVE_GENERATED,
-		BACKUP_CREATE_FAILED,
-		BACKUP_UPDATE_FAILED,
-		BACKUP_DELETE_FAILED,
 	},
 } = require("./backup.constants");
 
-const { BadRequestException, InternalServerException, ForbiddenException } = require("./../../../shared/exceptions");
+const { BadRequestException, ForbiddenException } = require("./../../../shared/exceptions");
 
 /**
  * A class representing backup services.
@@ -118,7 +115,7 @@ class BackupServices {
 	 * @param {string} params.code - The backup code to verify.
 	 * @returns {string} A success message.
 	 */
-	static async verify({ email, code }) {
+	static async recover({ email, code }) {
 		const account = await AccountServices.findOne({ email });
 
 		if (!account || !account.isBackupEnabled) {
@@ -266,13 +263,7 @@ class BackupServices {
 	 * @throws {InternalServerException} If the backup codes could not be created.
 	 */
 	static async createMany(payload) {
-		const areBackupCodesCreated = await BackupRepository.insertMany(payload);
-
-		if (!areBackupCodesCreated) {
-			throw new InternalServerException(BACKUP_CREATE_FAILED);
-		}
-
-		return areBackupCodesCreated;
+		return await BackupRepository.insertMany(payload);
 	}
 
 	/**
@@ -305,9 +296,7 @@ class BackupServices {
 	 * @throws {InternalServerException} If the backup codes could not be updated.
 	 */
 	static async updateMany(filter, setPayload, unsetPayload) {
-		const { modifiedCount } = await BackupRepository.updateMany(filter, setPayload, unsetPayload);
-
-		if (modifiedCount === 0) throw new InternalServerException(BACKUP_UPDATE_FAILED);
+		return await BackupRepository.updateMany(filter, setPayload, unsetPayload);
 	}
 
 	/**
@@ -319,11 +308,7 @@ class BackupServices {
 	 * @throws {InternalServerException} If the backup code could not be deleted.
 	 */
 	static async deleteOne(filter) {
-		const { deletedCount } = await BackupRepository.deleteOne(filter);
-
-		if (deletedCount === 0) {
-			throw new InternalServerException(BACKUP_DELETE_FAILED);
-		}
+		return await BackupRepository.deleteOne(filter);
 	}
 
 	/**
@@ -335,11 +320,7 @@ class BackupServices {
 	 * @throws {InternalServerException} If the deletion operation fails or no documents are deleted.
 	 */
 	static async deleteMany(filter) {
-		const { deletedCount } = await BackupRepository.deleteMany(filter);
-
-		if (deletedCount === 0) {
-			throw new InternalServerException(BACKUP_DELETE_FAILED);
-		}
+		return await BackupRepository.deleteMany(filter);
 	}
 }
 

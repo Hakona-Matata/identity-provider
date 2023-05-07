@@ -20,6 +20,6 @@ module.exports = async (req, res) => {
 		success: true,
 		status: httpStatusCodes.OK,
 		code: httpStatusMessages.OK,
-		result: req.result,
+		result: res.locals.result,
 	});
 };
