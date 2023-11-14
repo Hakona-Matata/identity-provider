@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto, PublicUserDto, UpdateUserDto } from './dtos';
 import { UserService } from './user.service';
-import { Serialize } from 'src/decorators/serialize.decorator';
+import { Serialize } from 'src/shared/decorators/serialize.decorator';
 
 @Controller('auth')
 @Serialize(PublicUserDto)
