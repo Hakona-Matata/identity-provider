@@ -5,36 +5,30 @@ import {
   Get,
   Param,
   Patch,
-  Post,
   Query,
 } from '@nestjs/common';
-import { CreateUserDto, PublicUserDto, UpdateUserDto } from './dtos';
 import { UserService } from './user.service';
-import { Serialize } from 'src/shared/decorators/serialize.decorator';
+import { Serialize } from 'src/shared/decorators';
+import { PublicUserDto, UpdateUserDto } from './dtos';
 
-@Controller('auth')
+@Controller('users')
 @Serialize(PublicUserDto)
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @Post('/sign-up')
-  async signUp(@Body() data: CreateUserDto) {
-    return await this.userService.signUp(data);
-  }
-
   @Patch('/:userId')
   async updateUser(@Param('userId') userId, @Body() payload: UpdateUserDto) {
-    return await this.userService.updateUser(+userId, payload);
+    return await this.userService.updateOne(+userId, payload);
   }
 
   @Delete('/:userId')
   async deleteUser(@Param('userId') userId: string) {
-    return await this.userService.deleteUser(+userId);
+    return await this.userService.deleteOne(+userId);
   }
 
   @Get('/:userId')
   async getUser(@Param('userId') userId: string) {
-    return await this.userService.getUser(+userId);
+    return await this.userService.findById(+userId);
   }
 
   @Get()
@@ -42,6 +36,6 @@ export class UserController {
     @Query('pageSize') pageSize: number,
     @Query('pageNumber') pageNumber: number,
   ) {
-    return await this.userService.getAllUsers({ pageSize, pageNumber });
+    return await this.userService.findAll({ pageSize, pageNumber });
   }
 }

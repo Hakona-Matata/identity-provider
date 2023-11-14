@@ -7,6 +7,7 @@ import { Report } from './modules/report/report.entity';
 import { UserModule } from './modules/user/user.module';
 import { ReportModule } from './modules/report/report.module';
 import { MessagesModule } from './modules/message/messages.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MessagesModule } from './modules/message/messages.module';
     MessagesModule,
     UserModule,
     ReportModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
