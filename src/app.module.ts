@@ -1,21 +1,34 @@
-import { Module } from '@nestjs/common';
-import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { User } from './modules/user/user.entity';
+import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
+import { MessagesModule } from './modules/message/messages.module';
+import { ReportModule } from './modules/report/report.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { Report } from './modules/report/report.entity';
 import { UserModule } from './modules/user/user.module';
-import { ReportModule } from './modules/report/report.module';
-import { MessagesModule } from './modules/message/messages.module';
-import { AuthModule } from './modules/auth/auth.module';
+import { User } from './modules/user/user.entity';
+import { AppController } from './app.controller';
+const cookieSession = require('cookie-session');
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppService } from './app.service';
+import { APP_PIPE } from '@nestjs/core';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'sqlite',
-      database: 'db.sqlite',
-      entities: [User, Report],
-      synchronize: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV}`,
+    }),
+    // for multiple environment part!
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        return {
+          type: 'sqlite',
+          database: config.get<string>('DB_NAME'),
+          entities: [User, Report],
+          synchronize: true,
+        };
+      },
     }),
     MessagesModule,
     UserModule,
@@ -23,6 +36,26 @@ import { AuthModule } from './modules/auth/auth.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      // this is how we configure a global pipe!
+      provide: APP_PIPE,
+      useValue: new ValidationPipe({
+        whitelist: true, // only accept inputs that we are expecting!
+        transform: true,
+      }),
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(
+        cookieSession({
+          keys: ['this is my encryption key!!!!!!!!'],
+        }),
+      )
+      .forRoutes('*'); // Now it's a global middleware for all routes
+  }
+}

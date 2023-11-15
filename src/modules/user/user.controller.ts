@@ -8,7 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { Serialize } from 'src/shared/decorators';
+import { Serialize } from '../../shared/decorators';
 import { PublicUserDto, UpdateUserDto } from './dtos';
 
 @Controller('users')

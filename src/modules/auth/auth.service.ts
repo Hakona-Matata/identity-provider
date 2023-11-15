@@ -13,7 +13,8 @@ export class AuthService {
 
   async signUp(data: CreateUserDto): Promise<User> {
     const isAlreadyFound = await this.userService.findOne({
-      where: { email: data.email, isDeleted: false },
+      email: data.email,
+      isDeleted: false,
     });
 
     if (isAlreadyFound)

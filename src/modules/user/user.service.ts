@@ -3,9 +3,9 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOneOptions, Repository } from 'typeorm';
 import { CreateUserDto, GetAllUsersDto } from './dtos';
 
 @Injectable()
@@ -58,13 +58,14 @@ export class UserService {
     return 'The user is deleted successfully!';
   }
 
-  async findOne(query: FindOneOptions<User>): Promise<User> {
-    return await this.userRepository.findOne(query);
+  async findOne(query: Partial<User>): Promise<User> {
+    return await this.userRepository.findOneBy(query);
   }
 
   async findByEmail(email: string): Promise<User> {
-    const isUserFound = await this.userRepository.findOne({
-      where: { email, isDeleted: false },
+    const isUserFound = await this.findOne({
+      email,
+      isDeleted: false,
     });
 
     if (!isUserFound) throw new NotFoundException('The user is not found!');
@@ -73,8 +74,11 @@ export class UserService {
   }
 
   async findById(userId: number): Promise<User> {
-    const isUserFound = await this.userRepository.findOne({
-      where: { id: userId, isDeleted: false },
+    if (!userId) return null;
+
+    const isUserFound = await this.findOne({
+      id: userId,
+      isDeleted: false,
     });
 
     if (!isUserFound) throw new NotFoundException('The user is not found!');
