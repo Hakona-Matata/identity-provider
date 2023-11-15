@@ -6,9 +6,3 @@ global.beforeEach(async () => {
     await rm(join(__dirname, '..', 'test.sqlite'));
   } catch (error) {}
 });
-
-global.afterAll(async () => {
-  try {
-    await rm(join(__dirname, '..', 'test.sqlite'));
-  } catch (error) {}
-});
