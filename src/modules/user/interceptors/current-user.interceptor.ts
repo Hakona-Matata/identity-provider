@@ -1,10 +1,8 @@
 import {
-  BadRequestException,
   CallHandler,
   ExecutionContext,
   Injectable,
   NestInterceptor,
-  NotFoundException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { UserService } from '../user.service';
@@ -19,15 +17,9 @@ export class CurrentUserInterceptor implements NestInterceptor {
   ): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
 
-    const userId = request.session.userId || null;
+    const userId = request?.session?.userId || null;
 
-    if (!userId) throw new BadRequestException('You are not logged In!');
-
-    const user = await this.userService.findById(+userId);
-
-    if (!user) throw new NotFoundException('The user is not found!');
-
-    request.currentUser = user;
+    request.currentUser = await this.userService.findOne({ id: userId });
 
     return next.handle();
   }

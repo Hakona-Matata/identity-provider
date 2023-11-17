@@ -9,8 +9,10 @@ import { AppController } from './app.controller';
 const cookieSession = require('cookie-session');
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppService } from './app.service';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CurrentUserInterceptor } from './modules/user/interceptors';
+import { CurrentUserMiddleware } from './shared/middlewares';
 
 @Module({
   imports: [
@@ -46,6 +48,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         transform: true,
       }),
     },
+
+    // For making hte @CurrentUser globally!
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CurrentUserInterceptor,
+    },
   ],
 })
 export class AppModule {
@@ -56,6 +64,8 @@ export class AppModule {
           keys: ['this is my encryption key!!!!!!!!'],
         }),
       )
-      .forRoutes('*'); // Now it's a global middleware for all routes
+      .forRoutes('*');
+
+    consumer.apply(CurrentUserMiddleware).forRoutes('*');
   }
 }

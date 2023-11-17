@@ -23,7 +23,7 @@ describe('🏠AuthController (e2e) | Sign Up', () => {
     return request(app.getHttpServer())
       .post(path)
       .send({ email, password: 'myPassword' })
-      .expect(201) // Uncomment this line if 201 is the expected status code
+      .expect(201)
       .then((res) => {
         const { id, email: responseEmail } = res.body;
         expect(id).toBeDefined();

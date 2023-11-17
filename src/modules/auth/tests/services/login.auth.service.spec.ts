@@ -17,8 +17,9 @@ describe('🏠AuthService | Log In', () => {
         const user = {
           id: Math.floor(Math.random() * 1000),
           isDeleted: false,
+          isAdmin: true,
           ...data,
-        };
+        } as User;
         users.push(user);
         return Promise.resolve(user as User);
       },

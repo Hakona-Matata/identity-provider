@@ -6,4 +6,7 @@ export class PublicUserDto {
 
   @Expose()
   email: string;
+
+  @Expose()
+  isAdmin: boolean;
 }

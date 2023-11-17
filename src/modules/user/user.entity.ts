@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Report } from '../report/report.entity';
 
-@Entity({ name: 'User Entity' })
+@Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -13,4 +14,10 @@ export class User {
 
   @Column({ default: false })
   isDeleted: boolean;
+
+  @Column({ default: true })
+  isAdmin: boolean;
+
+  @OneToMany(() => Report, (report) => report.user)
+  reports: Report[];
 }
