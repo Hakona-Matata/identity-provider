@@ -8,7 +8,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { User } from 'src/modules/user/user.entity';
+import { User } from './../../user/user.entity';
 
 export class GetEstimateDto {
   @Type(() => String)
